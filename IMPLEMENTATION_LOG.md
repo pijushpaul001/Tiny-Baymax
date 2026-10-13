@@ -1,56 +1,72 @@
 # Tiny Baymax — Implementation Log
 
-This log tracks work against `CLAUDE_HANDOFF.md`. Never commit API keys, passcodes, private health conversations, or personally identifying data.
+This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or commit API keys, passcodes, private health conversations, or other identifying/sensitive data.
 
 ## Current status
 
-- **Architecture:** Claude's v0.6 architecture has been reviewed.
-- **Local implementation snapshot:** v0.6.1 hardening candidate prepared from the user-supplied ZIP.
-- **Local validation:** 40 tests passed; Python compile check and JavaScript syntax checks passed.
-- **GitHub source sync:** **Not complete.** The tested source snapshot is prepared in this conversation, but the source tree has not yet been uploaded to this repository. Until that happens, GitHub `main` is still documentation-only.
-- **Real Gemini / phone verification:** Not run; requires the user's API configuration and device/network environment.
+- **Repository:** `pijushpaul001/Tiny-Baymax`
+- **Implementation snapshot:** v0.6.1 hardening candidate
+- **Architecture:** Claude's detailed v0.6 architecture reviewed; use it as the contract for follow-up work.
+- **Automated verification:** 41 tests passed locally; Python compile check and JavaScript syntax checks passed.
+- **GitHub sync:** Source is being committed to `work/v0.6.1-hardening`. `main` remains documentation-only until the pull request is reviewed and merged.
+- **Real Gemini / device verification:** Not run. These require the user's configured API key and phone/network environment.
 - **Last updated:** 2026-10-13
 
-## Task status
+## Summary
 
-| ID | Area | Status | Notes |
+| ID | Area | Status | Details |
 |---|---|---|---|
-| SETUP-001 | Coordination docs | Done | README, Claude handoff, and implementation log exist. |
-| ARCH-001 | Review Claude architecture | Done | Reviewed G1–G18, API/storage contracts, safety behavior, migration phases, acceptance criteria, and open decisions. |
-| PHASE0-001 | Project hygiene | Done in local snapshot | Includes expanded .gitignore, existing AGENTS.md, GitHub Actions test workflow, manual test plan, tests/, and a newly created web/ client. The original source ZIP did not contain tests/ or web/. |
-| IMPL-001 | v0.6.1 hardening | Implemented in local snapshot | Rating parsing/skip/correction, atomic persistence, emergency path independent of storage/model, feedback redaction, safer shutdown matching, secret digit redaction, schema version/backup, API error handling, CORS/OPTIONS, rate limiting, rating edit/delete, and encapsulated delete-all. |
-| TEST-001 | Local automated tests | Pass | 40 tests pass using unittest; compileall and Node syntax checks pass. |
-| SYNC-001 | Upload tested source snapshot to GitHub | Pending | The code must be synced to a work branch and reviewed before main is considered implemented. |
-| VERIFY-001 | Real Gemini and phone tests | Pending | Follow `docs/MANUAL_TEST.md` after source sync. |
-| MOBILE-001 | Native mobile shell | Later | v0.6.2 remains a later phase. |
-| REMIND-001 | Reminders | Later | v0.7.0 remains a later phase. |
+| SETUP-001 | Repository coordination files | Done | `README.md`, `CLAUDE_HANDOFF.md`, `AGENTS.md` retained; this implementation log updated. |
+| PHASE0-001 | Project hygiene and tests | Done in this snapshot | Added `.github/workflows/tests.yml`, expanded `.gitignore`, regression tests, and `docs/MANUAL_TEST.md`. The source bundle did not contain the original `tests/` or `web/` directories, so these test files and web client are new additions rather than restored originals. |
+| G3 | Shutdown answer classification | Done | Negative phrases are evaluated before positives, avoiding `very disappointed` or `not satisfied` being treated as satisfied. |
+| G5 | Feedback secret redaction | Done | Shutdown feedback is redacted before persistence. |
+| G2, G10 | Rating persistence and atomic writes | Done | Turn messages, emotion, rating event, memory and usage save atomically via `Store.persist_turn`. A rating survives an LLM failure. |
+| G12, G15 | Safety-first response path | Done | Emergency/self-harm patterns are checked before storage reads/model calls and return deterministic guidance with a not-medical-advice statement. |
+| G1, G13 | Rating capture | Done | Handles numbers/words, skip, corrections, ambiguous answers, and incidental-number avoidance. |
+| G14 | Rating management | Done | Per-item rating edit/delete API routes. |
+| G4 | Exit intent | Done | Short whole-message exit phrases are recognized without broad matches like “I am done with my project.” |
+| G7 | HTTP error handling | Done | Invalid content length, oversized requests, SQLite failures, and unexpected exceptions receive JSON error responses. |
+| G6 | Digit-group redaction | Done | Redaction recognizes 12–19 digit sequences with spaces/dashes; 10-digit phone-like values are not redacted on length alone. |
+| G8 | CORS / OPTIONS | Done | Explicit origin allowlist and OPTIONS support; the default allowlist is empty. |
+| G9 | Failed login throttling | Done | Per-client temporary lockout after repeated invalid passcodes. |
+| G11 | SQLite schema versioning | Done | Uses `PRAGMA user_version`, a transactional baseline migration, and pre-migration backups. |
+| G17 | User deletion encapsulation | Done | Added `ChatService.forget_user`; API no longer directly mutates private session state. |
+| UI-001 | Web client | Implemented; browser review pending | Newly created responsive browser/PWA client with rating chips, satisfaction quick replies, memory/rating controls, export/delete-all, consent gate, and offline banner. `web/` was missing from the source ZIP. |
+| VERIFY-001 | Real-world verification | Not started | Requires a real Gemini request and user's phone/browser/HTTPS route. See `docs/MANUAL_TEST.md`. |
+| MOBILE-001 | Native mobile shell | Later phase | Capacitor/Android shell remains outside this hardening snapshot. |
+| REMIND-001 | Reminders | Later phase | v0.7.0 reminder work remains out of scope. |
 
-## Detailed implementation entry
+## Validation run (2026-10-13)
 
-### 2026-10-13 — IMPL-001 — v0.6.1 local hardening snapshot
+- `python -m compileall -q baymax server tests` — **passed**.
+- `python -m unittest discover -s tests -t . -v` — **41 tests passed**.
+- `node --check web/app.js` — **passed**.
+- `node --check web/sw.js` — **passed**.
+- HTTP smoke tests with `FakeLLM` verify static assets, public health endpoint, session greeting, immediate rating prompt, ratings retrieval and satisfaction-before-close flow.
+- One `[error] API request failed: RuntimeError` line is expected: the test intentionally raises an exception to verify the JSON 500 response.
 
-- **Status:** Implemented locally; GitHub sync pending.
-- **Architecture requirements:** Phase 0–2 and G1–G17 in `CLAUDE_HANDOFF.md`.
-- **Files changed/added in the local snapshot:** core modules under `baymax/`, API/auth/server code under `server/`, `.env.example`, `.gitignore`, README, `tests/`, `web/`, `.github/workflows/tests.yml`, `docs/MANUAL_TEST.md`, and this log.
-- **Verification:** `python -m compileall -q baymax server tests` passed; `python -m unittest discover -s tests -t . -v` passed 40/40; `node --check web/app.js` passed; `node --check web/sw.js` passed; a simple scan found no obvious live API-key/private-key pattern.
-- **Known limitations:** `tests/` and `web/` were absent in the supplied ZIP, so the tests and PWA client are new architecture-guided additions, not restored original files. No live Gemini API request, visual browser QA, phone/PWA installation, HTTPS/Tailscale setup, or Android shell build has been tested. Source tree is not yet present on GitHub.
-- **Next step:** Sync the tested snapshot to a GitHub work branch, review the diff, then have Claude review the implementation against the architecture before merging and performing real-world verification.
+## Known limitations and risks
 
-## Next test checklist
+1. The input ZIP supplied core v0.6.0 modules and docs, but no original `tests/` or `web/`. The included tests and web app are new architecture-guided additions and need visual/browser testing.
+2. No actual Gemini request was made; current model identifier availability, quota behavior, structured output and real reply quality remain unverified.
+3. No phone, HTTPS tunnel, Tailscale route, PWA installation, speech or native Android build was tested.
+4. Session-only state (active rating wait, shutdown ritual and safety hold) remains in process memory and resets after server restart, as documented in the architecture.
+5. Consent is enforced in the web UI. This does not establish legal or regulatory compliance.
+6. Source is being committed to a work branch. Do not mark `main` or a deployment as implemented until review/merge and manual verification are complete.
 
-- [ ] Sync source snapshot to GitHub on a work branch.
-- [ ] Claude code review against G1–G18 and AC-1–AC-16.
-- [ ] Fake-model manual test on a real browser.
-- [ ] Verify current Gemini model identifier and test 20 varied prompts using the user's configured key.
-- [ ] Test phone browser over a trusted HTTPS route and record results.
-- [ ] Keep the native mobile shell and reminders in their later phases.
+## Next steps
+
+1. Finish syncing and verify the source tree on `work/v0.6.1-hardening`.
+2. Review the draft pull request against G1–G18 and AC-1–AC-16 in `CLAUDE_HANDOFF.md`; handle review findings in separate commits.
+3. Run `docs/MANUAL_TEST.md` with the fake model, then real Gemini, then the user's phone.
+4. Record only verified outcomes. Do not move to the native mobile shell until Phase 1 tests pass and Phase 2 results are recorded.
 
 ## Entry template
 
 ### YYYY-MM-DD — ID — Short title
 
 - **Status:** Done / In progress / Blocked
-- **Architecture requirement:**
+- **Architecture requirement:** Link the applicable section in `CLAUDE_HANDOFF.md`
 - **Files changed:**
 - **Implementation notes:**
 - **Tests run and results:**

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#e8f2f3">
+  <meta name="description" content="Tiny Baymax, a personal healthcare companion prototype.">
+  <title>Tiny Baymax</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/baymax.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <img src="/baymax.svg" alt="" class="brand-mark">
+        <div><h1>Tiny Baymax</h1><p>Personal healthcare companion</p></div>
+      </div>
+      <div class="topbar-actions">
+        <span id="connection-status" class="status-pill" aria-live="polite">Not connected</span>
+        <button id="end-session" class="button button-soft" type="button" disabled>End session</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="connect-screen" class="panel connect-panel">
+        <div class="orb" aria-hidden="true"><img src="/baymax.svg" alt=""></div>
+        <p class="eyebrow">A calm space to talk</p>
+        <h2>Let’s check in.</h2>
+        <p class="muted">Connect to your Baymax server with the passcode configured by the server owner. Your passcode stays in this tab and is not saved to browser storage.</p>
+        <form id="connect-form" class="stack-form">
+          <label for="passcode">Server passcode</label>
+          <input id="passcode" type="password" autocomplete="current-password" required maxlength="256" placeholder="Enter your passcode">
+          <button class="button button-primary" type="submit">Connect to Baymax</button>
+        </form>
+        <p id="connect-error" class="error-text" role="alert"></p>
+        <button id="review-consent" class="small-action" type="button">Review privacy &amp; safety</button>
+        <div class="privacy-note"><span aria-hidden="true">◈</span><p>Messages are processed by the server and may be sent to Gemini. Baymax offers supportive information, not professional medical care.</p></div>
+      </section>
+
+      <section id="chat-screen" class="chat-layout hidden" aria-label="Baymax conversation">
+        <section class="panel conversation-panel">
+          <div class="conversation-heading">
+            <div><p class="eyebrow">Your conversation</p><h2>How are you feeling today?</h2></div>
+            <button id="clear-history" class="icon-button" type="button" title="Clear conversation" aria-label="Clear conversation">↺</button>
+          </div>
+          <div id="offline-card" class="offline-card hidden" role="status">
+            <strong>Baymax is temporarily offline.</strong>
+            <p>If you may be experiencing a medical emergency, contact local emergency services now. Messages are not queued for later delivery.</p>
+          </div>
+          <div id="messages" class="messages" aria-live="polite" aria-relevant="additions text"></div>
+          <div id="interaction-tools" class="interaction-tools hidden"></div>
+          <form id="chat-form" class="composer">
+            <label class="sr-only" for="message-input">Your message</label>
+            <textarea id="message-input" rows="1" maxlength="2000" placeholder="Tell Baymax what’s on your mind…" required></textarea>
+            <button id="send-button" type="submit" class="send-button" aria-label="Send message">↑</button>
+          </form>
+          <p class="disclaimer">Baymax is an AI companion, not a doctor or emergency service. Avoid sharing passwords, keys, or highly sensitive details.</p>
+        </section>
+
+        <aside class="panel tools-panel">
+          <p class="eyebrow">Your controls</p>
+          <h2>Care &amp; privacy</h2>
+          <p class="muted">You stay in control of what is saved.</p>
+          <div class="control-grid">
+            <button id="show-memories" class="control-tile" type="button"><span>◌</span><strong>Memories</strong><small>Review or remove</small></button>
+            <button id="show-ratings" class="control-tile" type="button"><span>◷</span><strong>Ratings</strong><small>Edit or remove</small></button>
+            <button id="export-data" class="control-tile" type="button"><span>⇩</span><strong>Export data</strong><small>Download JSON</small></button>
+            <button id="reset-emotion" class="control-tile" type="button"><span>〰</span><strong>Reset state</strong><small>Simulated emotion</small></button>
+          </div>
+          <div id="settings-panel" class="settings-panel hidden"></div>
+          <div class="danger-zone">
+            <h3>Clear all data</h3>
+            <p>Deletes conversation history, memories, ratings, feedback, and settings saved on this server.</p>
+            <button id="delete-all" class="button button-danger" type="button">Delete my data</button>
+          </div>
+          <div class="privacy-note"><span aria-hidden="true">◈</span><p>Long-term memory is intended for stable, non-sensitive facts. Check saved items regularly. This app does not claim regulatory or medical-device compliance.</p></div>
+        </aside>
+      </section>
+    </main>
+    <footer class="footer"><span>Tiny Baymax · v0.6.1</span><span>Calm, practical, and under your control.</span></footer>
+  </div>
+
+  <dialog id="consent-dialog" class="consent-dialog">
+    <form method="dialog" id="consent-form">
+      <p class="eyebrow">Before your first chat</p>
+      <h2>A few things to know</h2>
+      <ul>
+        <li>Your messages are sent to the Baymax server and may be sent to Google’s Gemini service to generate replies.</li>
+        <li>The server can store redacted conversation history, ratings, settings, and approved memories. You can inspect, export, and delete stored data.</li>
+        <li>Baymax is a supportive AI prototype, not a doctor, medical device, or emergency service. Do not use it for emergencies.</li>
+      </ul>
+      <p class="muted">Continue only if you understand and agree to these terms.</p>
+      <p id="consent-error" class="error-text" role="alert"></p>
+      <div class="dialog-actions"><button id="decline-consent" class="button button-soft" type="submit" value="decline">Not now</button><button id="accept-consent" class="button button-primary" type="submit" value="accept">I understand</button></div>
+    </form>
+  </dialog>
+  <script src="/app.js" defer></script>
+</body>
+</html>
