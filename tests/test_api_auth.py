@@ -107,6 +107,9 @@ class ApiAuthTests(unittest.TestCase):
         self.assertEqual(denied, {})
 
 
+    def test_handler_has_a_finite_socket_timeout(self):
+        self.assertEqual(make_handler(self.api).timeout, 15)
+
     def test_handler_returns_400_for_invalid_content_length(self):
         with tempfile.TemporaryDirectory() as td:
             api = Api(self.service, self.auth, allowed_origins=("https://app.example",))
