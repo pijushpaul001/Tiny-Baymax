@@ -111,6 +111,28 @@ class ServiceTests(unittest.TestCase):
         response = svc.handle("u1", "good night")
         self.assertEqual(response["reply"], "Are you satisfied with my care today?")
 
+    def test_shutdown_decision_accepts_natural_short_phrases(self):
+        for phrase in ("shut down please", "yes shut down", "let's stop"):
+            with self.subTest(phrase=phrase):
+                svc = self.build()
+                svc.handle("u1", "/quit")
+                svc.handle("u1", "no")
+                svc.handle("u1", "the opening message was not helpful")
+                self.assertEqual(svc.session("u1").closing, "decide")
+                response = svc.handle("u1", phrase)
+                self.assertTrue(response["ended"])
+                self.assertIn("Goodbye", response["reply"])
+
+    def test_keep_going_phrase_accepts_polite_suffix(self):
+        svc = self.build()
+        svc.handle("u1", "/quit")
+        svc.handle("u1", "no")
+        svc.handle("u1", "the opening message was not helpful")
+        response = svc.handle("u1", "keep going please")
+        self.assertFalse(response["ended"])
+        self.assertIn("continue", response["reply"].lower())
+        self.assertIsNone(svc.session("u1").closing)
+
     def test_feedback_is_redacted_before_storage(self):
         svc = self.build()
         svc.handle("u1", "/quit")
