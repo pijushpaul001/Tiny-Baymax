@@ -110,14 +110,16 @@ class ChatService:
 
     def open_session(self, uid: str) -> dict:
         """Called when the app opens. Greets once per session (and again after a long gap)."""
-        s = self.session(uid)
-        with s.lock:
-            if s.invalidated:
-                return self.open_session(uid)
-            if time.time() - s.greeted_at > GREET_AFTER_SECONDS:
-                s.greeted_at = time.time()
-                s.closing = None
-                self.store.add_messages(uid, [("assistant", " ".join(GREETING))])
+        while True:
+            s = self.session(uid)
+            with s.lock:
+                if s.invalidated:
+                    continue
+                if time.time() - s.greeted_at > GREET_AFTER_SECONDS:
+                    s.greeted_at = time.time()
+                    s.closing = None
+                    self.store.add_messages(uid, [("assistant", " ".join(GREETING))])
+                break
         return {"history": self.store.history_with_time(uid, 40), "emotion": self._emotion(uid).to_dict(),
                 "settings": self.store.get_settings(uid)}
 
@@ -181,15 +183,17 @@ class ChatService:
             return self._resp(uid, "My simulated emotional state is back to baseline.", kind="command", s=s)
 
     def forget_user(self, uid: str):
-        # Keep deletion behavior encapsulated in the service instead of exposing _sessions to the API.
+        # Never hold the global session-map lock while waiting for one user's turn to finish.
         with self._guard:
             s = self._sessions.get(uid)
-            if s is None:
-                self.store.delete_all(uid)
-            else:
-                with s.lock:
-                    self.store.delete_all(uid)
-                    s.invalidated = True
+        if s is None:
+            self.store.delete_all(uid)
+            return
+        with s.lock:
+            self.store.delete_all(uid)
+            s.invalidated = True
+            with self._guard:
+                if self._sessions.get(uid) is s:
                     self._sessions.pop(uid, None)
 
     # ------------------------------------------------------------ main entry
