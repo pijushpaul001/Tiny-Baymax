@@ -68,7 +68,10 @@ class Api:
             if method == "GET":
                 return 200, {"memories": st.memories(uid)}
             if method == "POST":
-                reply = svc.handle(uid, "/remember " + str(data.get("fact", "")))
+                fact = data.get("fact", "")
+                if not isinstance(fact, str):
+                    return 400, {"error": "'fact' must be text.", "code": "invalid_fact"}
+                reply = svc.remember(uid, fact)
                 return 200, {"reply": reply["reply"], "memories": st.memories(uid)}
             if method == "DELETE":
                 st.clear_memories(uid)
@@ -92,9 +95,9 @@ class Api:
         if (method, path) == ("POST", "/api/settings"):
             return 200, {"settings": st.save_settings(uid, data)}
         if (method, path) == ("POST", "/api/clear"):
-            return 200, svc.handle(uid, "/clear")
+            return 200, svc.clear_history(uid)
         if (method, path) == ("POST", "/api/emotion/reset"):
-            return 200, svc.handle(uid, "/emotion-reset")
+            return 200, svc.reset_emotion(uid)
         if (method, path) == ("GET", "/api/export"):
             return 200, st.export(uid)
         if (method, path) == ("DELETE", "/api/data"):
