@@ -66,6 +66,7 @@ docs/ARCHITECTURE.md
 - Your Gemini key lives only in `.env` on the server. It is never sent to the app or saved in the database.
 - The server only listens on your own computer unless you change `BAYMAX_HOST`.
 - Every private API request needs your passcode. Repeated wrong guesses from one client are temporarily locked out; the health check is public.
+- If you deliberately place a trusted reverse proxy on the same machine, set `BAYMAX_TRUSTED_PROXY=1` so login lockout can use its first validated `X-Forwarded-For` address. Leave it off otherwise; forwarded headers are ignored unless the direct peer is loopback.
 - Keys, passwords and card-like numbers you type are hidden before anything is sent to Gemini or saved.
 - Health details, moods and private relationship facts never become long-term memories automatically.
 - In the app's settings you can see every memory and rating, remove them, download all your data, or delete everything.
