@@ -99,17 +99,17 @@ Changes were committed to the draft PR branch through GitHub. Local execution wa
 ### Implemented on `work/v0.6.1-hardening`
 
 - **F6:** Added state-specific short-form closing intent handling for “shut down please”, “yes shut down”, and “let’s stop”, plus “keep going please”. Removed bare `stop` from ordinary exit-intent phrases to avoid starting the satisfaction ritual from that ambiguous word alone.
-- **F7:** Full account deletion now removes pre-migration backup snapshots that could retain the deleted conversation. The delete-data disclosure identifies this side effect. This intentionally removes rollback snapshots in that data directory, not only a single account's copy.
+- **F7:** Full account deletion now attempts to remove pre-migration backup snapshots before deleting active rows, so a purge failure does not silently claim success. The delete-data disclosure identifies this side effect. This intentionally removes rollback snapshots in that data directory, not only a single account's copy.
 - **F8:** HTTP request handlers use a 15-second socket timeout and suppress expected `BrokenPipeError` / `ConnectionResetError` when the client disconnects. Added timeout coverage.
 - **F9:** User deletion no longer holds the global session-map lock while waiting for that user’s turn lock. Session reopening retries against a fresh session when a concurrent deletion invalidates the old one. Added a concurrency regression test.
 - **F11:** Added narrow guards for figurative “project is a headache” and culinary “burning dinner” uses, while preserving literal pain detection. Added “chest feels tight” variants to the deterministic urgent-medical path and tests. The keyword system is still rule-based and needs broader clinical safety review.
-- **F12 (partial):** Exports now include all ratings and daily usage; consent discloses the auto-memory default and commands to turn it off/on; export URL revocation is delayed; Python 3.10 was added to CI; API health/version and footer now use the package version; API/static not-found responses include stable error codes and common API validation errors carry codes.
+- **F12 (partial):** Exports now include all ratings and daily usage; consent discloses the auto-memory default and commands to turn it off/on; export URL revocation is delayed; Python 3.10 was added to CI; API health/version and footer now use the package version; API/static not-found responses include stable error codes and common API validation errors carry codes. Digit redaction now consumes full long grouped sequences and avoids the reported all-two-digit-group false positive; ordinary "token was rejected" wording is no longer consumed as a secret value.
 
 ### Still open
 
 - **F3 / AC-7 conflict:** No change made to emergency-turn persistence pending a product/privacy decision. Red-flag replies still do not access the model or storage.
 - **F10:** The rebuilt web client still needs reconciliation with the original v0.6 UI. The original web assets and 48-test suite were absent from the source bundle available for this branch; they have not been recovered.
-- **F12:** Full digit-redaction edge cases, web install icons, all consent/settings parity, and any remaining HTTP/API edge cases need further review.
+- **F12:** Broader adversarial redaction tests, web install icons, full consent/settings parity, and any remaining HTTP/API edge cases need further review.
 - **AC-12 / AC-16:** Secret exposure and equivalence to the original suite are still not proven. The current suite is newly authored.
 - Real Gemini/model acceptance, browser visual QA, phone/PWA installation, tunnel/HTTPS and speech still require manual checks.
 
