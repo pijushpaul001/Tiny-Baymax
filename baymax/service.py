@@ -19,12 +19,13 @@ MAX_MESSAGE_CHARS = 2000
 GREET_AFTER_SECONDS = 6 * 3600
 
 YES = re.compile(
-    r"^(?:y|yes|yeah|yep|yup|of course|definitely|satisfied|very satisfied|"
-    r"i'?m (?:very )?satisfied|i am (?:very )?satisfied)(?:\b|[.!?])", re.I
+    r"(?:y|yes|yeah|yep|yup|sure|of course|definitely|satisfied|very satisfied|"
+    r"i'?m (?:very )?satisfied|i am (?:very )?satisfied|"
+    r"no problem(?: i am satisfied| i'm satisfied)?|no worries(?: i am satisfied| i'm satisfied)?)", re.I
 )
 NO = re.compile(
-    r"^(?:n|no|nope|nah|not really|not (?:very )?satisfied|i'?m not|i am not|"
-    r"very disappointed|disappointed|unsatisfied|dissatisfied)(?:\b|[.!?])", re.I
+    r"(?:n|no|nope|nah|not really|not (?:very )?satisfied|i'?m not(?: (?:very )?satisfied)?|"
+    r"i am not(?: (?:very )?satisfied)?|very disappointed|disappointed|unsatisfied|dissatisfied)", re.I
 )
 KEEP = re.compile(r"^(?:continue|keep going|go on|stay|not yet|carry on)(?:[.! ]*)$", re.I)
 QUIT_WORDS = {"/quit", "/exit", "bye", "quit", "exit"}
@@ -39,6 +40,22 @@ def is_exit_intent(text: str) -> bool:
     """Recognize a short, whole-message exit request without catching ordinary prose."""
     normalized = re.sub(r"[.!?]+$", "", (text or "").strip().lower())
     return len(normalized.split()) <= 5 and normalized in EXIT_PHRASES
+
+
+def _closing_reply_matches(pattern: re.Pattern, text: str) -> bool:
+    """Accept only a short, complete answer to the satisfaction question."""
+    normalized = re.sub(r"[,;:!? .]+$", "", (text or "").strip().lower())
+    normalized = re.sub(r"\\s+", " ", normalized)
+    words = normalized.split()
+    # These are complete affirmative replies despite their slightly greater length.
+    extended_yes = {
+        "no problem i am satisfied", "no problem i'm satisfied",
+        "no worries i am satisfied", "no worries i'm satisfied",
+    }
+    if len(words) > 4 and normalized not in extended_yes:
+        return False
+    return bool(pattern.fullmatch(normalized))
+
 
 HELP = """Commands
 /help          Show this help.
@@ -152,10 +169,10 @@ class ChatService:
         # ---- shutdown ritual
         if s.closing == "asked":
             # Negative phrases are checked first so "not satisfied" can never count as positive.
-            if NO.match(lower):
+            if _closing_reply_matches(NO, lower):
                 s.closing = "feedback"
                 return self._resp(uid, "I am sorry. What could I have done better?", kind="ritual", s=s)
-            if YES.match(lower):
+            if _closing_reply_matches(YES, lower):
                 return self._finish(uid, s, "I am glad to hear that. Take care. Goodbye.")
             s.closing = None                         # unclear answer: carry on as normal conversation
         elif s.closing == "feedback":
