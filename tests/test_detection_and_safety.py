@@ -78,6 +78,17 @@ class SecretRedactionTests(unittest.TestCase):
                 self.assertNotIn(raw, safe)
                 self.assertIn("[REDACTED]", safe)
 
+    def test_redacts_all_of_long_digit_groups_and_avoids_short_group_false_positive(self):
+        raw = "1234 5678 9012 3456 7890 1234"
+        safe, found = redact_secrets("ID " + raw)
+        self.assertTrue(found)
+        self.assertNotIn("7890 1234", safe)
+        self.assertIn("[REDACTED]", safe)
+        self.assertEqual(redact_secrets("numbers 10 20 30 40 50 60"), ("numbers 10 20 30 40 50 60", False))
+
+    def test_secret_keyword_in_ordinary_sentence_is_not_redacted(self):
+        self.assertEqual(redact_secrets("the token was rejected"), ("the token was rejected", False))
+
     def test_does_not_redact_ten_digit_phone_numbers_by_digit_count_alone(self):
         for raw in ("1234567890", "9876543210"):
             with self.subTest(raw=raw):
