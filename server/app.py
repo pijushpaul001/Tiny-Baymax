@@ -66,18 +66,23 @@ def make_handler(api: Api):
     class Handler(BaseHTTPRequestHandler):
         server_version = "TinyBaymax"
         sys_version = ""
+        timeout = 15
 
         def log_message(self, fmt, *args):      # never log paths with message content; keep it quiet
             pass
 
         def _send(self, status, payload: bytes, ctype: str, extra=None):
-            self.send_response(status)
-            self.send_header("Content-Type", ctype)
-            self.send_header("Content-Length", str(len(payload)))
-            for k, v in {**SECURITY_HEADERS, **(extra or {})}.items():
-                self.send_header(k, v)
-            self.end_headers()
-            self.wfile.write(payload)
+            try:
+                self.send_response(status)
+                self.send_header("Content-Type", ctype)
+                self.send_header("Content-Length", str(len(payload)))
+                for k, v in {**SECURITY_HEADERS, **(extra or {})}.items():
+                    self.send_header(k, v)
+                self.end_headers()
+                self.wfile.write(payload)
+            except (BrokenPipeError, ConnectionResetError):
+                # The client went away; do not emit a traceback for a normal disconnect.
+                return
 
         def _json(self, status, obj, extra=None):
             headers = {"Cache-Control": "no-store", **api.cors_headers(self.headers.get("Origin", "")), **(extra or {})}
