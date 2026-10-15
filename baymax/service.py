@@ -44,7 +44,8 @@ def is_exit_intent(text: str) -> bool:
 
 def _closing_reply_matches(pattern: re.Pattern, text: str) -> bool:
     """Accept only a short, complete answer to the satisfaction question."""
-    normalized = re.sub(r"[,;:!? .]+$", "", (text or "").strip().lower())
+    normalized = re.sub(r"[,;:!?]+", " ", (text or "").strip().lower())
+    normalized = re.sub(r"\.+$", "", normalized).strip()
     normalized = re.sub(r"\s+", " ", normalized)
     words = normalized.split()
     # These are complete affirmative replies despite their slightly greater length.
