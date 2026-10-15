@@ -303,12 +303,10 @@ class Store:
         source = Path(self.path)
         removed = 0
         for backup in source.parent.glob(f"{source.name}.pre-migration-*.bak"):
-            try:
-                backup.unlink()
-                removed += 1
-            except OSError:
-                # A later UI/API message should not claim the purge succeeded if one remains.
-                continue
+            # Surface failures so the service does not claim deletion succeeded while a
+            # rollback snapshot containing the user's data remains on disk.
+            backup.unlink()
+            removed += 1
         return removed
 
     def delete_all(self, uid):
