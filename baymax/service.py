@@ -45,7 +45,7 @@ def is_exit_intent(text: str) -> bool:
 def _closing_reply_matches(pattern: re.Pattern, text: str) -> bool:
     """Accept only a short, complete answer to the satisfaction question."""
     normalized = re.sub(r"[,;:!? .]+$", "", (text or "").strip().lower())
-    normalized = re.sub(r"\\s+", " ", normalized)
+    normalized = re.sub(r"\s+", " ", normalized)
     words = normalized.split()
     # These are complete affirmative replies despite their slightly greater length.
     extended_yes = {
@@ -130,6 +130,41 @@ class ChatService:
             s.closing = "asked"
             return self._resp(uid, "Are you satisfied with my care today?", kind="ritual", s=s,
                               ui={"quick_replies": ["Yes", "No"]})
+
+    def remember(self, uid: str, fact: str) -> dict:
+        """Save a user-requested memory without routing it through the current dialogue state."""
+        s = self.session(uid)
+        with s.lock:
+            fact = (fact or "").strip()[:MAX_MESSAGE_CHARS]
+            if not fact:
+                reply = "Tell me what you want me to remember."
+            else:
+                memories = [item["fact"] for item in self.store.memories(uid)]
+                ok, _ = memory_gate(fact, memories)
+                if ok:
+                    self.store.add_memory(uid, fact)
+                    reply = "I will remember that."
+                else:
+                    reply = "I did not save that. It may already exist or contain sensitive information."
+            return self._resp(uid, reply, kind="command", s=s)
+
+    def clear_history(self, uid: str) -> dict:
+        """Clear the conversation and reset emotion, even during the shutdown ritual."""
+        s = self.session(uid)
+        with s.lock:
+            self.store.clear_history(uid)
+            self.store.save_emotion(uid, EmotionState().to_dict())
+            s.dstate = DecisionState()
+            s.closing = None
+            s.greeted_at = time.time()
+            return self._resp(uid, "Conversation cleared. Long-term memories remain.", kind="command", s=s)
+
+    def reset_emotion(self, uid: str) -> dict:
+        """Reset simulated emotion without consuming the current dialogue as text."""
+        s = self.session(uid)
+        with s.lock:
+            self.store.save_emotion(uid, EmotionState().to_dict())
+            return self._resp(uid, "My simulated emotional state is back to baseline.", kind="command", s=s)
 
     def forget_user(self, uid: str):
         # Keep deletion behavior encapsulated in the service instead of exposing _sessions to the API.
