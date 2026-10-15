@@ -110,9 +110,9 @@ Changes were committed to the draft PR branch through GitHub. Local execution wa
 - **F3 / AC-7 conflict:** No change made to emergency-turn persistence pending a product/privacy decision. Red-flag replies still do not access the model or storage.
 - **F10:** The rebuilt web client still needs reconciliation with the original v0.6 UI. The original web assets and 48-test suite were absent from the source bundle available for this branch; they have not been recovered.
 - **F12:** Broader adversarial redaction tests, web install icons, full consent/settings parity, and any remaining HTTP/API edge cases need further review.
-- **AC-12 / AC-16:** Secret exposure and equivalence to the original suite are still not proven. The current suite is newly authored.
+- **AC-12 / AC-16:** LLM diagnostics now retain only the exception type, not raw SDK exception text, reducing the risk of returning keys/request details to the client. End-to-end key-exposure checks and equivalence to the original suite are still not proven. The current suite is newly authored.
 - Real Gemini/model acceptance, browser visual QA, phone/PWA installation, tunnel/HTTPS and speech still require manual checks.
 
 ### Validation
 
-GitHub Actions passed for several intermediate commits. The latest commit in this branch must finish its push and pull-request workflows before this batch can be marked green. Local test execution was unavailable in this session. PR #1 remains open, draft, and unmerged.
+GitHub Actions passed for push and pull-request workflows on commit `347f779`. Additional digit-redaction and LLM-exception-hardening commits were added afterward; their latest workflows must pass before merge. Local test execution was unavailable in this session. PR #1 remains open, draft, and unmerged.
