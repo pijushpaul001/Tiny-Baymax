@@ -11,6 +11,15 @@
     el.classList.toggle("connected", connected);
   }
 
+  async function refreshVersion() {
+    try {
+      const health = await api("/api/health");
+      if (health.version) byId("app-version").textContent = `Tiny Baymax · v${health.version}`;
+    } catch (_) {
+      // Version display is optional when the server is offline.
+    }
+  }
+
   async function api(path, options = {}) {
     const headers = { ...(options.headers || {}) };
     if (state.token) headers["X-Baymax-Token"] = state.token;
@@ -322,5 +331,6 @@
     }
   });
 
+  refreshVersion();
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
 })();
