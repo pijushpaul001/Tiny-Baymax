@@ -12,10 +12,25 @@ class RatingParserTests(unittest.TestCase):
         self.assertEqual(parse_rating_reply("my pain is 4").value, 4)
         self.assertEqual(parse_rating_reply("8 out of 10").value, 8)
         self.assertEqual(parse_rating_reply("8/10").value, 8)
+        for phrase, expected in (
+            ("it is about a six", 6),
+            ("i'd say about a six", 6),
+            ("its 7", 7),
+            ("like a 7", 7),
+            ("pretty bad, maybe 7", 7),
+            ("7 pain", 7),
+            ("seven out of ten", 7),
+        ):
+            with self.subTest(phrase=phrase):
+                parsed = parse_rating_reply(phrase)
+                self.assertEqual(parsed.kind, "value")
+                self.assertEqual(parsed.value, expected)
 
     def test_skip(self):
         self.assertEqual(parse_rating_reply("skip").kind, "skip")
         self.assertEqual(parse_rating_reply("rather not say").kind, "skip")
+        self.assertEqual(parse_rating_reply("skip it").kind, "skip")
+        self.assertEqual(parse_rating_reply("I'd rather skip").kind, "skip")
 
     def test_correction(self):
         for text in ("actually 6", "actually, I meant 6", "I meant 5", "change it to 4"):
@@ -34,6 +49,7 @@ class RatingParserTests(unittest.TestCase):
         self.assertEqual(parse_rating_reply("I took 2 pills").kind, "none")
         self.assertEqual(parse_rating_reply("meet at 3 pm").kind, "none")
         self.assertEqual(parse_rating_reply("5 minutes").kind, "none")
+        self.assertEqual(parse_rating_reply("3 tablets").kind, "none")
         self.assertIsNone(parse_rating("I took 2 pills"))
 
     def test_compatibility_parser(self):
