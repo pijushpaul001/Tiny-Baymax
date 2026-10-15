@@ -13,7 +13,7 @@ SYMPTOM = rx(r"\b(fever|nausea|nauseous|dizzy|dizziness|vomit(?:ing)?|cough(?:in
 EMOTION = rx(r"\b(sad|depressed|anxious|anxiety|stressed|stress|lonely|miserable|hopeless|panic(?:king|ked)?|upset|heartbroken|crying|devastated)\b")
 UNWELL = rx(r"\b(not feel(?:ing)? (?:very |so |too )?(?:well|ok|okay|great|good|right|myself)|i(?:'m| am) not (?:very |so )?(?:well|ok|okay)|unwell|under the weather|feel(?:ing)? (?:terrible|awful|ill|off))\b")
 OTHER = rx(r"\b(exhausted|tired|drained|overwhelmed|confused|can'?t cope|struggling|burn(?:ed|t)? out)\b")
-URGENT = rx(r"\b(chest pain|can'?t breathe|cannot breathe|trouble breathing|difficulty breathing|severe bleeding|won'?t stop bleeding|unconscious|passed out|stroke|face (?:is )?drooping|overdos(?:e|ed))\b")
+URGENT = rx(r"\b(chest pain|chest feels tight|chest tightness|tightness in (?:my )?chest|chest pressure|can't breathe|cannot breathe|trouble breathing|difficulty breathing|severe bleeding|won't stop bleeding|unconscious|passed out|stroke|face (?:is )?drooping|overdos(?:e|ed))\b")
 SELF_HARM = rx(r"\b(suicid\w*|kill myself|end my life|want to die|hurt myself|self[- ]harm)\b")
 NEG = rx(r"\b(?:not|no|never|without|\w+n't)\s+(?:\w+\s+){0,2}$")
 THIRD = rx(r"\b(my (?:wife|husband|partner|friend|mom|dad|mother|father|son|daughter|brother|sister|kid|child|boss|dog|cat)|he|she|they|his|her|their)\b")
@@ -55,6 +55,23 @@ def _third_party(msg, pos):
     return bool(THIRD.search(sent)) and not FIRST.search(sent)
 
 
+def _figurative_difficulty(msg, match) -> bool:
+    """Filter a few common figurative/culinary uses without suppressing literal symptoms."""
+    term = match.group(0).lower()
+    before = msg[:match.start()].lower()
+    after = msg[match.end():].lower()
+    if term == "headache":
+        if re.search(r"\b(?:project|task|work|job|meeting|assignment|problem|process|situation)\s+(?:is|was|has been|became)\s+(?:a\s+)?$", before):
+            return True
+        if re.search(r"\bwhat\s+a\s+$", before):
+            return True
+    if term == "burning" and re.match(
+        r"\s+(?:dinner|lunch|breakfast|food|toast|chicken|rice|eggs|vegetables)\b", after
+    ):
+        return True
+    return False
+
+
 def detect(msg: str) -> Detection:
     d = Detection()
     if SELF_HARM.search(msg):                      # fail-safe: no negation guard
@@ -69,6 +86,8 @@ def detect(msg: str) -> Detection:
                           ("other", "unwell", UNWELL), ("other", "other", OTHER)):
         for m in pat.finditer(msg):
             if _negated(msg, m.start()):
+                continue
+            if typ == "physical" and sub == "pain" and _figurative_difficulty(msg, m):
                 continue
             if _third_party(msg, m.start()):
                 d.third_party = True
