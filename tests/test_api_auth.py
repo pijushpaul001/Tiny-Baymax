@@ -64,6 +64,17 @@ class ApiAuthTests(unittest.TestCase):
                                       json.dumps({"rating": 11}).encode())
         self.assertEqual(status, 400)
 
+    def test_api_validation_errors_include_stable_codes(self):
+        status, body = self.api.dispatch("GET", "/api/session", {}, b"")
+        self.assertEqual(status, 401)
+        self.assertEqual(body["code"], "authentication_required")
+        status, body = self.api.dispatch("POST", "/api/chat", self.headers, b'{"message":42}')
+        self.assertEqual(status, 400)
+        self.assertEqual(body["code"], "invalid_message")
+        status, body = self.api.dispatch("PATCH", "/api/ratings/1", self.headers, b'{"rating":11}')
+        self.assertEqual(status, 400)
+        self.assertEqual(body["code"], "invalid_rating")
+
     def test_session_end_enters_satisfaction_ritual(self):
         status, body = self.api.dispatch("POST", "/api/session/end", self.headers, b"")
         self.assertEqual(status, 200)
