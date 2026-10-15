@@ -27,11 +27,11 @@ NO = re.compile(
     r"(?:n|no|nope|nah|not really|not (?:very )?satisfied|i'?m not(?: (?:very )?satisfied)?|"
     r"i am not(?: (?:very )?satisfied)?|very disappointed|disappointed|unsatisfied|dissatisfied)", re.I
 )
-KEEP = re.compile(r"^(?:continue|keep going|go on|stay|not yet|carry on)(?:[.! ]*)$", re.I)
+KEEP = re.compile(r"^(?:continue|keep going|go on|stay|not yet|carry on)(?:\s+please)?[.! ]*$", re.I)
 QUIT_WORDS = {"/quit", "/exit", "bye", "quit", "exit"}
 EXIT_PHRASES = {
     "goodbye", "good night", "goodnight", "i'm done", "im done", "i am done",
-    "that's all", "thats all", "see you", "see ya", "bye", "quit", "exit", "stop",
+    "that's all", "thats all", "see you", "see ya", "bye", "quit", "exit",
     "shut down", "shutdown", "/quit", "/exit",
 }
 
@@ -40,6 +40,19 @@ def is_exit_intent(text: str) -> bool:
     """Recognize a short, whole-message exit request without catching ordinary prose."""
     normalized = re.sub(r"[.!?]+$", "", (text or "").strip().lower())
     return len(normalized.split()) <= 5 and normalized in EXIT_PHRASES
+
+
+def _closing_should_end(text: str) -> bool:
+    """Recognize concise shut-down choices only while the closing choice is active."""
+    normalized = re.sub(r"[,;:!?]+", " ", (text or "").strip().lower())
+    normalized = re.sub(r"[.]+$", "", normalized).strip()
+    normalized = re.sub(r"\s+", " ", normalized)
+    words = normalized.split()
+    if not words or len(words) > 5:
+        return False
+    if re.search(r"\b(?:don't|dont|do not|not|never)\b", normalized):
+        return False
+    return bool(re.search(r"\b(?:stop|shut|shutdown|quit|exit|bye|goodbye|end|finish|leave)\b", normalized))
 
 
 def _closing_reply_matches(pattern: re.Pattern, text: str) -> bool:
@@ -218,10 +231,10 @@ class ChatService:
             return self._resp(uid, "Thank you for telling me. Would you like to keep going, or shall I shut down?",
                               kind="ritual", s=s, ui={"quick_replies": ["Keep going", "Shut down"]})
         elif s.closing == "decide":
-            if KEEP.fullmatch(lower):
+            if KEEP.fullmatch(lower.strip()):
                 s.closing = None
                 return self._resp(uid, "Alright. We can continue.", kind="ritual", s=s)
-            if is_exit_intent(lower):
+            if _closing_should_end(lower):
                 return self._finish(uid, s, "Goodbye. Take care.")
             s.closing = None
 
