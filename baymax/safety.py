@@ -4,14 +4,32 @@ import re
 from .detection import rx
 
 # ---- secrets: removed before anything is sent to the LLM or stored
-SECRET_RX = re.compile(r"\b(api[ _-]?key|password|passcode|secret|token|otp)\b\s*(?:is|=|:)?\s*\S+"
-                       r"|\bpin\s*(?:is|=|:)\s*\d+|AIza[\w-]{20,}|(?<!\d)(?:\d[ -]?){11,18}\d(?!\d)", re.I)
+SECRET_RX = re.compile(
+    r"\b(api[ _-]?key|password|passcode|secret|token|otp)\b\s*"
+    r"(?:(?:is|=|:)\s*|\s+(?!was\b|were\b|are\b|got\b|received\b|rejected\b|"
+    r"invalid\b|expired\b|missing\b|rotated\b|leaked\b|created\b|generated\b|"
+    r"needed\b|works\b|failed\b|fails\b|sent\b|stored\b))\S+"
+    r"|\bpin\s*(?:is|=|:)\s*\d+|AIza[\w-]{20,}", re.I
+)
+# Find a full formatted number run first, then decide based on its digit groups.
+# This avoids leaving the tail of very long IDs and avoids treating six two-digit
+# values ("10 20 30 40 50 60") as a secret solely because their sum is 12 digits.
+_NUMBER_GROUP_RX = re.compile(r"(?<!\d)\d[\d -]{10,}\d(?!\d)")
 SECRET_NOTE = "I can't accept or store keys or passwords, so I hid that part. Please don't share them here."
 
 
 def redact_secrets(text: str):
     """Returns (safe_text, found_secret)."""
     safe = SECRET_RX.sub(lambda m: (m.group(1) + " [REDACTED]") if m.group(1) else "[REDACTED]", text)
+
+    def redact_number(match):
+        groups = re.findall(r"\d+", match.group(0))
+        digits = sum(len(group) for group in groups)
+        if digits >= 12 and any(len(group) >= 3 for group in groups):
+            return "[REDACTED]"
+        return match.group(0)
+
+    safe = _NUMBER_GROUP_RX.sub(redact_number, safe)
     return safe, safe != text
 
 
