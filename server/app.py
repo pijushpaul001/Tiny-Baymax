@@ -115,7 +115,7 @@ def make_handler(api: Api):
 
         def do_OPTIONS(self):
             if not self.path.startswith("/api/"):
-                return self._json(404, {"error": "Not found."})
+                return self._json(404, {"error": "Not found.", "code": "not_found"})
             headers = api.cors_headers(self.headers.get("Origin", ""))
             self._send(204, b"", "text/plain", headers)
 
@@ -123,7 +123,7 @@ def make_handler(api: Api):
             rel = self.path.split("?", 1)[0].lstrip("/") or "index.html"
             target = (WEB_DIR / rel).resolve()
             if WEB_DIR not in target.parents or not target.is_file() or target.suffix not in STATIC_OK:
-                return self._json(404, {"error": "Not found."})
+                return self._json(404, {"error": "Not found.", "code": "not_found"})
             ctype = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
             if target.suffix == ".webmanifest":
                 ctype = "application/manifest+json"
@@ -134,13 +134,13 @@ def make_handler(api: Api):
             self._api("GET") if self.path.startswith("/api/") else self._static()
 
         def do_POST(self):
-            self._api("POST") if self.path.startswith("/api/") else self._json(404, {"error": "Not found."})
+            self._api("POST") if self.path.startswith("/api/") else self._json(404, {"error": "Not found.", "code": "not_found"})
 
         def do_DELETE(self):
-            self._api("DELETE") if self.path.startswith("/api/") else self._json(404, {"error": "Not found."})
+            self._api("DELETE") if self.path.startswith("/api/") else self._json(404, {"error": "Not found.", "code": "not_found"})
 
         def do_PATCH(self):
-            self._api("PATCH") if self.path.startswith("/api/") else self._json(404, {"error": "Not found."})
+            self._api("PATCH") if self.path.startswith("/api/") else self._json(404, {"error": "Not found.", "code": "not_found"})
 
     return Handler
 
