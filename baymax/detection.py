@@ -86,10 +86,11 @@ class RatingReply:
     candidates: tuple[int, ...] = ()
 
 
-_SKIP_RATING = rx(r"^(?:skip|pass|no rating|rather not say|prefer not to say|rather skip)(?: please)?[.! ]*$")
+_SKIP_RATING = rx(r"^(?:(?:i'?d|i would) )?(?:skip(?: it)?|pass|no rating|rather not(?: say)?|prefer not to(?: say)?|rather skip)(?: please)?[.! ]*$")
 _CORRECTION = rx(r"\b(?:actually|i meant|change it to|correct(?:ion)?|make it)\b")
 _TIME_TOKEN = rx(r"(?<!\d)\d{1,2}(?::\d{2})?\s*(?:am|pm)\b|(?<!\d)\d{1,2}:\d{2}(?!\d)")
 _EXPLICIT_RATING = re.compile(r"(?<!\d)(10|[0-9])\s*(?:/|out of)\s*10(?!\d)", re.I)
+_WORD_EXPLICIT_RATING = rx(r"\b(zero|one|two|three|four|five|six|seven|eight|nine|ten)\s+out of\s+(?:ten|10)\b")
 _NUMBER_TOKEN = re.compile(r"(?<![a-z])(?:10|[0-9]|zero|one|two|three|four|five|six|seven|eight|nine|ten)(?![a-z])", re.I)
 
 
@@ -106,6 +107,8 @@ def parse_rating_reply(text: str) -> RatingReply:
         return RatingReply()
     if _SKIP_RATING.fullmatch(t):
         return RatingReply("skip")
+    # Treat worded "N out of ten" replies as one explicit rating.
+    t = _WORD_EXPLICIT_RATING.sub(lambda m: f"{WORD_NUM[m.group(1).lower()]}/10", t)
     correction = bool(_CORRECTION.search(t))
     if _TIME_TOKEN.search(t):
         return RatingReply()
@@ -133,15 +136,20 @@ def parse_rating_reply(text: str) -> RatingReply:
     allowed_prefix = re.compile(
         r"^(?:(?:actually[, ]+)?(?:i meant|change it to|correct(?:ion)?|make it)|actually)?\s*"
         r"(?:(?:i would say|i'd say|i would rate it|i'd rate it|my (?:pain|feeling) is|"
-        r"the rating is|it is|it's|about|around|maybe|probably|i feel like)\s+)?"
+        r"the rating is|it is|it's|its|about|around|like|maybe|probably|i feel like|"
+        r"pretty bad|really bad|quite bad|very bad)\s+)*"
         r"(?:a\s+)?(zero|one|two|three|four|five|six|seven|eight|nine|ten|10|[0-9])"
-        r"(?:\s*(?:out of 10|/10))?(?:\s+(?:i think|i guess|maybe|probably))?[.! ]*$",
+        r"(?:\s*(?:out of 10|/10))?(?:\s+(?:i think|i guess|maybe|probably|pain|feeling|bad|severe))?[.! ]*$",
         re.I,
     )
-    match = allowed_prefix.fullmatch(t)
+    normalized_t = re.sub(r"[,;:]+", " ", t)
+    normalized_t = re.sub(r"\s+", " ", normalized_t).strip()
+    match = allowed_prefix.fullmatch(normalized_t)
     if not match:
         # An explicit correction may lead a short phrase: "actually, I meant 6".
         stripped = re.sub(r"^(?:actually[, ]+)?(?:i meant|change it to|correct(?:ion)?|make it)\s+", "", t, flags=re.I)
+        stripped = re.sub(r"[,;:]+", " ", stripped)
+        stripped = re.sub(r"\s+", " ", stripped).strip()
         match = allowed_prefix.fullmatch(stripped)
     if not match:
         return RatingReply("none")
