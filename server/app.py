@@ -1,4 +1,5 @@
 """Tiny dependency-free HTTP server: JSON API + the static web app."""
+import ipaddress
 import json
 import mimetypes
 import sqlite3
@@ -33,12 +34,32 @@ def build_llm(cfg: Settings):
     return GeminiAdapter(cfg.gemini_api_key, cfg.model, cfg.fallback_model or None)
 
 
+def resolve_client_id(peer_ip: str, forwarded_for: str = "", trusted_proxy: bool = False) -> str:
+    """Use X-Forwarded-For only when explicitly enabled and the peer is loopback."""
+    peer = (peer_ip or "unknown").strip()
+    if not trusted_proxy:
+        return peer
+    try:
+        if not ipaddress.ip_address(peer).is_loopback:
+            return peer
+    except ValueError:
+        return peer
+    forwarded = (forwarded_for or "").split(",", 1)[0].strip()
+    if not forwarded:
+        return peer
+    try:
+        return str(ipaddress.ip_address(forwarded))
+    except ValueError:
+        return peer
+
+
 def build_api(cfg: Settings, llm=None) -> Api:
     cfg.data_dir.mkdir(parents=True, exist_ok=True)
     service = ChatService(Store(cfg.db_path, backup_keep=cfg.backup_keep), llm or build_llm(cfg),
                           DecisionConfig(emergency_hint=cfg.emergency_hint),
                           max_history=cfg.max_history, max_per_day=cfg.max_per_day)
-    return Api(service, Auth(cfg.tokens, cfg.allow_no_auth), allowed_origins=cfg.allowed_origins)
+    return Api(service, Auth(cfg.tokens, cfg.allow_no_auth),
+               allowed_origins=cfg.allowed_origins, trusted_proxy=cfg.trusted_proxy)
 
 
 def make_handler(api: Api):
@@ -74,7 +95,10 @@ def make_handler(api: Api):
                 return self._json(413, {"error": "Request too large.", "code": "request_too_large"})
             body = self.rfile.read(length) if length else b""
             try:
-                client_id = self.client_address[0] if self.client_address else "unknown"
+                peer_ip = self.client_address[0] if self.client_address else "unknown"
+                client_id = resolve_client_id(
+                    peer_ip, self.headers.get("X-Forwarded-For", ""), api.trusted_proxy
+                )
                 status, obj = api.dispatch(method, self.path, self.headers, body, client_id=client_id)
             except sqlite3.Error:
                 return self._json(503, {"error": "Storage is temporarily unavailable.", "code": "storage_unavailable"})
