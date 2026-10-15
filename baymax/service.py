@@ -187,12 +187,12 @@ class ChatService:
         with self._guard:
             s = self._sessions.get(uid)
         if s is None:
-            self.store.delete_all(uid)
             self.store.purge_backups()
+            self.store.delete_all(uid)
             return
         with s.lock:
-            self.store.delete_all(uid)
             self.store.purge_backups()
+            self.store.delete_all(uid)
             s.invalidated = True
             with self._guard:
                 if self._sessions.get(uid) is s:
