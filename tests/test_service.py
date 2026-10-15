@@ -56,6 +56,15 @@ class ServiceTests(unittest.TestCase):
         episode = svc.session("u1").dstate.episode
         self.assertEqual(episode.rating_id, rows[0]["id"])
 
+    def test_llm_exception_text_is_not_returned_to_the_client(self):
+        secret = "API key=super-secret-test-value"
+        svc = self.build(FakeLLM(replies=[RuntimeError(secret)]))
+        response = svc.handle("u1", "tell me something interesting")
+        self.assertEqual(response["kind"], "error")
+        self.assertNotIn("super-secret-test-value", response.get("detail", ""))
+        self.assertNotIn("super-secret-test-value", str(response.get("trace", "")))
+        self.assertIn("RuntimeError", response.get("detail", ""))
+
     def test_rating_correction_within_window_updates_existing_row(self):
         svc = self.build()
         svc.handle("u1", "my head hurts")
