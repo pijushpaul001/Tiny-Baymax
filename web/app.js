@@ -260,8 +260,11 @@
       const data = await api("/api/export");
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href = url; a.download = "tiny-baymax-export.json"; a.click();
-      URL.revokeObjectURL(url);
+      const a = document.createElement("a"); a.href = url; a.download = "tiny-baymax-export.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (error) { message("assistant", error.message, true); }
   }
 
