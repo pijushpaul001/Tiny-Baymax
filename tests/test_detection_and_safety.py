@@ -1,6 +1,6 @@
 import unittest
 
-from baymax.detection import parse_rating, parse_rating_reply
+from baymax.detection import detect, parse_rating, parse_rating_reply
 from baymax.safety import memory_gate, redact_secrets
 
 
@@ -55,6 +55,18 @@ class RatingParserTests(unittest.TestCase):
     def test_compatibility_parser(self):
         self.assertEqual(parse_rating("6"), 6)
         self.assertIsNone(parse_rating("skip"))
+
+
+class FigurativeDifficultyTests(unittest.TestCase):
+    def test_common_figurative_pain_phrases_do_not_prompt_a_rating(self):
+        self.assertEqual(detect("this project is a headache").type, "none")
+        self.assertEqual(detect("I am burning dinner").type, "none")
+
+    def test_literal_pain_and_chest_tightness_are_still_detected(self):
+        self.assertEqual(detect("my head hurts").type, "physical")
+        self.assertEqual(detect("my leg is burning").type, "physical")
+        result = detect("my chest feels tight")
+        self.assertEqual(result.red_flag, "urgent_medical")
 
 
 class SecretRedactionTests(unittest.TestCase):
