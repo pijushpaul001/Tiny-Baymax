@@ -108,6 +108,7 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertIn('localStorage.getItem(CONSENT_KEY) !== "accepted"', script)
         self.assertIn('if (!consentDialog.open) consentDialog.showModal()', script)
         self.assertIn('id="review-consent"', html)
+        self.assertIn("Automatic memory is on by default", html)
         self.assertIn('addEventListener("click"', script)
 
 
