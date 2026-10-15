@@ -260,8 +260,12 @@ class Store:
             return int(cur.lastrowid)
 
     def ratings(self, uid, limit=50):
-        rows = self._all("SELECT id, ts, type, subtype, rating FROM ratings WHERE user_id=? ORDER BY id DESC LIMIT ?",
-                         (uid, limit))
+        if limit is None:
+            rows = self._all("SELECT id, ts, type, subtype, rating FROM ratings WHERE user_id=? ORDER BY id DESC",
+                             (uid,))
+        else:
+            rows = self._all("SELECT id, ts, type, subtype, rating FROM ratings WHERE user_id=? ORDER BY id DESC LIMIT ?",
+                             (uid, limit))
         return rows[::-1]
 
     def update_rating(self, uid, rating_id: int, rating: int) -> bool:
@@ -288,8 +292,24 @@ class Store:
     def export(self, uid) -> dict:
         return {"memories": self.memories(uid), "messages": self.history_with_time(uid, MAX_MESSAGES),
                 "emotion": self.get_emotion(uid), "settings": self.get_settings(uid),
-                "ratings": self.ratings(uid, 1000),
-                "feedback": self._all("SELECT ts, text FROM feedback WHERE user_id=? ORDER BY id", (uid,))}
+                "ratings": self.ratings(uid, None),
+                "feedback": self._all("SELECT ts, text FROM feedback WHERE user_id=? ORDER BY id", (uid,)),
+                "usage": self._all("SELECT day, count FROM usage WHERE user_id=? ORDER BY day", (uid,))}
+
+    def purge_backups(self) -> int:
+        """Remove pre-migration database snapshots that may retain deleted conversation data."""
+        if self.path == ":memory:":
+            return 0
+        source = Path(self.path)
+        removed = 0
+        for backup in source.parent.glob(f"{source.name}.pre-migration-*.bak"):
+            try:
+                backup.unlink()
+                removed += 1
+            except OSError:
+                # A later UI/API message should not claim the purge succeeded if one remains.
+                continue
+        return removed
 
     def delete_all(self, uid):
         with self._lock:
