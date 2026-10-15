@@ -70,6 +70,36 @@ class ApiAuthTests(unittest.TestCase):
         self.assertEqual(body["reply"], "Are you satisfied with my care today?")
         self.assertEqual(body["closing"], "asked")
 
+    def test_clear_endpoint_works_during_shutdown_feedback(self):
+        self.store.add_messages("u1", [("user", "old private message"), ("assistant", "old reply")])
+        self.service.handle("u1", "/quit")
+        self.service.handle("u1", "no")
+        self.assertEqual(self.service.session("u1").closing, "feedback")
+        status, body = self.api.dispatch("POST", "/api/clear", self.headers, b"{}")
+        self.assertEqual(status, 200)
+        self.assertIn("cleared", body["reply"].lower())
+        self.assertEqual(self.store.history("u1"), [])
+        self.assertEqual(self.store.export("u1")["feedback"], [])
+        self.assertIsNone(self.service.session("u1").closing)
+
+    def test_memory_endpoint_bypasses_shutdown_feedback_state(self):
+        self.service.handle("u1", "/quit")
+        self.service.handle("u1", "no")
+        body = json.dumps({"fact": "my favourite food is dosa"}).encode()
+        status, result = self.api.dispatch("POST", "/api/memories", self.headers, body)
+        self.assertEqual(status, 200)
+        self.assertTrue(any("dosa" in m["fact"] for m in result["memories"]))
+        self.assertEqual(self.store.export("u1")["feedback"], [])
+        self.assertEqual(self.service.session("u1").closing, "feedback")
+
+    def test_emotion_reset_endpoint_bypasses_shutdown_feedback_state(self):
+        self.service.handle("u1", "/quit")
+        self.service.handle("u1", "no")
+        status, body = self.api.dispatch("POST", "/api/emotion/reset", self.headers, b"{}")
+        self.assertEqual(status, 200)
+        self.assertIn("baseline", body["reply"].lower())
+        self.assertEqual(self.store.export("u1")["feedback"], [])
+
     def test_cors_is_exact_allowlist(self):
         allowed = self.api.cors_headers("https://app.example")
         denied = self.api.cors_headers("https://evil.example")
