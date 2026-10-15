@@ -111,7 +111,7 @@ class BaymaxBrain:
                         if not ok:
                             warnings.append(f"memory blocked: {why}")
             except Exception as e:                       # an API failure must never crash the app
-                warnings.append(f"llm error: {type(e).__name__}: {str(e)[:200]}")
+                warnings.append(f"llm error: {type(e).__name__}")
 
         st.recent_q = (st.recent_q + [reply.rstrip().endswith("?")])[-4:]
         return TurnResult(reply, mode, signal, d, mem_fact, rating_event, warnings)
