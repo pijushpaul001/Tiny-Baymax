@@ -6,6 +6,8 @@ server can later be swapped for FastAPI/Flask without touching any logic.
 import json
 import re
 
+from baymax import __version__
+
 MAX_BODY = 16 * 1024
 
 
@@ -32,15 +34,15 @@ class Api:
         if path == "/api/health":
             health = self.store.health()
             return (200 if health["ok"] else 503), {
-                "ok": health["ok"], "version": "0.6.1", "storage": "ok" if health["ok"] else "unavailable"
+                "ok": health["ok"], "version": __version__, "storage": "ok" if health["ok"] else "unavailable"
             }
         uid = self.auth.user_for(headers, client_id=client_id)
         if uid is None:
             if self.auth.is_locked(client_id):
                 return 429, {"error": "Too many failed passcode attempts. Try again later.", "code": "too_many_attempts"}
-            return 401, {"error": "Passcode needed."}
+            return 401, {"error": "Passcode needed.", "code": "authentication_required"}
         if len(body or b"") > MAX_BODY:
-            return 413, {"error": "Request too large."}
+            return 413, {"error": "Request too large.", "code": "request_too_large"}
         data = {}
         if method in ("POST", "PATCH", "DELETE") and body:
             try:
@@ -48,7 +50,7 @@ class Api:
                 if not isinstance(data, dict):
                     raise ValueError
             except (ValueError, UnicodeDecodeError):
-                return 400, {"error": "Body must be a JSON object."}
+                return 400, {"error": "Body must be a JSON object.", "code": "invalid_json_body"}
 
         svc, st = self.service, self.store
         if (method, path) == ("GET", "/api/session"):
@@ -58,7 +60,7 @@ class Api:
         if (method, path) == ("POST", "/api/chat"):
             msg = data.get("message")
             if not isinstance(msg, str):
-                return 400, {"error": "'message' must be text."}
+                return 400, {"error": "'message' must be text.", "code": "invalid_message"}
             return 200, svc.handle(uid, msg)
         if (method, path) == ("GET", "/api/state"):
             from baymax.emotion import EmotionState
@@ -80,7 +82,7 @@ class Api:
         m = re.fullmatch(r"/api/memories/(\d+)", path)
         if m and method == "DELETE":
             ok = st.delete_memory(uid, int(m.group(1)))
-            return (200, {"memories": st.memories(uid)}) if ok else (404, {"error": "Not found."})
+            return (200, {"memories": st.memories(uid)}) if ok else (404, {"error": "Not found.", "code": "not_found"})
         if (method, path) == ("GET", "/api/ratings"):
             return 200, {"ratings": st.ratings(uid, 50)}
         m = re.fullmatch(r"/api/ratings/(\d+)", path)
@@ -90,7 +92,7 @@ class Api:
         if m and method == "PATCH":
             rating = data.get("rating")
             if isinstance(rating, bool) or not isinstance(rating, int) or not 0 <= rating <= 10:
-                return 400, {"error": "'rating' must be an integer from 0 to 10."}
+                return 400, {"error": "'rating' must be an integer from 0 to 10.", "code": "invalid_rating"}
             ok = st.update_rating(uid, int(m.group(1)), rating)
             return (200, {"ratings": st.ratings(uid, 50)}) if ok else (404, {"error": "Not found."})
         if (method, path) == ("POST", "/api/settings"):
@@ -103,7 +105,7 @@ class Api:
             return 200, st.export(uid)
         if (method, path) == ("DELETE", "/api/data"):
             if data.get("confirm") != "DELETE":
-                return 400, {"error": 'Send {"confirm": "DELETE"} to delete everything.'}
+                return 400, {"error": 'Send {"confirm": "DELETE"} to delete everything.', "code": "confirmation_required"}
             svc.forget_user(uid)
             return 200, {"deleted": True}
         return 404, {"error": "Not found."}
