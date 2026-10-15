@@ -88,13 +88,13 @@ class Api:
         m = re.fullmatch(r"/api/ratings/(\d+)", path)
         if m and method == "DELETE":
             ok = st.delete_rating(uid, int(m.group(1)))
-            return (200, {"ratings": st.ratings(uid, 50)}) if ok else (404, {"error": "Not found."})
+            return (200, {"ratings": st.ratings(uid, 50)}) if ok else (404, {"error": "Not found.", "code": "not_found"})
         if m and method == "PATCH":
             rating = data.get("rating")
             if isinstance(rating, bool) or not isinstance(rating, int) or not 0 <= rating <= 10:
                 return 400, {"error": "'rating' must be an integer from 0 to 10.", "code": "invalid_rating"}
             ok = st.update_rating(uid, int(m.group(1)), rating)
-            return (200, {"ratings": st.ratings(uid, 50)}) if ok else (404, {"error": "Not found."})
+            return (200, {"ratings": st.ratings(uid, 50)}) if ok else (404, {"error": "Not found.", "code": "not_found"})
         if (method, path) == ("POST", "/api/settings"):
             return 200, {"settings": st.save_settings(uid, data)}
         if (method, path) == ("POST", "/api/clear"):
@@ -108,4 +108,4 @@ class Api:
                 return 400, {"error": 'Send {"confirm": "DELETE"} to delete everything.', "code": "confirmation_required"}
             svc.forget_user(uid)
             return 200, {"deleted": True}
-        return 404, {"error": "Not found."}
+        return 404, {"error": "Not found.", "code": "not_found"}
