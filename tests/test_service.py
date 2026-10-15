@@ -1,8 +1,21 @@
+import threading
+import time
 import unittest
 
 from baymax.llm.fake import FakeLLM
 from baymax.service import ChatService
 from baymax.storage import Store
+
+
+class SlowLLM(FakeLLM):
+    def __init__(self):
+        super().__init__()
+        self.started = threading.Event()
+
+    def generate(self, system, history, user_msg, schema):
+        self.started.set()
+        time.sleep(1.5)
+        return super().generate(system, history, user_msg, schema)
 
 
 class BombStore:
@@ -132,6 +145,26 @@ class ServiceTests(unittest.TestCase):
         self.assertFalse(response["ended"])
         self.assertIn("continue", response["reply"].lower())
         self.assertIsNone(svc.session("u1").closing)
+
+    def test_forget_user_does_not_block_an_unrelated_session(self):
+        store = Store(":memory:")
+        self.addCleanup(store.close)
+        llm = SlowLLM()
+        svc = ChatService(store, llm)
+        turn = threading.Thread(target=lambda: svc.handle("user-a", "Tell me something interesting"))
+        turn.start()
+        self.assertTrue(llm.started.wait(timeout=1))
+        deletion = threading.Thread(target=lambda: svc.forget_user("user-a"))
+        deletion.start()
+        time.sleep(0.05)
+        started = time.monotonic()
+        svc.open_session("user-b")
+        elapsed = time.monotonic() - started
+        self.assertLess(elapsed, 0.5)
+        turn.join(timeout=3)
+        deletion.join(timeout=3)
+        self.assertFalse(turn.is_alive())
+        self.assertFalse(deletion.is_alive())
 
     def test_feedback_is_redacted_before_storage(self):
         svc = self.build()
