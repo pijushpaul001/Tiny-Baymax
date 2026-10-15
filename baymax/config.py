@@ -42,6 +42,7 @@ class Settings:
     max_per_day: int = 200
     emergency_hint: str = "your local emergency number"
     allowed_origins: tuple[str, ...] = ()
+    trusted_proxy: bool = False
     backup_keep: int = 7
 
     @property
@@ -66,5 +67,6 @@ class Settings:
             max_per_day=int(e("BAYMAX_MAX_PER_DAY", "200")),
             emergency_hint=e("BAYMAX_EMERGENCY_HINT", "your local emergency number"),
             allowed_origins=tuple(x.strip() for x in e("BAYMAX_ALLOWED_ORIGINS", "").split(",") if x.strip()),
+            trusted_proxy=e("BAYMAX_TRUSTED_PROXY", "") == "1",
             backup_keep=max(1, int(e("BAYMAX_BACKUP_KEEP", "7"))),
         )
