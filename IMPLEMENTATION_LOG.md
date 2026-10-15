@@ -72,3 +72,25 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 - **Tests run and results:**
 - **Known limitations / risks:**
 - **Next step:**
+
+## Claude review follow-up — 2026-10-15
+
+Review source: user-provided Claude review of PR #1 at commit `b18e7b6`. The review reported 41 tests passing in its sandbox, but did not verify live Gemini, browser rendering, phone/PWA installation, HTTPS/proxy deployment, or GitHub Actions. Those are not recorded as completed here.
+
+### Implemented on `work/v0.6.1-hardening`
+
+- **F1 / AC-6:** Satisfaction answers now require a complete short reply. Longer replies such as “yes, but my head hurts really bad” return to normal intent detection instead of ending the session. Added regression tests, including “no problem, I am satisfied.”
+- **F2 / AC-9:** Added direct service methods for remembering a fact, clearing history, and resetting simulated emotion. API controls no longer pass these actions through the active shutdown dialogue state. Added API regression tests.
+- **F5 / AC-4:** Expanded rating parsing for common phrasing, worded “seven out of ten,” “skip it,” and “I’d rather skip,” while retaining negative tests for incidental numbers.
+- **F4 / G9:** Added opt-in `BAYMAX_TRUSTED_PROXY=1`. A forwarded address is used only when explicitly enabled, the direct peer is loopback, and the forwarded value parses as an IP address. The default remains off. Added focused resolver tests and setup documentation.
+
+### Deferred or still open
+
+- **F3 / AC-7 conflict:** Claude recommends best-effort persistence of red-flag exchanges, but AC-7 explicitly says the emergency reply works with no storage access. No change was made to this contract pending a decision; emergency response remains independent of the model and storage.
+- **F6, F7, F8, F9, F10, F11, F12** remain open.
+- **AC-12 / AC-16:** Key exposure checks and recovery/verification of the original 48 tests remain unproven. The current suite was created for this snapshot and is not evidence that the prior suite passed.
+- Live Gemini, browser UI, phone/PWA, and tunnel verification are still pending.
+
+### Validation status for this follow-up
+
+Changes were committed to the draft PR branch through GitHub. Local execution was not available in this session; GitHub Actions results must be checked before claiming the updated suite passes. PR #1 remains unmerged.
