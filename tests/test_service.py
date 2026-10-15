@@ -87,6 +87,22 @@ class ServiceTests(unittest.TestCase):
         response = svc.handle("u1", "not satisfied")
         self.assertEqual(response["closing"], "feedback")
 
+    def test_yes_with_pain_report_is_not_a_goodbye(self):
+        svc = self.build()
+        svc.handle("u1", "/quit")
+        response = svc.handle("u1", "yes but my head hurts really bad")
+        self.assertFalse(response["ended"])
+        self.assertIn("from 0 to 10", response["reply"])
+        self.assertIsNone(response["closing"])
+        self.assertEqual(self.llm.calls, [])
+
+    def test_no_problem_i_am_satisfied_is_positive(self):
+        svc = self.build()
+        svc.handle("u1", "/quit")
+        response = svc.handle("u1", "no problem, I am satisfied")
+        self.assertTrue(response["ended"])
+        self.assertIn("Goodbye", response["reply"])
+
     def test_exit_intent_is_short_whole_message(self):
         svc = self.build()
         response = svc.handle("u1", "I am done with my project")
