@@ -11,7 +11,7 @@ from baymax.service import ChatService
 from baymax.storage import Store
 from server.api import Api
 from server.auth import Auth
-from server.app import make_handler
+from server.app import make_handler, resolve_client_id
 from http.server import ThreadingHTTPServer
 
 
@@ -181,6 +181,14 @@ class ApiAuthTests(unittest.TestCase):
                     server.shutdown()
                     server.server_close()
                     thread.join(timeout=2)
+
+    def test_forwarded_client_is_trusted_only_when_explicitly_enabled(self):
+        self.assertEqual(resolve_client_id("127.0.0.1", "198.51.100.7", False), "127.0.0.1")
+        self.assertEqual(resolve_client_id("127.0.0.1", "198.51.100.7", True), "198.51.100.7")
+        self.assertEqual(resolve_client_id("127.0.0.1", "198.51.100.8, 198.51.100.9", True),
+                         "198.51.100.8")
+        self.assertEqual(resolve_client_id("203.0.113.8", "198.51.100.7", True), "203.0.113.8")
+        self.assertEqual(resolve_client_id("127.0.0.1", "not-an-ip", True), "127.0.0.1")
 
     def test_auth_lockout_is_per_client_and_expires(self):
         clock = FakeClock()
