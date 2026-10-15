@@ -84,6 +84,36 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(store.memories("u1"), [])
         self.assertEqual([x["fact"] for x in store.memories("u2")], ["likes noodles"])
 
+    def test_export_includes_all_ratings_and_usage(self):
+        store = Store(":memory:")
+        self.addCleanup(store.close)
+        store.db.executemany(
+            "INSERT INTO ratings(user_id, ts, type, subtype, rating) VALUES (?,?,?,?,?)",
+            [("u1", "2026-01-01T00:00:00", "physical", "pain", i % 11) for i in range(1005)],
+        )
+        store.db.execute("INSERT INTO usage(user_id, day, count) VALUES (?,?,?)", ("u1", "2026-01-01", 12))
+        store.db.commit()
+        exported = store.export("u1")
+        self.assertEqual(len(exported["ratings"]), 1005)
+        self.assertEqual(exported["usage"], [{"day": "2026-01-01", "count": 12}])
+
+    def test_purge_backups_removes_matching_migration_snapshots(self):
+        with tempfile.TemporaryDirectory() as td:
+            db = Path(td) / "baymax.db"
+            store = Store(str(db))
+            store.close()
+            backup = Path(td) / "baymax.db.pre-migration-test.bak"
+            backup.write_text("private chat data", encoding="utf-8")
+            unrelated = Path(td) / "other.bak"
+            unrelated.write_text("keep", encoding="utf-8")
+            cleaner = Store(str(db))
+            try:
+                self.assertEqual(cleaner.purge_backups(), 1)
+                self.assertFalse(backup.exists())
+                self.assertTrue(unrelated.exists())
+            finally:
+                cleaner.close()
+
 
 if __name__ == "__main__":
     unittest.main()
