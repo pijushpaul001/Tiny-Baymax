@@ -18,16 +18,6 @@ _MULTIWORD_SECRET_RX = re.compile(
     re.I
 )
 SECRET_RX = re.compile(
-    r"\\b(?P<label>api[ _-]?key|password|passcode|secret|token|otp|pin)\\b\\s*"
-    r"(?:is\\s+|=\\s*|:\\s*)"
-    r"(?!was\\b|were\\b|are\\b|got\\b|received\\b|rejected\\b|invalid\\b|"
-    r"expired\\b|missing\\b|rotated\\b|leaked\\b|created\\b|generated\\b|"
-    r"needed\\b|works\\b|failed\\b|fails\\b|sent\\b|stored\\b|valid\\b|"
-    r"unavailable\\b|required\\b|wrong\\b|incorrect\\b|not\\b)"
-    r"(?P<value>\\S+(?:\\s+\\S+)+?)(?=[.!?](?:\\s|$)|[;\\n]|$)",
-    re.I
-)
-SECRET_RX = re.compile(
     r"\b(api[ _-]?key|password|passcode|secret|token|otp)\b\s*"
     r"(?:(?:is|=|:)\s*|\s+(?!was\b|were\b|are\b|got\b|received\b|rejected\b|"
     r"invalid\b|expired\b|missing\b|rotated\b|leaked\b|created\b|generated\b|"
