@@ -116,3 +116,13 @@ Changes were committed to the draft PR branch through GitHub. Local execution wa
 ### Validation
 
 GitHub Actions passed for push and pull-request workflows on commit `347f779`. Additional digit-redaction and LLM-exception-hardening commits were added afterward; their latest workflows must pass before merge. Local test execution was unavailable in this session. PR #1 remains open, draft, and unmerged.
+
+## 2026-10-17 — F12 — Multi-word secret redaction hardening
+
+- **Status:** Implemented; CI verification pending.
+- **Architecture requirement:** AC-10 / F12 — redact secrets before model calls and persistence.
+- **Files changed:** `baymax/safety.py`, `tests/test_detection_and_safety.py`.
+- **Implementation notes:** Added a deterministic pre-pass for multi-word values assigned to secret labels (for example, `password is correct horse battery staple`) so the full value is redacted instead of only its first word. Added regression cases for password, passcode, and API-key assignment formats. The existing ordinary phrase test `the token was rejected` remains in the suite.
+- **Tests run and results:** Focused regex cases were exercised in an isolated Python check and produced the expected redactions. The full repository test suite has not been run locally in this session. GitHub Actions for commit `69d61929d8befff3f2f602807c806bae6a1de89c` was queued at the time of this entry.
+- **Known limitations / risks:** Redaction is heuristic. Multi-word assigned values are redacted through the next sentence/line boundary, which may also hide non-secret text in that span. This change does not establish complete secret-detection coverage.
+- **Next step:** Verify the GitHub Actions result on the latest branch head, then continue the remaining F12 review items.
