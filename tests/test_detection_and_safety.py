@@ -89,6 +89,20 @@ class SecretRedactionTests(unittest.TestCase):
     def test_secret_keyword_in_ordinary_sentence_is_not_redacted(self):
         self.assertEqual(redact_secrets("the token was rejected"), ("the token was rejected", False))
 
+    def test_redacts_multi_word_assigned_passphrases(self):
+        cases = (
+            ("password is correct horse battery staple", ("correct", "horse", "battery", "staple")),
+            ("passcode: blue river quiet mountain", ("blue", "river", "quiet", "mountain")),
+            ("api_key=alpha beta gamma", ("alpha", "beta", "gamma")),
+        )
+        for raw, secret_words in cases:
+            with self.subTest(raw=raw):
+                safe, found = redact_secrets(raw)
+                self.assertTrue(found)
+                self.assertIn("[REDACTED]", safe)
+                for word in secret_words:
+                    self.assertNotIn(word, safe)
+
     def test_does_not_redact_ten_digit_phone_numbers_by_digit_count_alone(self):
         for raw in ("1234567890", "9876543210"):
             with self.subTest(raw=raw):
