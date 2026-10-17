@@ -43,7 +43,8 @@ SECRET_NOTE = "I can't accept or store keys or passwords, so I hid that part. Pl
 
 def redact_secrets(text: str):
     """Returns (safe_text, found_secret)."""
-    safe = SECRET_RX.sub(lambda m: (m.group(1) + " [REDACTED]") if m.group(1) else "[REDACTED]", text)
+    safe = _MULTIWORD_SECRET_RX.sub(lambda m: m.group("label") + " [REDACTED]", text)
+    safe = SECRET_RX.sub(lambda m: (m.group(1) + " [REDACTED]") if m.group(1) else "[REDACTED]", safe)
 
     def redact_number(match):
         groups = re.findall(r"\d+", match.group(0))
