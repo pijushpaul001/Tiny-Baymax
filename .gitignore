@@ -1,0 +1,10 @@
+.env
+data/
+__pycache__/
+*.pyc
+.venv/
+mobile/node_modules/
+*.bak
+.pytest_cache/
+.coverage
+.DS_Store

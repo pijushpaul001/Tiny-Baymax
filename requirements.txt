@@ -1,0 +1,2 @@
+# Only the Gemini SDK is needed. Everything else is the Python standard library.
+google-genai>=1.0

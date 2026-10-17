@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="A simple rounded white companion mascot">
+  <rect x="3" y="3" width="122" height="122" rx="36" fill="#dff0ee"/>
+  <path d="M35 42c0-12 9-20 29-20s29 8 29 20v33c0 20-12 32-29 32S35 95 35 75V42Z" fill="#fff" stroke="#c5dddc" stroke-width="3"/>
+  <rect x="43" y="42" width="42" height="13" rx="6.5" fill="#e6f5f3"/>
+  <circle cx="53" cy="48.5" r="3" fill="#2c6f76"/><circle cx="75" cy="48.5" r="3" fill="#2c6f76"/>
+  <path d="M53 72c6 5 16 5 22 0" fill="none" stroke="#b7d9d6" stroke-width="3" stroke-linecap="round"/>
+  <path d="M22 66h12M94 66h12" stroke="#c5dddc" stroke-width="5" stroke-linecap="round"/>
+  <path d="M48 87h32" stroke="#e8f4f3" stroke-width="6" stroke-linecap="round"/>
+</svg>

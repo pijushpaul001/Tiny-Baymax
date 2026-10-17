@@ -1,0 +1,12 @@
+{
+  "name": "Tiny Baymax",
+  "short_name": "Baymax",
+  "description": "A personal healthcare companion prototype.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#eef5f5",
+  "theme_color": "#e8f2f3",
+  "icons": [
+    { "src": "/baymax.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
