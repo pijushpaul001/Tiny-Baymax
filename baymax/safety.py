@@ -8,6 +8,16 @@ from .detection import rx
 # sentence/line boundary before the single-token rule below, otherwise a phrase
 # such as "password is correct horse battery staple" would leak its trailing words.
 _MULTIWORD_SECRET_RX = re.compile(
+    r"\b(?P<label>api[ _-]?key|password|passcode|secret|token|otp|pin)\b\s*"
+    r"(?:is\s+|=\s*|:\s*)"
+    r"(?!was\b|were\b|are\b|got\b|received\b|rejected\b|invalid\b|"
+    r"expired\b|missing\b|rotated\b|leaked\b|created\b|generated\b|"
+    r"needed\b|works\b|failed\b|fails\b|sent\b|stored\b|valid\b|"
+    r"unavailable\b|required\b|wrong\b|incorrect\b|not\b)"
+    r"(?P<value>\S+(?:\s+\S+)+?)(?=[.!?](?:\s|$)|[;\n]|$)",
+    re.I
+)
+SECRET_RX = re.compile(
     r"\\b(?P<label>api[ _-]?key|password|passcode|secret|token|otp|pin)\\b\\s*"
     r"(?:is\\s+|=\\s*|:\\s*)"
     r"(?!was\\b|were\\b|are\\b|got\\b|received\\b|rejected\\b|invalid\\b|"
