@@ -18,9 +18,9 @@ class SlowLLM(FakeLLM):
         return super().generate(system, history, user_msg, schema)
 
 
-class BombStore:
+class FailingSafetyStore:
     def __getattr__(self, name):
-        raise AssertionError(f"storage was accessed on the safety path: {name}")
+        raise RuntimeError(f"storage unavailable during safety persistence: {name}")
 
 
 class ServiceTests(unittest.TestCase):
@@ -184,14 +184,43 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(len(feedback), 1)
         self.assertNotIn("do-not-store-this-secret", feedback[0]["text"])
 
-    def test_urgent_red_flag_does_not_access_store_or_llm(self):
+    def test_emergency_turn_saves_only_placeholder_and_baymax_reply(self):
+        svc = self.build()
+        raw = "I cannot breathe and my private details are 123456789012"
+        response = svc.handle("u1", raw)
+        rows = self.store.history("u1", 10)
+        self.assertEqual(response["kind"], "safety")
+        self.assertEqual([row["role"] for row in rows], ["user", "assistant"])
+        self.assertEqual(rows[0]["content"], "(message not saved)")
+        self.assertEqual(rows[1]["content"], response["reply"])
+        self.assertNotIn(raw, str(rows))
+        self.assertNotIn("123456789012", str(rows))
+        self.assertEqual(self.llm.calls, [])
+
+    def test_emergency_turn_increases_persisted_concern_by_point_25(self):
+        svc = self.build()
+        before = self.store.get_emotion("u1").get("concern", 0.2)
+        response = svc.handle("u1", "I cannot breathe")
+        after = self.store.get_emotion("u1")["concern"]
+        self.assertEqual(response["kind"], "safety")
+        self.assertAlmostEqual(after, min(1.0, before + 0.25), places=3)
+
+    def test_emergency_response_survives_storage_failure(self):
         llm = FakeLLM()
-        svc = ChatService(BombStore(), llm)
+        svc = ChatService(FailingSafetyStore(), llm)
         response = svc.handle("u1", "I cannot breathe")
         self.assertEqual(response["kind"], "safety")
         self.assertIn("emergency", response["reply"].lower())
         self.assertIn("not medical advice", response["reply"].lower())
         self.assertEqual(llm.calls, [])
+
+    def test_red_flag_preempts_shutdown_state_and_preserves_ritual(self):
+        svc = self.build()
+        svc.handle("u1", "/quit")
+        response = svc.handle("u1", "I cannot breathe")
+        self.assertEqual(response["kind"], "safety")
+        self.assertEqual(svc.session("u1").closing, "asked")
+        self.assertEqual([m["role"] for m in self.store.history("u1", 10)], ["user", "assistant"])
 
     def test_red_flag_preempts_shutdown_state_without_losing_state(self):
         svc = self.build()
