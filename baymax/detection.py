@@ -52,7 +52,13 @@ class Detection:
     third_party: bool = False
 
 
-def _negated(msg, pos): return bool(NEG.search(msg[max(0, pos - 30):pos]))
+def _negated(msg, pos):
+    prefix = msg[max(0, pos - 30):pos]
+    # "Can't stop crying/bleeding" describes an inability to stop a symptom,
+    # not a negation of the symptom itself.
+    if rx(r"\b(?:can't|cant)\s+stop\s*$").search(prefix):
+        return False
+    return bool(NEG.search(prefix))
 
 
 def _third_party(msg, pos):
