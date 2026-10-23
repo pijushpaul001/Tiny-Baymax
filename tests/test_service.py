@@ -1,3 +1,4 @@
+import sqlite3
 import threading
 import time
 import unittest
@@ -20,7 +21,12 @@ class SlowLLM(FakeLLM):
 
 class FailingSafetyStore:
     def __getattr__(self, name):
-        raise RuntimeError(f"storage unavailable during safety persistence: {name}")
+        raise sqlite3.OperationalError(f"storage unavailable during safety persistence: {name}")
+
+
+class BrokenSafetyStore:
+    def __getattr__(self, name):
+        raise RuntimeError(f"unexpected programming failure: {name}")
 
 
 class ServiceTests(unittest.TestCase):
@@ -212,7 +218,18 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(response["kind"], "safety")
         self.assertIn("emergency", response["reply"].lower())
         self.assertIn("not medical advice", response["reply"].lower())
+        self.assertGreaterEqual(response["emotion"]["concern"], 0.35)
         self.assertEqual(llm.calls, [])
+
+    def test_safety_response_reports_nudged_emotion_when_store_works(self):
+        svc = self.build()
+        response = svc.handle("u1", "I cannot breathe")
+        self.assertGreaterEqual(response["emotion"]["concern"], 0.35)
+
+    def test_unexpected_safety_persistence_errors_are_not_silenced(self):
+        svc = ChatService(BrokenSafetyStore(), FakeLLM())
+        with self.assertRaises(RuntimeError):
+            svc.handle("u1", "I cannot breathe")
 
     def test_red_flag_preempts_shutdown_state_and_preserves_ritual(self):
         svc = self.build()
