@@ -80,6 +80,7 @@ class FigurativeDifficultyTests(unittest.TestCase):
         for text in (
             "I don't want to live in a big city",
             "I don't want to be here at this meeting",
+            "I don't want to be here",
             "let's end it all with a toast",
         ):
             with self.subTest(text=text):
