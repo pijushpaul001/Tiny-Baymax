@@ -3,6 +3,7 @@
 Both the HTTP API and any future client (CLI, voice, robot) talk only to this class.
 """
 import re
+import logging
 import sqlite3
 import threading
 import time
@@ -157,8 +158,8 @@ class ChatService:
                 bump=False,
             )
             response["emotion"] = emotion.to_dict()
-        except (sqlite3.Error, OSError):
-            pass
+        except (sqlite3.Error, OSError) as exc:
+            logging.warning("Safety response persistence failed (%s)", type(exc).__name__)
         return response
 
     def _exit_hold_response(self, s):

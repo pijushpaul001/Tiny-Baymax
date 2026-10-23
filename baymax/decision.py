@@ -14,6 +14,17 @@ from .detection import (ANAPHORA, CELEBRATE, CONCISE, ENCOURAGE, EMOTION_ADJ, EX
 from .emotion import EmotionState
 
 
+SELF_HARM_REPLY = (
+    "I am glad you told me. Your safety matters. If you might act on these thoughts, "
+    "please contact {emergency_hint} or a crisis line now, or reach a person nearby. "
+    "Are you safe at this moment? This is supportive information, not medical advice."
+)
+URGENT_MEDICAL_REPLY = (
+    "That sounds serious. Please call {emergency_hint} or get to the nearest emergency care now. "
+    "If someone is nearby, ask them to stay with you. This is supportive information, not medical advice."
+)
+
+
 @dataclass
 class DecisionConfig:
     pain_escalate: int = 8          # self-reported pain >= this -> recommend professional care
@@ -74,13 +85,9 @@ class DecisionLayer:
         if not det.red_flag:
             return None
         if det.red_flag == "self_harm":
-            reply = ("I am glad you told me. Your safety matters. If you might act on these thoughts, "
-                     f"please contact {self.cfg.emergency_hint} or a crisis line now, or reach a person nearby. "
-                     "Are you safe at this moment? This is supportive information, not medical advice.")
+            reply = SELF_HARM_REPLY.format(emergency_hint=self.cfg.emergency_hint)
         else:
-            reply = (f"That sounds serious. Please call {self.cfg.emergency_hint} or get to the nearest emergency "
-                     "care now. If someone is nearby, ask them to stay with you. This is supportive information, "
-                     "not medical advice.")
+            reply = URGENT_MEDICAL_REPLY.format(emergency_hint=self.cfg.emergency_hint)
         return Decision(
             detection=det, mode="reassure", mode_source="rule", severity_action="none", rating=None,
             deterministic_reply=reply, memory_hits=[], style={}, question_budget=0, brief="",
@@ -126,13 +133,9 @@ class DecisionLayer:
         action, det_reply, rating_action = "none", None, "none"
         if det.red_flag == "self_harm":
             st.safety_hold_until = st.turn + c.safety_hold_turns
-            det_reply = ("I am glad you told me. Your safety matters. If you might act on these thoughts, "
-                         f"please contact {c.emergency_hint} or a crisis line now, or reach a person nearby. "
-                         "Are you safe at this moment? This is supportive information, not medical advice.")
+            det_reply = SELF_HARM_REPLY.format(emergency_hint=c.emergency_hint)
         elif det.red_flag == "urgent_medical":
-            det_reply = (f"That sounds serious. Please call {c.emergency_hint} or get to the nearest emergency care "
-                         "now. If someone is nearby, ask them to stay with you. This is supportive information, "
-                         "not medical advice.")
+            det_reply = URGENT_MEDICAL_REPLY.format(emergency_hint=c.emergency_hint)
         elif rating_reply.kind == "skip":
             action, rating_action = "skip", "skip"
             st.awaiting_rating_until = -1

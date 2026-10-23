@@ -5,6 +5,8 @@ import unittest
 from unittest.mock import patch
 
 from baymax.llm.fake import FakeLLM
+from baymax.decision import DecisionLayer, DecisionState
+from baymax.emotion import EmotionState
 from baymax.service import ChatService, _closing_should_end
 from baymax.storage import Store
 
@@ -268,6 +270,21 @@ class ServiceTests(unittest.TestCase):
         svc = self.build()
         response = svc.handle("u1", "I cannot breathe")
         self.assertGreaterEqual(response["emotion"]["concern"], 0.35)
+
+    def test_safety_persistence_warning_logs_exception_type_only(self):
+        svc = ChatService(FailingSafetyStore(), FakeLLM())
+        with self.assertLogs(level="WARNING") as captured:
+            response = svc.handle("u1", "I cannot breathe")
+        logged = " ".join(captured.output)
+        self.assertEqual(response["kind"], "safety")
+        self.assertIn("OperationalError", logged)
+        self.assertNotIn("storage unavailable", logged)
+
+    def test_decide_and_safety_check_share_emergency_reply(self):
+        layer = DecisionLayer()
+        checked = layer.safety_check("I want to die")
+        decided = layer.decide("I want to die", EmotionState(), [], DecisionState())
+        self.assertEqual(checked.deterministic_reply, decided.deterministic_reply)
 
     def test_unexpected_safety_persistence_errors_are_not_silenced(self):
         svc = ChatService(BrokenSafetyStore(), FakeLLM())

@@ -212,3 +212,14 @@ GitHub Actions passed for push and pull-request workflows on commit `347f779`. A
 - **Test added:** `test_emergency_card_and_line_remain_available_for_failed_sends` checks card content/location, permanent line text, and that the 401/429 catch branch does not hide the card.
 - **Verification:** Local focused test passed: 1 test.
 - **Not verified at this item:** Real browser visual behavior, full suite, real Gemini, and deployment/HTTPS.
+
+
+## Round 3 — R3-8 safety-path logging and shared replies — 2026-10-23
+
+- **Status:** Implemented; three focused tests pass. No version change.
+- **Finding:** R3-8: expected storage/OS errors in `_safety_resp` were swallowed silently, and deterministic emergency wording was duplicated in `safety_check()` and `decide()`.
+- **Files changed:** `baymax/service.py`, `baymax/decision.py`, `tests/test_service.py`, `IMPLEMENTATION_LOG.md`.
+- **Implementation:** `_safety_resp` now emits one warning containing only the exception class name; exception text and user content are not logged. Both deterministic decision paths format the same shared self-harm and urgent-medical reply templates.
+- **Tests added:** `test_safety_persistence_warning_logs_exception_type_only`, `test_decide_and_safety_check_share_emergency_reply`.
+- **Verification:** Both new tests and the existing `test_unexpected_safety_persistence_errors_are_not_silenced` passed locally (3 tests total).
+- **Not verified at this item:** Full suite, real Gemini, browser/device visuals, and deployment/HTTPS.
