@@ -7,7 +7,7 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 - **Repository:** `pijushpaul001/Tiny-Baymax`
 - **Implementation snapshot:** v0.6.1 hardening candidate
 - **Architecture:** Claude's detailed v0.6 architecture reviewed; use it as the contract for follow-up work.
-- **Automated verification:** Claude's round-two review reports 63 tests passed against commit 87c3694 in its Python 3.12.3 sandbox. That result predates the R2 follow-up commits below; current branch CI and full suite remain unverified here.
+- **Automated verification:** GitHub Actions passed all 84 tests on commit `7ace26bb7ec8567e5e89f69d2919ce5dcf56a891` on Python 3.10, 3.11, and 3.12. This is the latest verified code/test commit before this log-only update.
 - **GitHub sync:** Source is being committed to `work/v0.6.1-hardening`. `main` remains documentation-only until the pull request is reviewed and merged.
 - **Real Gemini / device verification:** Not run. These require the user's configured API key and phone/network environment.
 - **Last updated:** 2026-10-23
@@ -155,5 +155,5 @@ GitHub Actions passed for push and pull-request workflows on commit `347f779`. A
 - **R2 detection follow-up:** Narrowed self-harm expressions so ordinary contextual statements about not wanting to live in a city or not wanting to be at a meeting do not trigger the crisis hold. "End it all" now requires a first-person intent phrase and excludes constructions followed by "with" or "by". Added tests for both positive and negative examples.
 - **Question/negation handling:** The general-question guard no longer mistakes "Can't ..." for a question. Apostrophe-less forms such as "dont", "cant", "wont", and "isnt" are recognized by the negation guard; tests cover "I dont have chest pain".
 - **R2-3 follow-up:** PIN and OTP redaction is now numeric-only, with spaces/dashes allowed. The service passes redacted text to the brain/model and persistence, while raw text is supplied only to local deterministic difficulty detection. Episode snippets/context remain based on redacted text. The secret-only shortcut no longer overrides a locally detected difficulty or red flag.
-- **Regression coverage added:** narrow self-harm matching; "Can't" difficulty detection; apostrophe-less negation; numeric-only PIN/OTP redaction; same-sentence secret plus symptom; punctuation preservation; service-level secret-plus-pain rating; and model-input/history redaction.
-- **Verification:** Changes are committed to `work/v0.6.1-hardening`. Full tests and GitHub Actions have not yet been verified after this batch. Do not treat prior 63-test results as validation of these changes.
+- **Regression coverage added:** narrow self-harm matching; "Can't" difficulty detection; apostrophe-less negation; numeric-only PIN/OTP redaction; same-sentence secret plus symptom; punctuation preservation; ordinary password-status wording; service-level secret-plus-pain rating; and model-input/history redaction.
+- **Verification:** GitHub Actions passed all 84 tests on Python 3.10, 3.11, and 3.12 for commit `7ace26bb7ec8567e5e89f69d2919ce5dcf56a891`. Real Gemini, browser/device and proxy deployment checks remain pending.
