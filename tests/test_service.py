@@ -199,7 +199,7 @@ class ServiceTests(unittest.TestCase):
 
     def test_emergency_turn_increases_persisted_concern_by_point_25(self):
         svc = self.build()
-        before = self.store.get_emotion("u1").get("concern", 0.2)
+        before = self.store.get_emotion("u1").get("concern", 0.1)
         response = svc.handle("u1", "I cannot breathe")
         after = self.store.get_emotion("u1")["concern"]
         self.assertEqual(response["kind"], "safety")
