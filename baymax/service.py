@@ -93,6 +93,7 @@ class Session:
     dstate: DecisionState = field(default_factory=DecisionState)
     closing: str = None            # None -> "asked" -> ("feedback" -> "decide")
     greeted_at: float = 0.0
+    exit_checked: bool = False
     debug: bool = False
     invalidated: bool = False
     lock: threading.Lock = field(default_factory=threading.Lock)
@@ -160,9 +161,21 @@ class ChatService:
             pass
         return response
 
+    def _exit_hold_response(self, s):
+        from .emotion import EmotionState
+        hint = self.brain.layer.cfg.emergency_hint
+        reply = (f"I am here with you. If you may act on these thoughts, please contact {hint} "
+                 "or a crisis line now, or ask someone nearby to stay with you. "
+                 "You may say goodbye again when you are ready.")
+        s.exit_checked = True
+        return {"reply": reply, "kind": "safety", "mode": "reassure", "ended": False,
+                "closing": s.closing, "emotion": EmotionState().to_dict()}
+
     def end_session(self, uid: str) -> dict:
         s = self.session(uid)
         with s.lock:
+            if s.dstate.turn < s.dstate.safety_hold_until and not s.exit_checked:
+                return self._exit_hold_response(s)
             s.closing = "asked"
             return self._resp(uid, "Are you satisfied with my care today?", kind="ritual", s=s,
                               ui={"quick_replies": ["Yes", "No"]})
@@ -282,6 +295,8 @@ class ChatService:
             s.closing = None
 
         if lower in QUIT_WORDS or is_exit_intent(lower):
+            if s.dstate.turn < s.dstate.safety_hold_until and not s.exit_checked:
+                return self._exit_hold_response(s)
             s.closing = "asked"
             return self._resp(uid, "Are you satisfied with my care today?", kind="ritual", s=s,
                               ui={"quick_replies": ["Yes", "No"]})
@@ -292,6 +307,7 @@ class ChatService:
             if cmd is not None:
                 return cmd
 
+        s.exit_checked = False
         return self._chat(uid, text, s)
 
     def _finish(self, uid, s, reply):

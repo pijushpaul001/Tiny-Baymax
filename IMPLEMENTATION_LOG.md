@@ -168,3 +168,14 @@ GitHub Actions passed for push and pull-request workflows on commit `347f779`. A
 - **Tests added:** `test_urgent_phrase_table`, `test_self_harm_phrase_table`, `test_harmless_controls_not_flagged`.
 - **Verification:** Local focused tests passed: 3 tests.
 - **Not verified at this item:** Full suite, browser/device behavior, real Gemini, and deployment/HTTPS.
+
+
+## Round 3 — R3-1 exit during safety hold — 2026-10-23
+
+- **Status:** Implemented; five focused regression tests pass. No version change.
+- **Finding:** R3-1: the first typed exit or End-button request during an active self-harm hold must return one deterministic safety check; a second request may begin the normal shutdown ritual. The next normal chat turn clears the check flag.
+- **Files changed:** `baymax/service.py`, `tests/test_service.py`, `IMPLEMENTATION_LOG.md`.
+- **Implementation:** Added session-local `exit_checked`; both exit paths share a storage-independent response using the configured emergency hint. The reply does not claim that help was contacted. A second exit request proceeds to the existing satisfaction ritual; expired holds do not delay it.
+- **Tests added:** `test_exit_during_hold_gets_safety_check`, `test_second_exit_starts_ritual`, `test_exit_after_hold_expires_goes_to_ritual`, `test_end_button_matches_bye`, `test_exit_check_works_with_dead_store`.
+- **Verification:** The five named tests passed locally via `python -m unittest`.
+- **Not verified at this item:** Full suite, browser/device behavior, real Gemini, and deployment/HTTPS.

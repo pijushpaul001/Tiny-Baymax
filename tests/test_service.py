@@ -274,6 +274,51 @@ class ServiceTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             svc.handle("u1", "I cannot breathe")
 
+    def test_exit_during_hold_gets_safety_check(self):
+        svc = self.build()
+        svc.handle("u1", "I want to die")
+        response = svc.handle("u1", "bye")
+        self.assertEqual(response["kind"], "safety")
+        self.assertIsNone(response["closing"])
+        self.assertFalse(response["ended"])
+        self.assertIn("local emergency number", response["reply"])
+        self.assertIn("say goodbye again", response["reply"])
+        self.assertTrue(svc.session("u1").exit_checked)
+
+    def test_second_exit_starts_ritual(self):
+        svc = self.build()
+        svc.handle("u1", "I want to die")
+        first = svc.handle("u1", "bye")
+        second = svc.handle("u1", "bye")
+        self.assertEqual(first["kind"], "safety")
+        self.assertEqual(second["kind"], "ritual")
+        self.assertEqual(second["reply"], "Are you satisfied with my care today?")
+
+    def test_exit_after_hold_expires_goes_to_ritual(self):
+        svc = self.build()
+        svc.handle("u1", "I want to die")
+        state = svc.session("u1").dstate
+        state.turn = state.safety_hold_until
+        response = svc.handle("u1", "bye")
+        self.assertEqual(response["kind"], "ritual")
+        self.assertEqual(response["reply"], "Are you satisfied with my care today?")
+
+    def test_end_button_matches_bye(self):
+        svc = self.build()
+        svc.handle("u1", "I want to die")
+        response = svc.end_session("u1")
+        self.assertEqual(response["kind"], "safety")
+        self.assertFalse(response["ended"])
+        self.assertIsNone(response["closing"])
+
+    def test_exit_check_works_with_dead_store(self):
+        svc = ChatService(FailingSafetyStore(), FakeLLM())
+        svc.handle("u1", "I want to die")
+        response = svc.end_session("u1")
+        self.assertEqual(response["kind"], "safety")
+        self.assertIn("local emergency number", response["reply"])
+        self.assertFalse(response["ended"])
+
     def test_red_flag_preempts_shutdown_state_and_preserves_ritual(self):
         svc = self.build()
         svc.handle("u1", "/quit")
