@@ -33,7 +33,7 @@ SECRET_NOTE = "I can't accept or store keys or passwords, so I hid that part. Pl
 
 def redact_secrets(text: str):
     """Returns (safe_text, found_secret)."""
-    text = (text or "").replace("’", "\\'").replace("‘", "\\'")
+    text = (text or "").replace("’", "'").replace("‘", "'")
     safe = _MULTIWORD_SECRET_RX.sub(lambda m: m.group("label") + " [REDACTED]", text)
     safe = SECRET_RX.sub(lambda m: (m.group(1) + " [REDACTED]") if m.group(1) else "[REDACTED]", safe)
 
