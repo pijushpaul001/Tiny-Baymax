@@ -179,3 +179,14 @@ GitHub Actions passed for push and pull-request workflows on commit `347f779`. A
 - **Tests added:** `test_exit_during_hold_gets_safety_check`, `test_second_exit_starts_ritual`, `test_exit_after_hold_expires_goes_to_ritual`, `test_end_button_matches_bye`, `test_exit_check_works_with_dead_store`.
 - **Verification:** The five named tests passed locally via `python -m unittest`.
 - **Not verified at this item:** Full suite, browser/device behavior, real Gemini, and deployment/HTTPS.
+
+
+## Round 3 — R3-3 silent automatic memory — 2026-10-23
+
+- **Status:** Implemented; focused regression test passes. No version change.
+- **Finding:** R3-3 / decision F-3: automatic memory saves remain silent in the chat UI. The top-level `memory_saved` field remains a string or null, and Settings remains the place to inspect or remove saved facts.
+- **Files changed:** `baymax/service.py`, `web/app.js`, `docs/MANUAL_TEST.md`, `tests/test_service.py`, `IMPLEMENTATION_LOG.md`.
+- **Implementation:** Removed `ui.memory_saved` from `_chat`, removed the client branch that rendered a saved-fact notice and Undo action, and corrected the manual checklist so it no longer asks the tester to undo a save.
+- **Test added:** `test_memory_saved_has_no_ui_field_and_stores_fact`.
+- **Verification:** Local focused test passed: 1 test.
+- **Not verified at this item:** Full suite, browser/device behavior, real Gemini, and deployment/HTTPS.

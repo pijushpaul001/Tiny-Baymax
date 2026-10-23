@@ -25,7 +25,7 @@ Use this checklist after automated tests pass. Do not put API keys, passcodes, o
 - [ ] Try `/quit`; confirm the exact satisfaction question appears and the closing message waits until an answer.
 - [ ] Try `very disappointed` and `not satisfied`; neither should be treated as satisfaction.
 - [ ] During the closing ritual, send an urgent-risk example such as `I cannot breathe`; confirm the safety reply takes priority and the ritual state is preserved.
-- [ ] Save an ordinary non-sensitive memory, undo it, inspect memories and ratings, export JSON, then test clear-history and delete-all only with disposable test data.
+- [ ] Save an ordinary non-sensitive memory, inspect memories and ratings, export JSON, then test clear-history and delete-all only with disposable test data.
 
 ## C. Error and persistence paths
 

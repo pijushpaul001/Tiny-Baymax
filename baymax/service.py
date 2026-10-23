@@ -420,8 +420,6 @@ class ChatService:
             episode = s.dstate.episode
             about = "pain" if episode and episode.type == "physical" else "feeling"
             ui["rating"] = {"min": 0, "max": 10, "about": about, "skippable": True}
-        if memory_fact and persisted["memory_id"]:
-            ui["memory_saved"] = {"id": persisted["memory_id"], "fact": memory_fact}
         return self._resp(uid, r.reply, kind="chat", mode=r.mode, s=s,
                           memory_saved=memory_fact, trace=trace, **({"ui": ui} if ui else {}))
 

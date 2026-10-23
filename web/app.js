@@ -107,23 +107,7 @@
     clearTools();
     if (reply.ui?.rating) return showRating(reply.ui.rating);
     if (reply.ui?.quick_replies?.length) return showQuickReplies(reply.ui.quick_replies);
-    if (reply.ui?.memory_saved) {
-      const saved = reply.ui.memory_saved;
-      const tools = byId("interaction-tools");
-      const text = document.createElement("p");
-      text.className = "hint";
-      text.textContent = `Memory saved: ${saved.fact}`;
-      const undo = document.createElement("button");
-      undo.type = "button";
-      undo.className = "chip skip";
-      undo.textContent = "Undo save";
-      undo.addEventListener("click", async () => {
-        try { await api(`/api/memories/${saved.id}`, { method: "DELETE" }); message("assistant", "I removed that saved memory."); clearTools(); }
-        catch (error) { message("assistant", error.message, true); }
-      });
-      tools.append(text, undo);
-      tools.classList.remove("hidden");
-    }
+
   }
 
   function setBusy(busy) {

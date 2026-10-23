@@ -319,6 +319,15 @@ class ServiceTests(unittest.TestCase):
         self.assertIn("local emergency number", response["reply"])
         self.assertFalse(response["ended"])
 
+    def test_memory_saved_has_no_ui_field_and_stores_fact(self):
+        store = Store(":memory:")
+        self.addCleanup(store.close)
+        svc = ChatService(store, FakeLLM(memory_fact="Likes spicy food"))
+        response = svc.handle("u1", "Tell me something interesting")
+        self.assertEqual(response["memory_saved"], "Likes spicy food")
+        self.assertNotIn("memory_saved", response.get("ui", {}))
+        self.assertIn("Likes spicy food", [item["fact"] for item in store.memories("u1")])
+
     def test_red_flag_preempts_shutdown_state_and_preserves_ritual(self):
         svc = self.build()
         svc.handle("u1", "/quit")
