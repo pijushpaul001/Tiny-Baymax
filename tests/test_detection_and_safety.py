@@ -130,6 +130,9 @@ class SecretRedactionTests(unittest.TestCase):
         self.assertIn("[REDACTED]", safe)
         self.assertEqual(redact_secrets("numbers 10 20 30 40 50 60"), ("numbers 10 20 30 40 50 60", False))
 
+    def test_password_status_wording_is_not_redacted(self):
+        self.assertEqual(redact_secrets("the password is wrong"), ("the password is wrong", False))
+
     def test_secret_keyword_in_ordinary_sentence_is_not_redacted(self):
         self.assertEqual(redact_secrets("the token was rejected"), ("the token was rejected", False))
 
