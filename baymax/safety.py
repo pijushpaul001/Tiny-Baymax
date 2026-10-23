@@ -19,7 +19,7 @@ _MULTIWORD_SECRET_RX = re.compile(
 )
 SECRET_RX = re.compile(
     r"\b(api[ _-]?key|password|passcode|secret|token)\b\s*"
-    r"(?:(?:is|=|:)\s*(?!was\b|were\b|are\b|got\b|received\b|rejected\b|invalid\b|expired\b|missing\b|rotated\b|leaked\b|created\b|generated\b|needed\b|works\b|failed\b|fails\b|sent\b|stored\b|wrong\b|incorrect\b|not\b)|\s+(?!was\b|were\b|are\b|got\b|received\b|rejected\b|"
+    r"(?:(?:is|=|:)\s*(?!was\b|were\b|are\b|got\b|received\b|rejected\b|invalid\b|expired\b|missing\b|rotated\b|leaked\b|created\b|generated\b|needed\b|works\b|failed\b|fails\b|sent\b|stored\b|wrong\b|incorrect\b|not\b)|\s+(?!is\b|was\b|were\b|are\b|got\b|received\b|"
     r"invalid\b|expired\b|missing\b|rotated\b|leaked\b|created\b|generated\b|"
     r"needed\b|works\b|failed\b|fails\b|sent\b|stored\b|wrong\b|incorrect\b|not\b))(?!\[REDACTED\])\S+"
     r"|\b(?:pin|otp)\s*(?:is|=|:)\s*\d+(?:[ -]+\d+)*|AIza[\w-]{20,}", re.I
