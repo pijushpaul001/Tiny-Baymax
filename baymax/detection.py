@@ -17,7 +17,7 @@ URGENT = rx(r"\b(chest pain|chest feels tight|chest tightness|tightness in (?:my
 SELF_HARM = rx(
     r"\b(?:suicid\w*|kill myself|end my life|want to die|"
     r"(?:don['’]?t|do not) want to live(?=\s*(?:[.!?,;]|$)|\s+(?:anymore|like this)\b)|"
-    r"(?:don['’]?t|do not) want to be here(?=\s*(?:[.!?,;]|$)|\s+any ?more\b)|"
+    r"(?:don['’]?t|do not) want to be here(?=\s+any ?more\b)|"
     r"(?:don['’]?t|do not) want to be alive|no reason to live|better off dead|"
     r"(?:i want to|i(?:'m| am) going to|im going to|i might) end it all(?!\s+(?:with|by)\b)|"
     r"take my own life|hurt myself|self[- ]harm)\b"
