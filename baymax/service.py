@@ -202,20 +202,37 @@ class ChatService:
             return self._resp(uid, "My simulated emotional state is back to baseline.", kind="command", s=s)
 
     def forget_user(self, uid: str):
-        # Never hold the global session-map lock while waiting for one user's turn to finish.
+        """Delete active user data, then try to purge snapshots that may retain old data."""
         with self._guard:
             s = self._sessions.get(uid)
+
+        backup_error = None
         if s is None:
-            self.store.purge_backups()
             self.store.delete_all(uid)
-            return
-        with s.lock:
-            self.store.purge_backups()
-            self.store.delete_all(uid)
-            s.invalidated = True
-            with self._guard:
-                if self._sessions.get(uid) is s:
-                    self._sessions.pop(uid, None)
+            try:
+                self.store.purge_backups()
+            except OSError as exc:
+                backup_error = type(exc).__name__
+        else:
+            with s.lock:
+                self.store.delete_all(uid)
+                try:
+                    self.store.purge_backups()
+                except OSError as exc:
+                    backup_error = type(exc).__name__
+                s.invalidated = True
+                with self._guard:
+                    if self._sessions.get(uid) is s:
+                        self._sessions.pop(uid, None)
+
+        result = {"deleted": True, "backups_purged": backup_error is None}
+        if backup_error:
+            result["warning"] = (
+                "Your active data was deleted, but a pre-migration backup could not be removed. "
+                "Retry deletion or remove the backup file manually."
+            )
+            result["backup_error"] = backup_error
+        return result
 
     # ------------------------------------------------------------ main entry
     def handle(self, uid: str, text: str) -> dict:
