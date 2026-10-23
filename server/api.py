@@ -106,6 +106,5 @@ class Api:
         if (method, path) == ("DELETE", "/api/data"):
             if data.get("confirm") != "DELETE":
                 return 400, {"error": 'Send {"confirm": "DELETE"} to delete everything.', "code": "confirmation_required"}
-            svc.forget_user(uid)
-            return 200, {"deleted": True}
+            return 200, svc.forget_user(uid)
         return 404, {"error": "Not found.", "code": "not_found"}
