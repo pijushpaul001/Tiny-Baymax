@@ -158,6 +158,28 @@ class SecretRedactionTests(unittest.TestCase):
                 self.assertIn("[REDACTED]", safe)
                 self.assertIn(expected, safe)
 
+    def test_pin_and_otp_are_redacted_only_when_numeric(self):
+        self.assertEqual(redact_secrets("the pin is in my foot and it hurts"), ("the pin is in my foot and it hurts", False))
+        self.assertEqual(redact_secrets("the otp is required for login"), ("the otp is required for login", False))
+        for raw in ("my pin is 4821", "my pin is 4821-7733", "my otp is 4821 7733"):
+            with self.subTest(raw=raw):
+                safe, found = redact_secrets(raw)
+                self.assertTrue(found)
+                self.assertIn("[REDACTED]", safe)
+
+    def test_secret_redaction_keeps_following_symptom_in_same_sentence(self):
+        raw = "my password is hunter2 and my head hurts"
+        safe, found = redact_secrets(raw)
+        self.assertTrue(found)
+        self.assertIn("[REDACTED]", safe)
+        self.assertIn("and my head hurts", safe)
+        self.assertNotIn("hunter2", safe)
+
+    def test_redacted_marker_does_not_consume_sentence_punctuation(self):
+        safe, found = redact_secrets("my password is hunter2. My head hurts")
+        self.assertTrue(found)
+        self.assertIn("[REDACTED]. My head hurts", safe)
+
     def test_does_not_redact_ten_digit_phone_numbers_by_digit_count_alone(self):
         for raw in ("1234567890", "9876543210"):
             with self.subTest(raw=raw):
