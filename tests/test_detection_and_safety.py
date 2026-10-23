@@ -76,6 +76,35 @@ class FigurativeDifficultyTests(unittest.TestCase):
                 self.assertEqual(detect(text).red_flag, "self_harm")
         self.assertEqual(detect("I don't want to leave the house").red_flag, "")
 
+    def test_self_harm_patterns_are_narrow_and_intent_specific(self):
+        for text in (
+            "I don't want to live in a big city",
+            "I don't want to be here at this meeting",
+            "let's end it all with a toast",
+        ):
+            with self.subTest(text=text):
+                self.assertNotEqual(detect(text).red_flag, "self_harm")
+        for text in (
+            "I don't want to live anymore",
+            "I don't want to live like this",
+            "I don't want to be here anymore",
+            "I don't want to be here any more",
+            "I want to end it all",
+            "I'm going to end it all",
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(detect(text).red_flag, "self_harm")
+
+    def test_cant_prefix_is_not_mistaken_for_a_general_question(self):
+        self.assertEqual(detect("Can't sleep, head hurts").type, "physical")
+        self.assertEqual(detect("Can't stop crying").type, "emotional")
+        self.assertEqual(detect("Can't cope with this").type, "other")
+        self.assertEqual(detect("Can you help me").type, "none")
+
+    def test_apostropheless_negations_suppress_negated_chest_pain(self):
+        self.assertEqual(detect("I dont have chest pain").red_flag, "")
+        self.assertEqual(detect("I cant breathe").red_flag, "urgent_medical")
+
     def test_literal_pain_and_chest_tightness_are_still_detected(self):
         self.assertEqual(detect("my head hurts").type, "physical")
         self.assertEqual(detect("my leg is burning").type, "physical")
