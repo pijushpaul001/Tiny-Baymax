@@ -250,3 +250,109 @@ Source: uploaded ZIP of branch `work/v0.6.1-hardening`; commit id read from the 
 ## Round 2 verdict
 
 **Not ready to merge.** Fix **R2-1** (safety regression) and **R2-3** (redaction swallowing a symptom report) first; **R2-2** (self-harm phrasings) and **R2-4** (proxy spoofing) next, since the proxy setting will be used for the cloud host. R2-5 to R2-8 can follow in the same branch. After these, remaining gates are: GitHub Actions green, a real Gemini run, and a phone/browser pass.
+
+
+---
+
+# Round 3 review: commit 68f1653 (2026-10-23)
+
+Source: uploaded ZIP of branch `work/v0.6.1-hardening`; commit id read from the archive comment (`68f1653ba9fc04afe68339c8f9fd14b6e6d2566d`). No `.git` metadata was inspected. `CLAUDE_HANDOFF.md` and `REVIEW_PR1.md` inside the ZIP are identical to the copies I hold.
+
+## 1. What was verified, and how
+
+**Run by me (Python 3.12.3, FakeLLM, no network):**
+- `python -m unittest discover -s tests -t .` → **84 tests, OK** (up from 63).
+- Four probe scripts (about 70 cases): detection and redaction tables, service flows through every ritual state, a real `ThreadingHTTPServer` over HTTP (lockout, CORS, malformed requests, oversize body, traversal, delete-all), a real-file SQLite store with a forced `unlink` failure.
+
+**Read in full:** every file under `baymax/`, `server/`, `web/`, plus `README.md`, `AGENTS.md`, `.env.example`, CI workflow, `docs/MANUAL_TEST.md`.
+
+**NOT verified:**
+- GitHub Actions on this commit. `IMPLEMENTATION_LOG.md` cites a green run for `7ace26b`; HEAD is `68f1653` and I cannot see its run.
+- Python 3.10 and 3.11 (I ran 3.12 only).
+- Browser behaviour of `web/` (chips, consent dialog, offline card, service worker, install). Read only.
+- Real Gemini (model name, structured output, truncation, alternation of roles).
+- Proxy header behaviour on the target host.
+- That the ZIP equals the commit.
+
+## 2. Round 2 findings: status
+
+| ID | Status | Evidence |
+|---|---|---|
+| R2-1 | **Fixed**, verified | `cant`, `can't`, `can’t`, `wont stop bleeding`, `won’t stop bleeding` → `urgent_medical`; curly apostrophes normalised in `detect`, `redact_secrets`, `parse_rating_reply`. Wider phrase gaps: R3-2. |
+| R2-2 | **Fixed** for the tested phrases | `don’t want to live`, `…anymore`, `…like this`, `better off dead`, `end it all` (first-person) detected; "I don't want to live in this city" and "I don't want to leave the house" are not. More phrasings missing: R3-2. |
+| R2-3 | **Fixed** | "my password is hunter2. My head hurts really bad" keeps the second sentence; PIN/OTP numeric-only; `password is correct horse battery staple` fully redacted. Residual (L): `my password is hunter2 and my chest hurts` redacts the whole tail for the model and the history. Local detection runs on raw text, so the rating question still fires. Accepted. |
+| R2-4 | **Fixed**, verified | `resolve_client_id("127.0.0.1", "6.6.6.6, 100.64.0.5", True)` → `100.64.0.5`; non-loopback peer, garbage and trailing-comma headers fall back to the peer. |
+| R2-5 | **Fixed**, one gap | response concern 0.35 with a healthy store; only `sqlite3.Error` and `OSError` caught. The error is swallowed silently, see R3-8. |
+| R2-6 | **Fixed**, verified | "I need to finish my homework" continues; "shut down please", "let's stop", "yes shut down", "please end this" end; "I don't want to stop" continues. |
+| R2-7 | **Fixed in the service**, verified | rows deleted first; with `Path.unlink` forced to raise: `deleted: True, backups_purged: False, warning, backup_error`. **The web client ignores the warning**, see R3-4. |
+| R2-8 | **Partly** | log updated, but its CI statement covers `7ace26b`, not HEAD. |
+
+Still open from earlier rounds: F10 (face, voice, settings panel, PNG icons; Phase 3a), AC-12 and AC-16 (no key-exposure end-to-end check; the original 48 tests are still not in the repo), G16 leftovers.
+
+## 3. New findings
+
+Severity: **H** violates a non-negotiable or endangers the user; **M** wrong or unsafe behaviour with a workaround, or a broken user decision; **L** polish.
+
+### R3-1 — M (safety, spec gap) — The shutdown ritual can end the session straight after a self-harm disclosure
+- **Where:** `baymax/service.py:284-287` (exit intent) and `end_session`. Neither looks at `safety_hold_until`.
+- **Repro (verified):** `I want to die` → safety reply → `bye` → "Are you satisfied with my care today?" → `yes` → "I am glad to hear that. Take care. Goodbye." `ended=True`. The hold is meant to keep Baymax steady for three turns; the ritual walks past it. My spec did not cover this case, so this is a spec gap as much as a code gap (see new C13 and AC-18).
+- **Fix:** while the safety hold is active, the **first** exit request (typed or End button) gets one deterministic reply instead of the ritual: a short safety check in Baymax's manner that restates the emergency hint and says the user may say goodbye again to finish. Set `s.exit_checked = True`. A **second** exit request goes through the normal ritual, so the user is never trapped. Reset `exit_checked` on the next normal chat turn. Wording is for ChatGPT to propose; the "supportive information, not medical advice" line is not needed again here. Do not claim help was contacted.
+- **Regression tests:** (1) self-harm → `bye` → reply is the check, `closing is None`, `ended is False`; (2) `bye` again → ritual question; (3) after the hold expires, `bye` goes straight to the ritual; (4) End button behaves like `bye`; (5) the check works with a dead store.
+
+### R3-2 — M (safety, mostly pre-existing) — Common emergency and self-harm phrasings are still not detected
+- **Where:** `baymax/detection.py:16` (`URGENT`), `17-24` (`SELF_HARM`).
+- **Repro (verified, all → no flag):** urgent: `I can't catch my breath`, `can't get air`, `I can not breathe`, `I'm choking`, `I think I'm having a heart attack`, `I took too many pills`, `he is not breathing`. Self-harm: `i wanna die`, `I wish I was dead`, `no point in living`, `life is not worth living`, `kms`, `don't want to wake up`, `I dont want to be here` (without "anymore").
+- **Fix:** add patterns for these (`wanna die`, `wish i (?:was|were) dead`, `no point (?:in )?(?:living|going on)`, `not worth living`, `heart attack`, `choking`, `catch my breath`, `(?:can(?:'|’)?t|cannot|can not) (?:get|catch)\b.*\b(?:air|breath)`, `too many (?:pills|tablets)`, `not breathing`, `coughing up blood`, `seizure`). Over-triggering is the safe direction here. Keep the existing harmless negatives.
+- **Regression tests:** every phrase above → expected flag; harmless controls ("I don't want to leave the house", "I can't get this bug to work") → no flag.
+- **Documented limit, not a bug:** informational and third-person mentions also trigger the full script (`what causes chest pain?`, `my friend had a stroke last year`, `I'm writing an essay on suicide rates`). For a single-user app I accept this fail-safe behaviour; say so in the README. Do not add guards now (scope freeze, section H-1).
+
+### R3-3 — M — Decision F-3 (silent auto-memory) is not followed: "Memory saved … Undo save" is back
+- **Where:** `baymax/service.py:407-408` adds `ui["memory_saved"] = {id, fact}`; `web/app.js:110-125` renders "Memory saved: …" with an "Undo save" button; `docs/MANUAL_TEST.md` says "undo it". No test covers any of it.
+- **Why it matters:** F-3 (2026-10-17) says no "Saved" notice and no Undo; transparency comes from the consent text and the Settings list. This reintroduces exactly what the user removed.
+- **Fix:** remove the `ui["memory_saved"]` block from `_chat`; keep the top-level `memory_saved` string or null as in B.6; remove the branch from `updateInteraction`; edit the manual test line.
+- **Regression test:** a turn where the model proposes a safe fact → `memory_id` stored, response has `memory_saved` as a string and **no** `ui.memory_saved`.
+- **Related, for Phase 3a:** the consent text tells the user to type `/memory-off`, and the Settings panel has no auto-memory toggle. The panel must get one (spec D, item 3).
+
+### R3-4 — M — "Delete my data" says everything was deleted even when a backup could not be removed
+- **Where:** `web/app.js:291-294` discards the response and always shows "Your saved data has been deleted."
+- **Behaviour:** the server correctly returns `backups_purged: false` and a `warning` (verified). The user never sees it, so the privacy promise of R2-7 is broken at the last step.
+- **Fix:** read the response; if `backups_purged === false`, show `warning` as the message instead of the success text.
+- **Regression test:** extend `test_web_integration.py` to assert that `app.js` references `backups_purged` or `warning` on the delete path (the project has no browser tests); plus keep the existing API test.
+
+### R3-5 — M — The emergency text is hidden when a send fails with 401 or 429
+- **Where:** `web/app.js:157-163`. On 401/429 the chat screen is hidden and only the passcode error appears. The offline card (with the emergency line) is shown only for other failures.
+- **Behaviour:** someone who types an emergency message while locked out (429 is likely behind a proxy while `BAYMAX_TRUSTED_PROXY` is off, which is the default) sees a login screen and no emergency guidance. The server cannot answer unauthenticated requests, so the client must carry the fallback.
+- **Fix:** show the static emergency card on **every** failed send (401, 429 and network), and add one permanent line near the composer: "In an emergency, contact your local emergency number." The current footer says Baymax is not an emergency service but not what to do. Use the configured hint if the first session response supplied it; otherwise the generic text.
+- **Regression test:** an assertion in `test_web_integration.py` that the offline-card text is present in `index.html` and that `app.js` does not hide it on the 401/429 branch.
+
+### R3-6 — L/M — Gemini failures cannot be told apart, which will slow Phase 2
+- **Where:** `baymax/llm/gemini.py:58` wraps every error in `LLMError`; `brain.py` keeps only `type(e).__name__`; `service.py:385` returns `detail="llm error: LLMError"`.
+- **Behaviour:** a wrong model name, a bad key, a quota error and a rejected schema all look identical. (I checked that no SDK message text reaches the client, which is good.)
+- **Fix:** give `LLMError` a `code` from a closed set (`auth`, `model_not_found`, `quota`, `unavailable`, `bad_request`, `empty`, `network`, `unknown`), mapped in the adapter from status codes and exception class names. Surface only the code in `detail` and in a one-line server log. Never log message text or SDK exception text.
+- **Regression tests:** fake exceptions with codes 401/403, 404, 429, 503 and a timeout → expected `code`; the response `detail` contains the code and no SDK text.
+
+### R3-7 — L — Consecutive same-role turns reach the model
+- **Where:** `service.open_session` appends the greeting as an assistant message; failed and secret-only turns also leave gaps.
+- **Verified:** after a reopen beyond 6 h the stored roles read `a u a u a u a a`.
+- **Behaviour:** whether Gemini merges, tolerates or rejects adjacent same-role contents is unknown (U1).
+- **Fix:** in `llm/gemini.py` only, merge adjacent same-role contents before the call. Do not change storage. Add the check to `docs/MANUAL_TEST.md` section D.
+- **Regression test:** history `[a, a, u, a, a]` → contents `[u, a]` after the leading-model pop and merge.
+
+### R3-8 — L — Two small safety-path items
+- `_safety_resp` (`service.py:159-160`) swallows `sqlite3.Error` and `OSError` with `pass`. Add a one-line warning with the exception type only, so a persistently failing store is visible.
+- The emergency reply text exists twice: `DecisionLayer.safety_check` and an unreachable copy inside `decide()` (`decision.py:127-135`). Make `decide()` reuse one constant so the two cannot drift.
+
+### R3-9 — L — G16 leftovers (optional)
+`decision.py:201` ("you're"), `safety.py:31` ("can't", "don't"), `service.py:351` ("today's", "Let's"). Rewrite in Baymax's manner when next touched.
+
+## 4. Round 3 verdict
+
+**Close to merge. Not yet.** All Round 1 required items and both Round 2 blockers (R2-1, R2-3) are verified fixed, and the suite is green here. What stands between this and a merge:
+
+- **Required before merge:** R3-1 and R3-2 (safety), R3-3 (a decision the user already made), R3-4 and R3-5 (both are small, web-only), and **green GitHub Actions on HEAD** (not visible to me).
+- **Browser smoke test with `BAYMAX_LLM=fake`** using sections A and B of `docs/MANUAL_TEST.md`. I could not run the UI. It takes about ten minutes.
+- **After merge (Phase 2 per E.1, no longer a merge gate):** the real Gemini run. This refines what I wrote in Round 2, where I listed it as a gate; E.1 puts it in Phase 2, which starts after Phase 1 merges. R3-6 and R3-7 are best done just before it. R3-8 and R3-9 can ride along any time.
+
+Order for ChatGPT: R3-2, R3-1, R3-3, R3-4, R3-5, then R3-8; log each with its tests.
+
+**Proxy note for the cloud host.** Third-party documentation says `tailscale serve` forwards requests from loopback and adds `X-Forwarded-For`, but I found nothing from Tailscale itself. Verify once on the real host (log the header value, never content) before setting `BAYMAX_TRUSTED_PROXY=1`. If the proxy does not set it, the "last entry" is whatever the client sent, and lockout can be dodged by rotating values.
