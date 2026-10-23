@@ -45,6 +45,33 @@ class ServiceTests(unittest.TestCase):
         self.assertIn("skip", response["reply"].lower())
         self.assertEqual(self.llm.calls, [])
 
+    def test_secret_and_pain_still_triggers_rating_without_exposing_secret(self):
+        svc = self.build()
+        raw = "my password is hunter2 and my head hurts"
+        response = svc.handle("u1", raw)
+        self.assertIn("pain", response["reply"].lower())
+        self.assertIn("from 0 to 10", response["reply"])
+        self.assertEqual(self.llm.calls, [])
+        history = self.store.history("u1", 10)
+        self.assertNotIn("hunter2", str(history))
+        episode = svc.session("u1").dstate.episode
+        self.assertNotIn("hunter2", episode.snippet)
+        self.assertIn("[REDACTED]", episode.snippet)
+
+    def test_secret_only_shortcut_does_not_hide_difficulty(self):
+        svc = self.build()
+        response = svc.handle("u1", "my password is Hunter2! My head hurts")
+        self.assertIn("from 0 to 10", response["reply"])
+        self.assertNotIn("can't accept or store keys", response["reply"].lower())
+        self.assertNotIn("Hunter2", str(self.store.history("u1", 10)))
+
+    def test_raw_secret_never_reaches_llm_input(self):
+        svc = self.build()
+        svc.handle("u1", "my password is hunter2. Can you explain photosynthesis?")
+        self.assertTrue(self.llm.calls)
+        self.assertNotIn("hunter2", str(self.llm.calls).lower())
+        self.assertIn("[REDACTED]", str(self.llm.calls))
+
     def test_skip_moves_on_without_saving_rating(self):
         svc = self.build()
         svc.handle("u1", "I feel sad")
