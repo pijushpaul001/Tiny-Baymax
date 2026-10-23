@@ -272,10 +272,12 @@
     const typed = window.prompt('Type DELETE to confirm complete data deletion:');
     if (typed !== "DELETE") return;
     try {
-      await api("/api/data", { method: "DELETE", body: JSON.stringify({ confirm: "DELETE" }) });
+      const result = await api("/api/data", { method: "DELETE", body: JSON.stringify({ confirm: "DELETE" }) });
       byId("messages").replaceChildren();
       byId("settings-panel").classList.add("hidden");
-      message("assistant", "Your saved data has been deleted.");
+      message("assistant", result.backups_purged === false
+        ? (result.warning || "Your active data was deleted, but a backup could not be removed.")
+        : "Your saved data has been deleted.");
     } catch (error) { message("assistant", error.message, true); }
   }
 

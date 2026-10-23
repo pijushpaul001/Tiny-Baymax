@@ -98,6 +98,13 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertTrue(closed["ended"])
 
+    def test_delete_path_surfaces_backup_warning(self):
+        _, _, script_bytes = self.request("/app.js")
+        script = script_bytes.decode()
+        delete_path = script[script.index('async function deleteAllData()'):script.index('byId("connect-form")')]
+        self.assertIn("backups_purged", delete_path)
+        self.assertIn("result.warning", delete_path)
+
     def test_consent_is_not_optional_for_connect_and_decline_is_actionable(self):
         _, _, html_bytes = self.request("/")
         _, _, script_bytes = self.request("/app.js")

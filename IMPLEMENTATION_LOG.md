@@ -190,3 +190,14 @@ GitHub Actions passed for push and pull-request workflows on commit `347f779`. A
 - **Test added:** `test_memory_saved_has_no_ui_field_and_stores_fact`.
 - **Verification:** Local focused test passed: 1 test.
 - **Not verified at this item:** Full suite, browser/device behavior, real Gemini, and deployment/HTTPS.
+
+
+## Round 3 — R3-4 delete-all backup warning — 2026-10-23
+
+- **Status:** Implemented; focused integration assertion passes. No version change.
+- **Finding:** R3-4: the browser discarded the delete-all response and always claimed that all saved data had been deleted, even when a backup could not be purged.
+- **Files changed:** `web/app.js`, `tests/test_web_integration.py`, `IMPLEMENTATION_LOG.md`.
+- **Implementation:** The delete-all handler now inspects `backups_purged`; when false it shows the server-provided `warning`, with a conservative fallback message if the warning field is absent. The success text remains for successful purges.
+- **Test added:** `test_delete_path_surfaces_backup_warning` checks that the delete handler references `backups_purged` and `result.warning`.
+- **Verification:** Local focused test passed: 1 test.
+- **Not verified at this item:** Real browser interaction, full suite, real Gemini, and deployment/HTTPS.
