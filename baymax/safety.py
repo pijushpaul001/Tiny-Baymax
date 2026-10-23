@@ -8,7 +8,7 @@ from .detection import rx
 # sentence/line boundary before the single-token rule below, otherwise a phrase
 # such as "password is correct horse battery staple" would leak its trailing words.
 _MULTIWORD_SECRET_RX = re.compile(
-    r"\b(?P<label>api[ _-]?key|password|passcode|secret|token|otp|pin)\b\s*"
+    r"\b(?P<label>api[ _-]?key|password|passcode|secret|token)\b\s*"
     r"(?:is\s+|=\s*|:\s*)"
     r"(?!was\b|were\b|are\b|got\b|received\b|rejected\b|invalid\b|"
     r"expired\b|missing\b|rotated\b|leaked\b|created\b|generated\b|"
@@ -18,11 +18,11 @@ _MULTIWORD_SECRET_RX = re.compile(
     re.I
 )
 SECRET_RX = re.compile(
-    r"\b(api[ _-]?key|password|passcode|secret|token|otp)\b\s*"
+    r"\b(api[ _-]?key|password|passcode|secret|token)\b\s*"
     r"(?:(?:is|=|:)\s*|\s+(?!was\b|were\b|are\b|got\b|received\b|rejected\b|"
     r"invalid\b|expired\b|missing\b|rotated\b|leaked\b|created\b|generated\b|"
     r"needed\b|works\b|failed\b|fails\b|sent\b|stored\b))\S+"
-    r"|\bpin\s*(?:is|=|:)\s*\d+|AIza[\w-]{20,}", re.I
+    r"|\b(?:pin|otp)\s*(?:is|=|:)\s*\d+(?:[ -]+\d+)*|AIza[\w-]{20,}", re.I
 )
 # Find a full formatted number run first, then decide based on its digit groups.
 # This avoids leaving the tail of very long IDs and avoids treating six two-digit
