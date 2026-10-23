@@ -105,6 +105,23 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertIn("backups_purged", delete_path)
         self.assertIn("result.warning", delete_path)
 
+    def test_emergency_card_and_line_remain_available_for_failed_sends(self):
+        _, _, html_bytes = self.request("/")
+        _, _, script_bytes = self.request("/app.js")
+        html = html_bytes.decode()
+        script = script_bytes.decode()
+        self.assertIn('id="offline-card"', html)
+        self.assertIn("contact local emergency services now", html)
+        self.assertIn("In an emergency, contact your local emergency number.", html)
+        self.assertLess(html.index('id="offline-card"'), html.index('id="connect-screen"'))
+        send_start = script.index('async function sendMessage')
+        catch_start = script.index('    } catch (error) {', send_start)
+        catch_end = script.index('    } finally {', catch_start)
+        catch_block = script[catch_start:catch_end]
+        self.assertIn('byId("offline-card").classList.remove("hidden")', catch_block)
+        self.assertIn('error.status === 401 || error.status === 429', catch_block)
+        self.assertNotIn('byId("offline-card").classList.add("hidden")', catch_block)
+
     def test_consent_is_not_optional_for_connect_and_decline_is_actionable(self):
         _, _, html_bytes = self.request("/")
         _, _, script_bytes = self.request("/app.js")

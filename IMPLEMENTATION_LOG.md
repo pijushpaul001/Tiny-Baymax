@@ -201,3 +201,14 @@ GitHub Actions passed for push and pull-request workflows on commit `347f779`. A
 - **Test added:** `test_delete_path_surfaces_backup_warning` checks that the delete handler references `backups_purged` and `result.warning`.
 - **Verification:** Local focused test passed: 1 test.
 - **Not verified at this item:** Real browser interaction, full suite, real Gemini, and deployment/HTTPS.
+
+
+## Round 3 — R3-5 emergency guidance on failed sends — 2026-10-23
+
+- **Status:** Implemented; focused integration assertion passes. No version change.
+- **Finding:** R3-5: 401/429 responses hid the chat screen and thereby hid the emergency card; network failures showed the card, but authentication/rate-limit failures did not.
+- **Files changed:** `web/app.js`, `web/index.html`, `tests/test_web_integration.py`, `IMPLEMENTATION_LOG.md`.
+- **Implementation:** Moved the emergency card outside both screen containers so it remains visible when the chat screen is hidden. Every failed send reveals it before status-specific handling. Added a permanent emergency line near the composer. If the session response provides `emergency_hint`, the client uses it; otherwise it uses generic local-emergency-number wording. Successful reconnection hides the transient card.
+- **Test added:** `test_emergency_card_and_line_remain_available_for_failed_sends` checks card content/location, permanent line text, and that the 401/429 catch branch does not hide the card.
+- **Verification:** Local focused test passed: 1 test.
+- **Not verified at this item:** Real browser visual behavior, full suite, real Gemini, and deployment/HTTPS.

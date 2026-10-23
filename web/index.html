@@ -24,6 +24,10 @@
     </header>
 
     <main>
+      <div id="offline-card" class="offline-card hidden" role="status">
+        <strong>Baymax is temporarily offline.</strong>
+        <p>If you may be experiencing a medical emergency, contact local emergency services now. Messages are not queued for later delivery.</p>
+      </div>
       <section id="connect-screen" class="panel connect-panel">
         <div class="orb" aria-hidden="true"><img src="/baymax.svg" alt=""></div>
         <p class="eyebrow">A calm space to talk</p>
@@ -45,10 +49,6 @@
             <div><p class="eyebrow">Your conversation</p><h2>How are you feeling today?</h2></div>
             <button id="clear-history" class="icon-button" type="button" title="Clear conversation" aria-label="Clear conversation">↺</button>
           </div>
-          <div id="offline-card" class="offline-card hidden" role="status">
-            <strong>Baymax is temporarily offline.</strong>
-            <p>If you may be experiencing a medical emergency, contact local emergency services now. Messages are not queued for later delivery.</p>
-          </div>
           <div id="messages" class="messages" aria-live="polite" aria-relevant="additions text"></div>
           <div id="interaction-tools" class="interaction-tools hidden"></div>
           <form id="chat-form" class="composer">
@@ -56,6 +56,7 @@
             <textarea id="message-input" rows="1" maxlength="2000" placeholder="Tell Baymax what’s on your mind…" required></textarea>
             <button id="send-button" type="submit" class="send-button" aria-label="Send message">↑</button>
           </form>
+          <p id="emergency-line" class="hint emergency-line">In an emergency, contact your local emergency number.</p>
           <p class="disclaimer">Baymax is an AI companion, not a doctor or emergency service. Avoid sharing passwords, keys, or highly sensitive details.</p>
         </section>
 

@@ -138,6 +138,7 @@
         setStatus("Not connected");
       }
     } catch (error) {
+      byId("offline-card").classList.remove("hidden");
       if (error.status === 401 || error.status === 429) {
         state.token = null;
         byId("chat-screen").classList.add("hidden");
@@ -145,7 +146,6 @@
         byId("connect-error").textContent = error.message;
         setStatus("Not connected");
       } else {
-        byId("offline-card").classList.remove("hidden");
         message("assistant", "I cannot reach the server right now. I have not queued your message for later.", true);
       }
     } finally {
@@ -175,6 +175,12 @@
         await api("/api/settings", { method: "POST", body: JSON.stringify({ consented_version: CONSENT_VERSION }) });
       }
       state.closing = null;
+      const emergencyHint = typeof session.emergency_hint === "string" && session.emergency_hint.trim()
+        ? session.emergency_hint.trim() : "your local emergency number";
+      byId("emergency-line").textContent = `In an emergency, contact ${emergencyHint}.`;
+      byId("offline-card").querySelector("p").textContent =
+        `If you may be experiencing a medical emergency, contact ${emergencyHint} now. Messages are not queued for later delivery.`;
+      byId("offline-card").classList.add("hidden");
       renderHistory(session.history);
       byId("connect-screen").classList.add("hidden");
       byId("chat-screen").classList.remove("hidden");
