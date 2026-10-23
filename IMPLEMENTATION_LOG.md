@@ -148,3 +148,12 @@ GitHub Actions passed for push and pull-request workflows on commit `347f779`. A
 - **R2-7:** Full deletion removes active rows before attempting backup purge. A failed purge is returned as a warning instead of preventing deletion or falsely claiming snapshots were removed. README now explains that pre-migration backups may contain deleted data until successfully purged.
 - **Tests added:** detection/redaction regressions, trusted-proxy resolver tests, safety emotion/error handling tests, and deletion/closing regressions.
 - **Verification:** Changes were committed to work/v0.6.1-hardening; the latest suite and GitHub Actions results have not yet been verified after these commits. Real Gemini, browser/device and proxy deployment checks remain pending.
+
+
+## Detection and redaction follow-up — 2026-10-23
+
+- **R2 detection follow-up:** Narrowed self-harm expressions so ordinary contextual statements about not wanting to live in a city or not wanting to be at a meeting do not trigger the crisis hold. "End it all" now requires a first-person intent phrase and excludes constructions followed by "with" or "by". Added tests for both positive and negative examples.
+- **Question/negation handling:** The general-question guard no longer mistakes "Can't ..." for a question. Apostrophe-less forms such as "dont", "cant", "wont", and "isnt" are recognized by the negation guard; tests cover "I dont have chest pain".
+- **R2-3 follow-up:** PIN and OTP redaction is now numeric-only, with spaces/dashes allowed. The service passes redacted text to the brain/model and persistence, while raw text is supplied only to local deterministic difficulty detection. Episode snippets/context remain based on redacted text. The secret-only shortcut no longer overrides a locally detected difficulty or red flag.
+- **Regression coverage added:** narrow self-harm matching; "Can't" difficulty detection; apostrophe-less negation; numeric-only PIN/OTP redaction; same-sentence secret plus symptom; punctuation preservation; service-level secret-plus-pain rating; and model-input/history redaction.
+- **Verification:** Changes are committed to `work/v0.6.1-hardening`. Full tests and GitHub Actions have not yet been verified after this batch. Do not treat prior 63-test results as validation of these changes.
