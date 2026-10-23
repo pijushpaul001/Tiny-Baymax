@@ -63,8 +63,9 @@ class BaymaxBrain:
         self.layer = DecisionLayer(cfg)
 
     def turn(self, user_msg: str, history: list, memories: list, emotion: EmotionState,
-             st: DecisionState, memory_enabled: bool = True, extra_system: str = "") -> TurnResult:
-        d = self.layer.decide(user_msg, emotion, memories, st)
+             st: DecisionState, memory_enabled: bool = True, extra_system: str = "",
+             raw_detection_text: Optional[str] = None) -> TurnResult:
+        d = self.layer.decide(user_msg, emotion, memories, st, raw_detection_text=raw_detection_text)
         warnings, mem_fact, signal = [], None, None
         mode = d.mode
         rating_event = None
