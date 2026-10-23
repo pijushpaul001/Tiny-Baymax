@@ -44,7 +44,7 @@ def resolve_client_id(peer_ip: str, forwarded_for: str = "", trusted_proxy: bool
             return peer
     except ValueError:
         return peer
-    forwarded = (forwarded_for or "").split(",", 1)[0].strip()
+    forwarded = (forwarded_for or "").split(",")[-1].strip()
     if not forwarded:
         return peer
     try:
