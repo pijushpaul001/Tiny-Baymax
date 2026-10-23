@@ -87,7 +87,8 @@ class DecisionLayer:
             trace=[f"safety-first: {det.red_flag}"], rating_action="none", ui_hint=None,
         )
 
-    def decide(self, msg: str, emotion: EmotionState, memories: list, st: DecisionState) -> Decision:
+    def decide(self, msg: str, emotion: EmotionState, memories: list, st: DecisionState,
+               raw_detection_text: Optional[str] = None) -> Decision:
         c, trace = self.cfg, []
         st.turn += 1
 
@@ -115,7 +116,10 @@ class DecisionLayer:
 
         rating = rating_reply.value if rating_reply.kind in {"value", "correction"} else None
         handled_rating_reply = rating_reply.kind in {"skip", "ambiguous", "correction"} or rating is not None
-        det = Detection() if handled_rating_reply else detect(msg)
+        # Raw text is used only by deterministic local detection. The redacted msg remains
+        # the sole source for context snippets, memory relevance and the model brief.
+        detection_text = msg if raw_detection_text is None else raw_detection_text
+        det = Detection() if handled_rating_reply else detect(detection_text)
         trace.append(f"difficulty: {det.type}/{det.subtype} red_flag={det.red_flag or '-'} rating={rating_reply.kind}:{rating}")
 
         # 3 DETERMINE SEVERITY NEED
