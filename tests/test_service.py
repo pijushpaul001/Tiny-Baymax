@@ -2,6 +2,7 @@ import sqlite3
 import threading
 import time
 import unittest
+from unittest.mock import patch
 
 from baymax.llm.fake import FakeLLM
 from baymax.service import ChatService
@@ -180,6 +181,27 @@ class ServiceTests(unittest.TestCase):
         deletion.join(timeout=3)
         self.assertFalse(turn.is_alive())
         self.assertFalse(deletion.is_alive())
+
+    def test_closing_choice_does_not_treat_finish_homework_as_shutdown(self):
+        svc = self.build()
+        svc.handle("u1", "/quit")
+        svc.handle("u1", "no")
+        svc.handle("u1", "my day was difficult")
+        # Re-enter the ritual and provide feedback to reach the closing choice.
+        svc.handle("u1", "/quit")
+        svc.handle("u1", "no")
+        svc.handle("u1", "I need to finish my homework")
+        self.assertFalse(svc.session("u1").closing == "ended")
+
+    def test_forget_user_deletes_rows_even_when_backup_purge_fails(self):
+        svc = self.build()
+        self.store.add_messages("u1", [("user", "private conversation")])
+        with patch.object(self.store, "purge_backups", side_effect=OSError("permission denied")):
+            result = svc.forget_user("u1")
+        self.assertTrue(result["deleted"])
+        self.assertFalse(result["backups_purged"])
+        self.assertIn("warning", result)
+        self.assertEqual(self.store.history("u1", 10), [])
 
     def test_feedback_is_redacted_before_storage(self):
         svc = self.build()
