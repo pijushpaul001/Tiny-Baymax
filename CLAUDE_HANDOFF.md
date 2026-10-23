@@ -361,6 +361,7 @@ Add tests alongside the existing suite (I have not seen `tests/`, so ChatGPT mus
 | F-5 | Are health-related reminders (for example medication times) acceptable to store on the server? | **Open.** Default: allowed because user-authored, kept out of Gemini context, covered by export and delete. |
 | F-6 | Who uses it: only the user, or a few friends? | **Open.** Default: only the user. |
 | F-7 | Version numbering v0.6.1 (hardening), v0.6.2 (Android shell), v0.7.0 (reminders)? | **Decided 2026-10-17: accepted.** |
+| F-8 | What is kept after an emergency reply (review finding F3)? | **Decided 2026-10-17 on the user's delegation (user may override):** save only Baymax's reply plus a neutral placeholder user turn, and raise concern by 0.25. The user's emergency words are never stored. Best-effort, after the reply, never blocking it. |
 
 ### H. Scope: simple first, movie-style Baymax (decided 2026-10-17)
 
@@ -407,3 +408,4 @@ The user wants no fancy facilities yet: a simple companion that feels like Bayma
 - 2026-10-17: Recorded user decisions F-1 (Android), F-2 (free cloud host), F-3 (auto-memory on), F-7 (version numbers); F-4 left open with a conflict noted against project rule 4. Rewrote E.2 hosting around an always-on free VM with a persistent disk plus Tailscale, and made Phase 3 Android-only. PR #1 (`work/v0.6.1-hardening`) reviewed: findings F1-F12 in `REVIEW_PR1.md`; fixing F1, F2, F3, F5 first, then F4 and F7, is required before merge.
 - 2026-10-17: Decision F-3 refined by the user: auto-memory is silent, with no save notification or Undo in the app. Removed the toast/Undo requirement from B.6, Phase 3 and section D; Settings still lists and deletes memories, and the consent screen discloses auto-save.
 - 2026-10-17: User asked to keep it simple and a movie-accurate Baymax. Added section H (scope freeze; face and voice defined; character fidelity without copied dialogue). Phase 4 reminders deferred. New order: Phase 1 fixes (F1-F5, F7 first), Phase 2 verification, Phase 3a face and voice in web, Phase 3b Android shell, host.
+- 2026-10-17: Added F-8 (emergency exchange retention) and refined the F3 fix in `REVIEW_PR1.md`: store the reply and a placeholder, not the user's words.
