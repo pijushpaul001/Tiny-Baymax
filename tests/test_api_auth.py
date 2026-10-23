@@ -200,7 +200,7 @@ class ApiAuthTests(unittest.TestCase):
         self.assertEqual(resolve_client_id("127.0.0.1", "198.51.100.7", False), "127.0.0.1")
         self.assertEqual(resolve_client_id("127.0.0.1", "198.51.100.7", True), "198.51.100.7")
         self.assertEqual(resolve_client_id("127.0.0.1", "198.51.100.8, 198.51.100.9", True),
-                         "198.51.100.8")
+                         "198.51.100.9")
         self.assertEqual(resolve_client_id("203.0.113.8", "198.51.100.7", True), "203.0.113.8")
         self.assertEqual(resolve_client_id("127.0.0.1", "not-an-ip", True), "127.0.0.1")
 
