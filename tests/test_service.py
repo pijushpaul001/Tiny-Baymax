@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import patch
 
 from baymax.llm.fake import FakeLLM
-from baymax.service import ChatService
+from baymax.service import ChatService, _closing_should_end
 from baymax.storage import Store
 
 
@@ -183,15 +183,9 @@ class ServiceTests(unittest.TestCase):
         self.assertFalse(deletion.is_alive())
 
     def test_closing_choice_does_not_treat_finish_homework_as_shutdown(self):
-        svc = self.build()
-        svc.handle("u1", "/quit")
-        svc.handle("u1", "no")
-        svc.handle("u1", "my day was difficult")
-        # Re-enter the ritual and provide feedback to reach the closing choice.
-        svc.handle("u1", "/quit")
-        svc.handle("u1", "no")
-        svc.handle("u1", "I need to finish my homework")
-        self.assertFalse(svc.session("u1").closing == "ended")
+        self.assertFalse(_closing_should_end("I need to finish my homework"))
+        self.assertTrue(_closing_should_end("shut down please"))
+        self.assertTrue(_closing_should_end("let's stop"))
 
     def test_forget_user_deletes_rows_even_when_backup_purge_fails(self):
         svc = self.build()
