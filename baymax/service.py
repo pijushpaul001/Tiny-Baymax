@@ -3,6 +3,7 @@
 Both the HTTP API and any future client (CLI, voice, robot) talk only to this class.
 """
 import re
+import sqlite3
 import threading
 import time
 from dataclasses import dataclass, field
@@ -134,14 +135,16 @@ class ChatService:
         return out
 
     def _safety_resp(self, uid, s, decision):
-        # Construct the deterministic response without depending on storage or the LLM.
+        # Construct the deterministic reply before any storage access or LLM call.
         from .emotion import EmotionState
+        emotion = EmotionState()
+        emotion.nudge(concern=0.25)
         response = {"reply": decision.deterministic_reply, "kind": "safety", "mode": "reassure",
-                    "ended": False, "closing": s.closing, "emotion": EmotionState().to_dict(),
+                    "ended": False, "closing": s.closing, "emotion": emotion.to_dict(),
                     "trace": decision.trace}
 
-        # Best-effort audit context: never persist the user's emergency wording. The response
-        # is already determined; persistence failure must never suppress or alter it.
+        # Best-effort audit context; never persist the user's emergency wording.
+        # Only expected storage/OS failures are suppressed; programming errors remain visible.
         try:
             emotion = self._emotion(uid)
             emotion.nudge(concern=0.25)
@@ -151,7 +154,8 @@ class ChatService:
                 emotion=emotion.to_dict(),
                 bump=False,
             )
-        except Exception:
+            response["emotion"] = emotion.to_dict()
+        except (sqlite3.Error, OSError):
             pass
         return response
 
