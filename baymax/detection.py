@@ -14,11 +14,18 @@ EMOTION = rx(r"\b(sad|depressed|anxious|anxiety|stressed|stress|lonely|miserable
 UNWELL = rx(r"\b(not feel(?:ing)? (?:very |so |too )?(?:well|ok|okay|great|good|right|myself)|i(?:'m| am) not (?:very |so )?(?:well|ok|okay)|unwell|under the weather|feel(?:ing)? (?:terrible|awful|ill|off))\b")
 OTHER = rx(r"\b(exhausted|tired|drained|overwhelmed|confused|can'?t cope|struggling|burn(?:ed|t)? out)\b")
 URGENT = rx(r"\b(chest pain|chest feels tight|chest tightness|tightness in (?:my )?chest|chest pressure|can['’]?t breathe|cannot breathe|trouble breathing|difficulty breathing|severe bleeding|won['’]?t stop bleeding|unconscious|passed out|stroke|face (?:is )?drooping|overdos(?:e|ed))\b")
-SELF_HARM = rx(r"\b(suicid\w*|kill myself|end my life|want to die|(?:don['’]?t|do not) want to (?:live|be here|be alive)|no reason to live|better off dead|end it all|take my own life|hurt myself|self[- ]harm)\b")
-NEG = rx(r"\b(?:not|no|never|without|\w+n't)\s+(?:\w+\s+){0,2}$")
+SELF_HARM = rx(
+    r"\b(?:suicid\w*|kill myself|end my life|want to die|"
+    r"(?:don['’]?t|do not) want to live(?=\s*(?:[.!?,;]|$)|\s+(?:anymore|like this)\b)|"
+    r"(?:don['’]?t|do not) want to be here(?=\s*(?:[.!?,;]|$)|\s+any ?more\b)|"
+    r"(?:don['’]?t|do not) want to be alive|no reason to live|better off dead|"
+    r"(?:i want to|i(?:'m| am) going to|im going to|i might) end it all(?!\s+(?:with|by)\b)|"
+    r"take my own life|hurt myself|self[- ]harm)\b"
+)
+NEG = rx(r"\b(?:not|no|never|without|\w+n't|dont|doesnt|didnt|cant|wont|isnt|arent|wasnt|werent|havent|hasnt|hadnt|shouldnt|wouldnt|couldnt)\s+(?:\w+\s+){0,2}$")
 THIRD = rx(r"\b(my (?:wife|husband|partner|friend|mom|dad|mother|father|son|daughter|brother|sister|kid|child|boss|dog|cat)|he|she|they|his|her|their)\b")
 FIRST = rx(r"\b(i|i'm|im|i've|me)\b")
-INFO_Q = rx(r"^\s*(what|why|how|when|which|is|are|can|does|do)\b")
+INFO_Q = rx(r"^\s*(what|why|how|when|which|is|are|can(?!['’]?t)|does|do)\b")
 
 EMOTION_ADJ = {"anxiety": "anxious", "stress": "stressed", "panic": "panicked", "panicking": "panicked",
                "panicked": "panicked", "crying": "upset", "depressed": "low", "devastated": "devastated"}
