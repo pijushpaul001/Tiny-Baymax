@@ -133,12 +133,27 @@ class ChatService:
         out.update(extra)
         return out
 
-    def _safety_resp(self, s, decision):
-        # This path intentionally does not read SQLite or call the LLM.
+    def _safety_resp(self, uid, s, decision):
+        # Construct the deterministic response without depending on storage or the LLM.
         from .emotion import EmotionState
-        return {"reply": decision.deterministic_reply, "kind": "safety", "mode": "reassure",
-                "ended": False, "closing": s.closing, "emotion": EmotionState().to_dict(),
-                "trace": decision.trace}
+        response = {"reply": decision.deterministic_reply, "kind": "safety", "mode": "reassure",
+                    "ended": False, "closing": s.closing, "emotion": EmotionState().to_dict(),
+                    "trace": decision.trace}
+
+        # Best-effort audit context: never persist the user's emergency wording. The response
+        # is already determined; persistence failure must never suppress or alter it.
+        try:
+            emotion = self._emotion(uid)
+            emotion.nudge(concern=0.25)
+            self.store.persist_turn(
+                uid,
+                pairs=[("user", "(message not saved)"), ("assistant", decision.deterministic_reply)],
+                emotion=emotion.to_dict(),
+                bump=False,
+            )
+        except Exception:
+            pass
+        return response
 
     def end_session(self, uid: str) -> dict:
         s = self.session(uid)
@@ -219,7 +234,7 @@ class ChatService:
             s.dstate.turn += 1
             if safety.detection.red_flag == "self_harm":
                 s.dstate.safety_hold_until = s.dstate.turn + self.brain.layer.cfg.safety_hold_turns
-            return self._safety_resp(s, safety)
+            return self._safety_resp(uid, s, safety)
 
         # ---- shutdown ritual
         if s.closing == "asked":
