@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from .brain import BaymaxBrain
 from .constants import GREETING
 from .decision import DecisionConfig, DecisionState
+from .detection import detect
 from .emotion import EmotionState
 from .persona import PERSONA
 from .safety import SECRET_NOTE, is_only_secret, memory_gate, redact_secrets
@@ -351,7 +352,10 @@ class ChatService:
                               kind="limit", s=s)
 
         safe, had_secret = redact_secrets(text)
-        if had_secret and is_only_secret(safe):      # nothing but a secret: answer without the LLM
+        raw_detection = detect(text)  # category-only local check; raw text is never passed to the LLM
+        has_safety_or_difficulty = raw_detection.type != "none" or bool(raw_detection.red_flag)
+        if had_secret and is_only_secret(safe) and not has_safety_or_difficulty:
+            # Do not let the secret-only shortcut suppress a real difficulty report.
             st.add_messages(uid, [("user", safe), ("assistant", SECRET_NOTE)])
             return self._resp(uid, SECRET_NOTE, kind="chat", s=s)
 
@@ -362,7 +366,10 @@ class ChatService:
         extra = ("\n\nSIMULATED BAYMAX STATE:\n" + emotion.report() + "\n\nLONG-TERM MEMORY:\n"
                  + ("\n".join(f"- {m}" for m in memories) if memories else "No memories are currently saved."))
 
-        r = self.brain.turn(safe, history, memories, emotion, s.dstate, settings["auto_memory"], extra_system=extra)
+        r = self.brain.turn(
+            safe, history, memories, emotion, s.dstate, settings["auto_memory"], extra_system=extra,
+            raw_detection_text=text,
+        )
         trace = r.decision.trace + ([f"warnings: {r.warnings}"] if r.warnings else []) if s.debug else None
 
         if r.signal and not r.decision.deterministic_reply and r.decision.detection.type == "none" \
