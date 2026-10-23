@@ -7,10 +7,10 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 - **Repository:** `pijushpaul001/Tiny-Baymax`
 - **Implementation snapshot:** v0.6.1 hardening candidate
 - **Architecture:** Claude's detailed v0.6 architecture reviewed; use it as the contract for follow-up work.
-- **Automated verification:** 41 tests passed locally; Python compile check and JavaScript syntax checks passed.
+- **Automated verification:** Previous snapshot reported 41 tests passing on 2026-10-13. F3 changes are awaiting CI verification; do not treat the older result as validation of this change.
 - **GitHub sync:** Source is being committed to `work/v0.6.1-hardening`. `main` remains documentation-only until the pull request is reviewed and merged.
 - **Real Gemini / device verification:** Not run. These require the user's configured API key and phone/network environment.
-- **Last updated:** 2026-10-13
+- **Last updated:** 2026-10-23
 
 ## Summary
 
@@ -56,7 +56,7 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 
 ## Next steps
 
-1. Finish syncing and verify the source tree on `work/v0.6.1-hardening`.
+1. Verify F3 through the branch's GitHub Actions full test matrix; address any failures before further review.
 2. Review the draft pull request against G1–G18 and AC-1–AC-16 in `CLAUDE_HANDOFF.md`; handle review findings in separate commits.
 3. Run `docs/MANUAL_TEST.md` with the fake model, then real Gemini, then the user's phone.
 4. Record only verified outcomes. Do not move to the native mobile shell until Phase 1 tests pass and Phase 2 results are recorded.
@@ -86,7 +86,7 @@ Review source: user-provided Claude review of PR #1 at commit `b18e7b6`. The rev
 
 ### Deferred or still open
 
-- **F3 / AC-7 conflict:** Claude recommends best-effort persistence of red-flag exchanges, but AC-7 explicitly says the emergency reply works with no storage access. No change was made to this contract pending a decision; emergency response remains independent of the model and storage.
+- **F3 / AC-7:** Implemented best-effort post-response persistence. The deterministic safety reply is constructed before persistence and returned unchanged even if persistence fails. The original emergency wording is never stored; history records `(message not saved)` plus Baymax's reply, and persisted concern is nudged by 0.25. This records that a safety response occurred, so it is not a claim of zero trace. Regression tests and current CI are the verification gates.
 - **F6, F7, F8, F9, F10, F11, F12** remain open.
 - **AC-12 / AC-16:** Key exposure checks and recovery/verification of the original 48 tests remain unproven. The current suite was created for this snapshot and is not evidence that the prior suite passed.
 - Live Gemini, browser UI, phone/PWA, and tunnel verification are still pending.
@@ -126,3 +126,13 @@ GitHub Actions passed for push and pull-request workflows on commit `347f779`. A
 - **Tests run and results:** Focused regex cases were exercised in an isolated Python check and produced the expected redactions. The full repository test suite has not been run locally in this session. GitHub Actions for commit `69d61929d8befff3f2f602807c806bae6a1de89c` was queued at the time of this entry.
 - **Known limitations / risks:** Redaction is heuristic. Multi-word assigned values are redacted through the next sentence/line boundary, which may also hide non-secret text in that span. This change does not establish complete secret-detection coverage.
 - **Next step:** Verify the GitHub Actions result on the latest branch head, then continue the remaining F12 review items.
+
+
+## F3 / AC-7 — emergency response persistence — 2026-10-23
+
+- **Status:** Implemented in source; awaiting automated CI verification.
+- **Files changed:** `baymax/service.py`, `tests/test_service.py`, `README.md`, `IMPLEMENTATION_LOG.md`.
+- **Implementation:** Constructs the deterministic response first, then best-effort persists a neutral user placeholder and the assistant's safety reply, and nudges persisted concern by 0.25. Storage errors are caught and do not change the returned safety response. The original emergency wording is not persisted by this path.
+- **Regression coverage added:** placeholder/reply-only persistence; concern increase; response survives storage failure; safety response preempts shutdown state while preserving the ritual.
+- **Not verified by this edit:** live Gemini, phone/PWA/browser visuals, and deployment/HTTPS.
+- **Important privacy qualification:** Although the original emergency words are not saved, the saved Baymax reply indicates that a safety event occurred.
