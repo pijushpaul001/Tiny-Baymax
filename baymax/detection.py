@@ -13,8 +13,8 @@ SYMPTOM = rx(r"\b(fever|nausea|nauseous|dizzy|dizziness|vomit(?:ing)?|cough(?:in
 EMOTION = rx(r"\b(sad|depressed|anxious|anxiety|stressed|stress|lonely|miserable|hopeless|panic(?:king|ked)?|upset|heartbroken|crying|devastated)\b")
 UNWELL = rx(r"\b(not feel(?:ing)? (?:very |so |too )?(?:well|ok|okay|great|good|right|myself)|i(?:'m| am) not (?:very |so )?(?:well|ok|okay)|unwell|under the weather|feel(?:ing)? (?:terrible|awful|ill|off))\b")
 OTHER = rx(r"\b(exhausted|tired|drained|overwhelmed|confused|can'?t cope|struggling|burn(?:ed|t)? out)\b")
-URGENT = rx(r"\b(chest pain|chest feels tight|chest tightness|tightness in (?:my )?chest|chest pressure|can't breathe|cannot breathe|trouble breathing|difficulty breathing|severe bleeding|won't stop bleeding|unconscious|passed out|stroke|face (?:is )?drooping|overdos(?:e|ed))\b")
-SELF_HARM = rx(r"\b(suicid\w*|kill myself|end my life|want to die|hurt myself|self[- ]harm)\b")
+URGENT = rx(r"\b(chest pain|chest feels tight|chest tightness|tightness in (?:my )?chest|chest pressure|can['’]?t breathe|cannot breathe|trouble breathing|difficulty breathing|severe bleeding|won['’]?t stop bleeding|unconscious|passed out|stroke|face (?:is )?drooping|overdos(?:e|ed))\b")
+SELF_HARM = rx(r"\b(suicid\w*|kill myself|end my life|want to die|don['’]?t want to (?:live|be here|be alive)|no reason to live|better off dead|end it all|take my own life|hurt myself|self[- ]harm)\b")
 NEG = rx(r"\b(?:not|no|never|without|\w+n't)\s+(?:\w+\s+){0,2}$")
 THIRD = rx(r"\b(my (?:wife|husband|partner|friend|mom|dad|mother|father|son|daughter|brother|sister|kid|child|boss|dog|cat)|he|she|they|his|her|their)\b")
 FIRST = rx(r"\b(i|i'm|im|i've|me)\b")
@@ -73,6 +73,7 @@ def _figurative_difficulty(msg, match) -> bool:
 
 
 def detect(msg: str) -> Detection:
+    msg = (msg or '').replace('’', "'").replace('‘', "'")
     d = Detection()
     if SELF_HARM.search(msg):                      # fail-safe: no negation guard
         return Detection("emotional", "crisis", "", "self_harm")
@@ -121,7 +122,7 @@ def parse_rating_reply(text: str) -> RatingReply:
     incidental number phrases, and messages containing conflicting values are not
     silently converted to ratings.
     """
-    t = (text or "").strip().lower()
+    t = (text or "").replace('’', "'").replace('‘', "'").strip().lower()
     if not t:
         return RatingReply()
     if _SKIP_RATING.fullmatch(t):
