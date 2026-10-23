@@ -117,6 +117,18 @@ class SecretRedactionTests(unittest.TestCase):
                 for word in secret_words:
                     self.assertNotIn(word, safe)
 
+    def test_multiword_secret_redaction_preserves_following_symptom_sentence(self):
+        cases = (
+            ("my password is hunter2. My head hurts really bad", "My head hurts really bad"),
+            ("my pin is 4821. I feel sad today", "I feel sad today"),
+        )
+        for raw, expected in cases:
+            with self.subTest(raw=raw):
+                safe, found = redact_secrets(raw)
+                self.assertTrue(found)
+                self.assertIn("[REDACTED]", safe)
+                self.assertIn(expected, safe)
+
     def test_does_not_redact_ten_digit_phone_numbers_by_digit_count_alone(self):
         for raw in ("1234567890", "9876543210"):
             with self.subTest(raw=raw):
