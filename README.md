@@ -93,3 +93,6 @@ python -m unittest discover -s tests -t . -v
 ```
 
 See [`docs/MANUAL_TEST.md`](docs/MANUAL_TEST.md) for the real Gemini and phone checks that cannot be proven by automated tests. Real Gemini use and phone access must be verified on your own configured server before relying on them.
+
+
+**Emergency detection limitation:** Detection is deliberately fail-safe. Informational and third-person mentions can also trigger the safety response.

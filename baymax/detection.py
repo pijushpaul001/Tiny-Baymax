@@ -13,12 +13,19 @@ SYMPTOM = rx(r"\b(fever|nausea|nauseous|dizzy|dizziness|vomit(?:ing)?|cough(?:in
 EMOTION = rx(r"\b(sad|depressed|anxious|anxiety|stressed|stress|lonely|miserable|hopeless|panic(?:king|ked)?|upset|heartbroken|crying|devastated)\b")
 UNWELL = rx(r"\b(not feel(?:ing)? (?:very |so |too )?(?:well|ok|okay|great|good|right|myself)|i(?:'m| am) not (?:very |so )?(?:well|ok|okay)|unwell|under the weather|feel(?:ing)? (?:terrible|awful|ill|off))\b")
 OTHER = rx(r"\b(exhausted|tired|drained|overwhelmed|confused|can'?t cope|struggling|burn(?:ed|t)? out)\b")
-URGENT = rx(r"\b(chest pain|chest feels tight|chest tightness|tightness in (?:my )?chest|chest pressure|can['’]?t breathe|cannot breathe|trouble breathing|difficulty breathing|severe bleeding|won['’]?t stop bleeding|unconscious|passed out|stroke|face (?:is )?drooping|overdos(?:e|ed))\b")
+URGENT = rx(
+    r"\b(chest pain|chest feels tight|chest tightness|tightness in (?:my )?chest|chest pressure|"
+    r"heart attack|chok(?:e|ing)|catch my breath|can['’]?t breathe|cannot breathe|can not breathe|"
+    r"(?:can['’]?t|cannot|can not) (?:get|catch)\b.*\b(?:air|breath)|trouble breathing|difficulty breathing|"
+    r"severe bleeding|coughing up blood|won['’]?t stop bleeding|unconscious|passed out|stroke|"
+    r"face (?:is )?drooping|overdos(?:e|ed)|too many (?:pills|tablets)|not breathing|seizure)\b"
+)
 SELF_HARM = rx(
-    r"\b(?:suicid\w*|kill myself|end my life|want to die|"
+    r"\b(?:suicid\w*|kms|kill myself|end my life|wanna die|wish i (?:was|were) dead|want to die|"
     r"(?:don['’]?t|do not) want to live(?=\s*(?:[.!?,;]|$)|\s+(?:anymore|like this)\b)|"
-    r"(?:don['’]?t|do not) want to be here(?=\s+any ?more\b)|"
-    r"(?:don['’]?t|do not) want to be alive|no reason to live|better off dead|"
+    r"(?:don['’]?t|do not) want to be here(?=\s*(?:[.!?,;]|$)|\s+any ?more\b)|"
+    r"(?:don['’]?t|do not) want to be alive|(?:don['’]?t|do not) want to wake up|"
+    r"no reason to live|no point (?:in )?(?:living|going on)|not worth living|better off dead|"
     r"(?:i want to|i(?:'m| am) going to|im going to|i might) end it all(?!\s+(?:with|by)\b)|"
     r"take my own life|hurt myself|self[- ]harm)\b"
 )

@@ -157,3 +157,14 @@ GitHub Actions passed for push and pull-request workflows on commit `347f779`. A
 - **R2-3 follow-up:** PIN and OTP redaction is now numeric-only, with spaces/dashes allowed. The service passes redacted text to the brain/model and persistence, while raw text is supplied only to local deterministic difficulty detection. Episode snippets/context remain based on redacted text. The secret-only shortcut no longer overrides a locally detected difficulty or red flag.
 - **Regression coverage added:** narrow self-harm matching; "Can't" difficulty detection; apostrophe-less negation; numeric-only PIN/OTP redaction; same-sentence secret plus symptom; punctuation preservation; ordinary password-status wording; service-level secret-plus-pain rating; and model-input/history redaction.
 - **Verification:** GitHub Actions passed all 84 tests on Python 3.10, 3.11, and 3.12 for commit `7ace26bb7ec8567e5e89f69d2919ce5dcf56a891`. Real Gemini, browser/device and proxy deployment checks remain pending.
+
+
+## Round 3 — R3-2 detection gaps — 2026-10-23
+
+- **Status:** Implemented; focused regression tests pass. No version change.
+- **Finding:** R3-2 (`REVIEW_PR1.md`): add the listed emergency/self-harm phrases while preserving the three specified harmless controls. Informational and third-person mentions intentionally remain unguarded, as accepted by the review.
+- **Files changed:** `baymax/detection.py`, `tests/test_detection_and_safety.py`, `README.md`, `IMPLEMENTATION_LOG.md`.
+- **Implementation:** Expanded urgent and self-harm phrase matching for breathing/air, choking, heart attack, overdose wording, not breathing, coughing blood, seizure, `wanna die`, wishes of being dead, lack of point in living, `kms`, waking up, and the bare first-person `don't want to be here` phrasing. Added the fail-safe limitation to the README.
+- **Tests added:** `test_urgent_phrase_table`, `test_self_harm_phrase_table`, `test_harmless_controls_not_flagged`.
+- **Verification:** Local focused tests passed: 3 tests.
+- **Not verified at this item:** Full suite, browser/device behavior, real Gemini, and deployment/HTTPS.

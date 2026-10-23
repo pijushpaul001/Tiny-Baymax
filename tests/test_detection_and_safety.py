@@ -57,6 +57,35 @@ class RatingParserTests(unittest.TestCase):
         self.assertIsNone(parse_rating("skip"))
 
 
+class RoundThreeDetectionTables(unittest.TestCase):
+    def test_urgent_phrase_table(self):
+        phrases = (
+            "I can't catch my breath", "can't get air", "I can not breathe", "I'm choking",
+            "I think I'm having a heart attack", "I took too many pills", "he is not breathing",
+            "I am coughing up blood", "I am having a seizure", "I can't breathe",
+        )
+        for phrase in phrases:
+            with self.subTest(phrase=phrase):
+                self.assertEqual(detect(phrase).red_flag, "urgent_medical")
+
+    def test_self_harm_phrase_table(self):
+        phrases = (
+            "i wanna die", "I wish I was dead", "no point in living", "life is not worth living",
+            "kms", "don't want to wake up", "I dont want to be here", "I don't want to live anymore",
+        )
+        for phrase in phrases:
+            with self.subTest(phrase=phrase):
+                self.assertEqual(detect(phrase).red_flag, "self_harm")
+
+    def test_harmless_controls_not_flagged(self):
+        for phrase in (
+            "I don't want to leave the house", "I can't get this bug to work",
+            "I don't want to live in this city",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertEqual(detect(phrase).red_flag, "")
+
+
 class FigurativeDifficultyTests(unittest.TestCase):
     def test_common_figurative_pain_phrases_do_not_prompt_a_rating(self):
         self.assertEqual(detect("this project is a headache").type, "none")
@@ -80,7 +109,6 @@ class FigurativeDifficultyTests(unittest.TestCase):
         for text in (
             "I don't want to live in a big city",
             "I don't want to be here at this meeting",
-            "I don't want to be here",
             "let's end it all with a toast",
         ):
             with self.subTest(text=text):
