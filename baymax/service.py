@@ -53,7 +53,7 @@ def _closing_should_end(text: str) -> bool:
         return False
     if re.search(r"\b(?:don't|dont|do not|not|never)\b", normalized):
         return False
-    return bool(re.search(r"\b(?:stop|shut|shutdown|quit|exit|bye|goodbye|end|finish|leave)\b", normalized))
+    return bool(re.search(r"\b(?:stop|shut|shutdown|quit|exit|bye|goodbye|end)\b", normalized))
 
 
 def _closing_reply_matches(pattern: re.Pattern, text: str) -> bool:
