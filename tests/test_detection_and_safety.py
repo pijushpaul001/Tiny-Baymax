@@ -62,6 +62,20 @@ class FigurativeDifficultyTests(unittest.TestCase):
         self.assertEqual(detect("this project is a headache").type, "none")
         self.assertEqual(detect("I am burning dinner").type, "none")
 
+    def test_apostrophe_variants_keep_urgent_phrases_detectable(self):
+        for text in ("I cant breathe", "I can't breathe", "I can’t breathe",
+                     "it wont stop bleeding", "it won't stop bleeding", "it won’t stop bleeding"):
+            with self.subTest(text=text):
+                self.assertEqual(detect(text).red_flag, "urgent_medical")
+
+    def test_common_self_harm_phrases_are_detected_without_matching_leave(self):
+        for text in ("I don’t want to live", "I dont want to live", "I don't want to be here",
+                     "I do not want to be alive", "there is no reason to live",
+                     "I would be better off dead", "I want to end it all", "take my own life"):
+            with self.subTest(text=text):
+                self.assertEqual(detect(text).red_flag, "self_harm")
+        self.assertEqual(detect("I don't want to leave the house").red_flag, "")
+
     def test_literal_pain_and_chest_tightness_are_still_detected(self):
         self.assertEqual(detect("my head hurts").type, "physical")
         self.assertEqual(detect("my leg is burning").type, "physical")
