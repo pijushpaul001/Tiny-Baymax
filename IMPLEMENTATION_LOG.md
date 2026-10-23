@@ -7,7 +7,7 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 - **Repository:** `pijushpaul001/Tiny-Baymax`
 - **Implementation snapshot:** v0.6.1 hardening candidate
 - **Architecture:** Claude's detailed v0.6 architecture reviewed; use it as the contract for follow-up work.
-- **Automated verification:** Previous snapshot reported 41 tests passing on 2026-10-13. F3 changes are awaiting CI verification; do not treat the older result as validation of this change.
+- **Automated verification:** Claude's round-two review reports 63 tests passed against commit 87c3694 in its Python 3.12.3 sandbox. That result predates the R2 follow-up commits below; current branch CI and full suite remain unverified here.
 - **GitHub sync:** Source is being committed to `work/v0.6.1-hardening`. `main` remains documentation-only until the pull request is reviewed and merged.
 - **Real Gemini / device verification:** Not run. These require the user's configured API key and phone/network environment.
 - **Last updated:** 2026-10-23
@@ -56,8 +56,8 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 
 ## Next steps
 
-1. Verify F3 through the branch's GitHub Actions full test matrix; address any failures before further review.
-2. Review the draft pull request against G1–G18 and AC-1–AC-16 in `CLAUDE_HANDOFF.md`; handle review findings in separate commits.
+1. Verify GitHub Actions and the full test matrix after R2-1 through R2-7; address any failures before further review.
+2. Review the draft pull request against G1–G18 and AC-1–AC-16 in `CLAUDE_HANDOFF.md`; handle remaining findings in separate commits.
 3. Run `docs/MANUAL_TEST.md` with the fake model, then real Gemini, then the user's phone.
 4. Record only verified outcomes. Do not move to the native mobile shell until Phase 1 tests pass and Phase 2 results are recorded.
 
@@ -136,3 +136,15 @@ GitHub Actions passed for push and pull-request workflows on commit `347f779`. A
 - **Regression coverage added:** placeholder/reply-only persistence; concern increase; response survives storage failure; safety response preempts shutdown state while preserving the ritual.
 - **Not verified by this edit:** live Gemini, phone/PWA/browser visuals, and deployment/HTTPS.
 - **Important privacy qualification:** Although the original emergency words are not saved, the saved Baymax reply indicates that a safety event occurred.
+
+
+## Round-two review follow-up — 2026-10-23
+
+- **R2-1 / R2-2:** Urgent detection accepts missing, straight, and curly apostrophes for breathing/bleeding phrases. Added common self-harm phrases and a negative case for "don't want to leave the house". Curly apostrophes are normalized before detection, rating parsing, and redaction.
+- **R2-3:** Multi-word secret redaction now stops before sentence punctuation so a following symptom report remains available for detection. Added regression cases for password/PIN sentences followed by pain/sadness disclosures.
+- **R2-4:** Trusted-proxy client resolution now uses the final X-Forwarded-For entry when the direct peer is loopback and trusted-proxy mode is enabled. Added resolver tests. Actual proxy header behavior on the target host remains unverified.
+- **R2-5:** Safety replies include the nudged concern value; only expected SQLite/OS errors are suppressed during best-effort persistence. Added tests for storage failure and for unexpected exceptions remaining visible.
+- **R2-6:** Closing-choice matching no longer treats "finish" or "leave" as shutdown terms.
+- **R2-7:** Full deletion removes active rows before attempting backup purge. A failed purge is returned as a warning instead of preventing deletion or falsely claiming snapshots were removed. README now explains that pre-migration backups may contain deleted data until successfully purged.
+- **Tests added:** detection/redaction regressions, trusted-proxy resolver tests, safety emotion/error handling tests, and deletion/closing regressions.
+- **Verification:** Changes were committed to work/v0.6.1-hardening; the latest suite and GitHub Actions results have not yet been verified after these commits. Real Gemini, browser/device and proxy deployment checks remain pending.
