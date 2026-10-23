@@ -144,6 +144,8 @@ stateDiagram-v2
 
 Rules for the diagram: urgent-medical and self-harm detection are evaluated in **every** state, including the closing states. A red flag during the ritual answers the red flag first and leaves the ritual state unchanged (see B.5).
 
+**Exit during a safety hold (added 2026-10-23, review R3-1).** While the 3-turn self-harm hold is active, the *first* exit request (typed or End button) does not start the ritual. Python replies once with a short deterministic safety check (emergency hint restated, no claim that help was contacted) and sets `exit_checked`. A *second* exit request starts the normal ritual, so the user is never trapped. `exit_checked` resets on the next normal chat turn. The check needs neither model nor storage.
+
 #### B.4 Module responsibilities and contracts
 
 Existing modules keep their roles and signatures. Changes are additive.
@@ -193,6 +195,10 @@ Existing modules keep their roles and signatures. Changes are additive.
 **`config.py`**
 - New settings: `BAYMAX_ALLOWED_ORIGINS`, `BAYMAX_BACKUP_KEEP` (default 7). Update `.env.example`. No other change.
 
+**`llm/gemini.py`** (added 2026-10-23, review R3-6 and R3-7)
+- `LLMError` carries a `code` from a closed set: `auth`, `model_not_found`, `quota`, `unavailable`, `bad_request`, `empty`, `network`, `unknown`. The adapter maps status codes and exception class names to it. Only the code reaches `detail` and the server log. SDK message text is never logged or returned.
+- Before each call the adapter merges adjacent same-role contents (after dropping leading model turns). Storage is unchanged.
+
 #### B.5 Failure behaviour (contract)
 
 | Failure | Required behaviour |
@@ -211,7 +217,7 @@ Existing responses keep `reply, kind, mode, ended, closing, emotion`. Added:
 - `ui` (optional object) on chat responses:
   - `{"rating": {"min": 0, "max": 10, "about": "pain" | "feeling", "skippable": true}}` when the server just asked a rating question or is waiting for one. The app renders tappable 0-10 chips plus a Skip button. Chips send the plain text of the number (or `skip`) through the normal `/api/chat` path, so there is one parsing path.
   - `{"quick_replies": ["Yes", "No"]}` during `ClosingAsked`; `["Keep going", "Shut down"]` during `ClosingDecide`.
-  - `memory_saved` stays as it is today (a bare string or null). **Decision F-3 (2026-10-17): auto-save is silent.** The app shows no "Saved" notice and no Undo. Saved facts are still listed in Settings, where each can be deleted.
+  - `memory_saved` stays as it is today (a bare string or null). **Decision F-3 (2026-10-17): auto-save is silent.** The app shows no "Saved" notice and no Undo, and the `ui` object carries no memory field (review R3-3). Saved facts are still listed in Settings, where each can be deleted.
 - `POST /api/session/end` → enters `ClosingAsked` (End button).
 - `DELETE /api/ratings/{id}`, `PATCH /api/ratings/{id}` with `{"rating": 0-10}`.
 - Error responses add `code` next to the existing `error` string.
@@ -237,6 +243,7 @@ Existing responses keep `reply, kind, mode, ended, closing, emotion`. Added:
 | C10 | Urgent risk language | Deterministic reply, calm, tells the person to contact local emergency support, never says help was contacted, states that this is supportive information and not medical advice. Works with no model and no storage, in any state. | Partly (G12, G15) |
 | C11 | Model request fails | Friendly error, no crash, rating/emotion already decided are not lost. | Partly (G2) |
 | C12 | Storage missing | Startup refusal or 503 as in B.5; emergency path still works at runtime. | Missing (G7, G12) |
+| C13 | Exit request during a self-harm safety hold | First request gets one deterministic safety check, no ritual (B.3). Second request starts the ritual. | Missing (R3-1) |
 
 ---
 
@@ -337,6 +344,9 @@ Implement in this order, each with tests: G3, G5, G2 + G10 (`persist_turn`), G12
 | AC-15 | Simulated emotion changes behaviour (tone, humour, length, question budget) in tests, and no reply claims real feelings or says "I'll always be here", "you need me" or "don't go". | existing |
 | AC-16 | Existing tests (48) still pass after every phase; the DB migrates from schema 1 with a backup taken first. | 1 |
 | AC-17 | Reminders fire as local notifications at the right local time after app restart and reinstall; confirmation is required before a model-proposed reminder is saved. | 4 |
+| AC-18 | After a self-harm message, the first exit request or End press returns the safety check and does not end the session; the second starts the ritual; after the hold expires exit goes straight to the ritual. Works with no model and no storage. | 1 |
+| AC-19 | Emergency and self-harm phrasing table (apostrophe variants, "can't catch my breath", "heart attack", "wanna die", "wish I was dead" and the other phrases in R3-2) all return the deterministic reply; harmless controls do not. | 1 |
+| AC-20 | Chat responses never contain `ui.memory_saved`; the web client shows no save notice or Undo; on any failed send (401, 429, network) the emergency card is visible; the delete-all result shows the backup warning when a snapshot could not be removed. | 1 |
 
 #### E.4 Test plan
 
@@ -410,3 +420,4 @@ The user wants no fancy facilities yet: a simple companion that feels like Bayma
 - 2026-10-17: User asked to keep it simple and a movie-accurate Baymax. Added section H (scope freeze; face and voice defined; character fidelity without copied dialogue). Phase 4 reminders deferred. New order: Phase 1 fixes (F1-F5, F7 first), Phase 2 verification, Phase 3a face and voice in web, Phase 3b Android shell, host.
 - 2026-10-17: Added F-8 (emergency exchange retention) and refined the F3 fix in `REVIEW_PR1.md`: store the reply and a placeholder, not the user's words.
 - 2026-10-23: Round 2 review R2-4: the proxy client-id rule I gave for review finding F4 (in `REVIEW_PR1.md`) was wrong; use the last `X-Forwarded-For` entry, not the first. Round 2 review of commit 87c3694 in `REVIEW_PR1.md`: F1, F2, F3, F5, F7, F8, F9 verified fixed; new findings R2-1 to R2-8; not ready to merge.
+- 2026-10-23: Round 3 review of commit 68f1653 in `REVIEW_PR1.md`: R2-1 to R2-7 verified fixed (84 tests pass here); new findings R3-1 to R3-9. Spec additions: exit during a safety hold (B.3, C13, AC-18), emergency phrase coverage (AC-19), `ui` and web checks (B.6, AC-20), Gemini error codes and role merging (B.4). Real Gemini moves back to Phase 2 as E.1 says; it is no longer listed as a merge gate. Not ready to merge until R3-1 to R3-5 are fixed and CI is green on HEAD.
