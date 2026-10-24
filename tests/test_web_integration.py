@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 from urllib.request import Request, urlopen
 
+from baymax import __version__
 from baymax.llm.fake import FakeLLM
 from baymax.config import Settings
 from server.app import make_server
@@ -57,7 +58,7 @@ class WebIntegrationTests(unittest.TestCase):
         status, _, health_bytes = self.request("/api/health")
         health = json.loads(health_bytes)
         self.assertEqual(status, 200)
-        self.assertEqual(health["version"], "0.6.1")
+        self.assertEqual(health["version"], __version__)
 
         status, _, session_bytes = self.request("/api/session", token="good-token")
         session = json.loads(session_bytes)
