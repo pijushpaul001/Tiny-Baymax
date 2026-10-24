@@ -30,14 +30,12 @@ Run the tests any time: `python -m unittest discover -s tests -t .`
 
 ## Using it on your phone
 
-Voice input, speech output and "install to home screen" need HTTPS (or localhost). Pick one:
+Voice input, speech output and "install to home screen" need HTTPS (or localhost). Use the project hosting path:
 
-- **Tailscale** (private, easiest): install it on the PC and the phone, then run
-  `tailscale serve --bg 8080` and open the `https://<your-pc>.<tailnet>.ts.net` address on the phone.
-  Nobody outside your own devices can reach it.
-- **Cloudflare Tunnel**: gives a public `https://` address. Keep your passcode long, because anyone can reach the login.
-- **A small cloud host**: set `BAYMAX_HOST=0.0.0.0` and put HTTPS in front (the host usually does this).
-  Keep `data/` on a persistent disk.
+- **Cloud VM + Tailscale**: install Tailscale on the VM and the phone. Keep Baymax bound to `127.0.0.1`, then run
+  `tailscale serve --bg 8080` on the VM and open the `https://<your-vm>.<tailnet>.ts.net` address on the phone.
+  This keeps the app private to your Tailscale network and provides HTTPS without exposing the Baymax server directly.
+  Keep `data/` on the VM's persistent disk and run the server as a single always-on process.
 
 On the phone: open the address, then "Add to Home screen" (Android Chrome) or Share > "Add to Home Screen" (iPhone Safari).
 Voice input works in Chrome on Android. iPhone Safari support for speech input is limited; typing and spoken replies work.
