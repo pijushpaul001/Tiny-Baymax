@@ -63,6 +63,11 @@ class RoundThreeDetectionTables(unittest.TestCase):
             "I can't catch my breath", "can't get air", "I can not breathe", "I'm choking",
             "I think I'm having a heart attack", "I took too many pills", "he is not breathing",
             "I am coughing up blood", "I am having a seizure", "I can't breathe",
+            "my chest hurts", "my chest is hurting", "my chest is aching", "pain in my chest",
+            "I have a pain in my chest", "shortness of breath", "I am short of breath",
+            "I am bleeding heavily", "I am bleeding a lot", "I am bleeding badly",
+            "I feel like I'm going to faint", "I am about to pass out",
+            "I am having a severe allergic reaction",
         )
         for phrase in phrases:
             with self.subTest(phrase=phrase):
@@ -139,6 +144,17 @@ class FigurativeDifficultyTests(unittest.TestCase):
         self.assertEqual(detect("my leg is burning").type, "physical")
         result = detect("my chest feels tight")
         self.assertEqual(result.red_flag, "urgent_medical")
+
+    def test_common_urgent_phrasings_respect_negation(self):
+        for text in (
+            "I do not have chest pain",
+            "I am not short of breath",
+            "I am not bleeding heavily",
+            "I am not going to faint",
+            "I am not having a severe allergic reaction",
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(detect(text).red_flag, "")
 
 
 class SecretRedactionTests(unittest.TestCase):
