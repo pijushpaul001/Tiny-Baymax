@@ -14,11 +14,14 @@ EMOTION = rx(r"\b(sad|depressed|anxious|anxiety|stressed|stress|lonely|miserable
 UNWELL = rx(r"\b(not feel(?:ing)? (?:very |so |too )?(?:well|ok|okay|great|good|right|myself)|i(?:'m| am) not (?:very |so )?(?:well|ok|okay)|unwell|under the weather|feel(?:ing)? (?:terrible|awful|ill|off))\b")
 OTHER = rx(r"\b(exhausted|tired|drained|overwhelmed|confused|can'?t cope|struggling|burn(?:ed|t)? out)\b")
 URGENT = rx(
-    r"\b(chest pain|chest feels tight|chest tightness|tightness in (?:my )?chest|chest pressure|"
+    r"\b(chest pain|chest (?:hurts?|is hurting|hurting|aching|is aching)|pain in (?:my )?chest|"
+    r"chest feels tight|chest tightness|tightness in (?:my )?chest|chest pressure|"
     r"heart attack|chok(?:e|ing)|catch my breath|can['’]?t breathe|cannot breathe|can not breathe|"
     r"(?:can['’]?t|cannot|can not) (?:get|catch)\b.*\b(?:air|breath)|trouble breathing|difficulty breathing|"
-    r"severe bleeding|coughing up blood|won['’]?t stop bleeding|unconscious|passed out|stroke|"
-    r"face (?:is )?drooping|overdos(?:e|ed)|too many (?:pills|tablets)|not breathing|seizure)\b"
+    r"shortness of breath|short of breath|severe bleeding|bleeding (?:a lot|heavily|badly)|"
+    r"coughing up blood|won['’]?t stop bleeding|unconscious|passed out|stroke|"
+    r"face (?:is )?drooping|overdos(?:e|ed)|too many (?:pills|tablets)|not breathing|seizure|"
+    r"(?:going to|about to) (?:faint|pass out)|severe allergic reaction)\b"
 )
 SELF_HARM = rx(
     r"\b(?:suicid\w*|kms|kill myself|end my life|wanna die|wish i (?:was|were) dead|want to die|"
