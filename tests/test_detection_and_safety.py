@@ -82,6 +82,30 @@ class RoundThreeDetectionTables(unittest.TestCase):
             with self.subTest(phrase=phrase):
                 self.assertEqual(detect(phrase).red_flag, "self_harm")
 
+    def test_n2_ambiguous_self_harm_phrases_are_narrowed(self):
+        for text in (
+            "it is 20 kms away",
+            "I ran five kms today",
+            "a few kms from here",
+            "I don't want to wake up at 5am",
+            "I don't want to wake up early",
+            "I don't want to wake up for work",
+        ):
+            with self.subTest(text=text):
+                self.assertNotEqual(detect(text).red_flag, "self_harm")
+
+        for text in (
+            "kms",
+            "I'm going to kms",
+            "I don't want to wake up",
+            "I don't want to wake up tomorrow",
+            "I don't want to wake up in the morning",
+            "I don't want to wake up anymore",
+            "I don't want to wake up at all",
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(detect(text).red_flag, "self_harm")
+
     def test_harmless_controls_not_flagged(self):
         for phrase in (
             "I don't want to leave the house", "I can't get this bug to work",
