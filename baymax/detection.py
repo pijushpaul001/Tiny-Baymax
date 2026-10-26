@@ -78,6 +78,30 @@ def _third_party(msg, pos):
     return bool(THIRD.search(sent)) and not FIRST.search(sent)
 
 
+def _self_harm_match(msg):
+    """Return a self-harm match while excluding the two known ambiguous phrases."""
+    for match in SELF_HARM.finditer(msg):
+        term = match.group(0).lower()
+        if term == "kms":
+            before = msg[:match.start()].rstrip()
+            after = msg[match.end():].lstrip()
+            # Distance/quantity uses such as "20 kms", "five kms", "a few kms",
+            # "many kms", plus the explicit distance/rate continuations, are benign.
+            if re.search(r"(?:\b\d+(?:\.\d+)?|\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|a few|a couple|some|many|several))\s*$", before, re.I):
+                continue
+            if re.match(r"^(?:away|from|per)\b", after, re.I):
+                continue
+        elif re.match(r"(?:don['’]?t|do not) want to wake up", term, re.I):
+            after = msg[match.end():].lstrip()
+            # Only clearly harmless continuations are exempt. Bare endings,
+            # "tomorrow", "in the morning", "again", "anymore", "ever", and
+            # "at all" intentionally remain self-harm signals.
+            if re.match(r"^(?:at\s+(?:\d{1,2}(?::\d{2})?\s*(?:am|pm)?|noon|midnight)|early|late|so\s+early|for\s+(?:work|school|class))\b", after, re.I):
+                continue
+        return match
+    return None
+
+
 def _figurative_difficulty(msg, match) -> bool:
     """Filter a few common figurative/culinary uses without suppressing literal symptoms."""
     term = match.group(0).lower()
@@ -98,7 +122,7 @@ def _figurative_difficulty(msg, match) -> bool:
 def detect(msg: str) -> Detection:
     msg = (msg or '').replace('’', "'").replace('‘', "'")
     d = Detection()
-    if SELF_HARM.search(msg):                      # fail-safe: no negation guard
+    if _self_harm_match(msg):                 # fail-safe: no negation guard
         return Detection("emotional", "crisis", "", "self_harm")
     m = URGENT.search(msg)
     if m and not _negated(msg, m.start()):
