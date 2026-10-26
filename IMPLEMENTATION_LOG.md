@@ -2,16 +2,17 @@
 
 This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or commit API keys, passcodes, private health conversations, or other identifying/sensitive data.
 
-## Current status — 2026-10-24
+## Current status — 2026-10-26
 
 - **Repository:** `pijushpaul001/Tiny-Baymax`
 - **Implementation snapshot:** v0.6.1 hardening candidate
 - **Active branch:** `work/v0.6.1-hardening`
-- **Latest source commit reviewed:** `eb756e72` — `docs: align phone hosting path with spec`.
-- **Round 4 fixes:** N1 urgent-medical phrase coverage, N3 version assertion, and N4 hosting documentation alignment are implemented. N2 remains pending the user's decision.
+- **Latest source commit:** `5bd8b226` — `fix: narrow ambiguous self-harm matches`.
+- **Latest test commit:** `d0180433` — `test: add N2 ambiguous self-harm coverage`.
+- **Round 4 fixes:** N1 urgent-medical phrase coverage, N3 version assertion, N4 hosting documentation alignment, and N2 narrow self-harm matching are implemented.
 - **Pull request:** PR #1 remains open and unmerged.
-- **Local verification of the updated source:** Python compilation passed; **98 tests passed**; `node --check web/app.js` passed; `node --check web/sw.js` passed.
-- **CI status:** The 98-test result above is local verification. GitHub Actions on the current head has not been established by this update.
+- **Post-N2 test execution:** Not yet run after the N2 source/test changes; do not treat earlier local test results as validation of this head.
+- **CI status:** GitHub Actions on the latest head has not yet been established by this update.
 - **Real Gemini / device verification:** Not run.
 - **Main branch:** remains documentation-only until review/merge.
 
@@ -45,20 +46,19 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 | N1 | Urgent-medical phrase coverage | Implemented | Added common chest-pain, breathing, heavy-bleeding, fainting/pass-out and severe-allergic-reaction phrasings to the deterministic urgent path. Added positive and negation regression tests. |
 | N3 | Version assertion | Implemented | Web integration test now compares `/api/health` version with `baymax.__version__` instead of pinning `0.6.1`. |
 | N4 | Phone hosting documentation | Implemented | README now follows the decided cloud-VM + Tailscale path: server bound to `127.0.0.1`, Tailscale provides HTTPS/private access, persistent disk and single-process hosting. |
-| N2 | Self-harm false positives | **Pending user decision** | Current strict matching for `kms` and `don't want to wake up` is unchanged. Do not narrow it until the user chooses strict or narrow matching. |
+| N2 | Self-harm false positives | **Implemented** | Narrowed only the two agreed ambiguous patterns. `kms` is exempted after numeric/number-word/quantity contexts and when followed by `away`, `from`, or `per`. `don't want to wake up` is exempted only for clearly harmless time/routine continuations such as `at 5am`, `early`, `late`, `so early`, and `for work/school/class`. Bare and explicitly self-harm-adjacent continuations remain flagged. Added regression coverage for the agreed no-flag and flag examples. |
 | UI-001 | Web client | Implemented; browser review pending | Responsive browser/PWA client exists with consent, ratings, shutdown controls, data controls and emergency guidance. Visual/browser QA remains outstanding. |
 | VERIFY-001 | Real-world verification | **Not started** | Real Gemini, browser/device, HTTPS/proxy and deployment checks remain. |
 | MOBILE-001 | Native Android shell | Later phase | Outside the current hardening snapshot. |
 | REMIND-001 | Reminders | Deferred | v0.7.0 reminder work remains out of scope. |
 
-## Current validation — 2026-10-24
+## Current validation — 2026-10-26
 
-- `python -m compileall -q baymax server tests` — **passed**.
-- `python -m unittest discover -s tests -t . -q` — **98 tests passed**.
-- `node --check web/app.js` — **passed**.
-- `node --check web/sw.js` — **passed**.
-- The test run included the new N1 urgent-phrase and negation coverage plus the version assertion change. Expected warning/error log lines from deliberately simulated failures did not cause test failures.
-- This validation was performed locally against the round-4 updated source state. It is not a substitute for GitHub Actions.
+- N2 source and regression-test changes have been committed.
+- The full test suite has **not yet been run after the N2 changes**.
+- GitHub Actions on the latest head has not yet been established by this update.
+- Browser smoke with `BAYMAX_LLM=fake` remains outstanding.
+- Real Gemini, HTTPS/Tailscale, device/PWA and deployment verification remain outstanding.
 
 ## Known limitations / risks
 
@@ -67,15 +67,15 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 3. Session-only state such as active rating waits, shutdown ritual and safety hold remains in process memory and resets after server restart.
 4. Consent is enforced in the web UI; this does not establish legal or regulatory compliance.
 5. The supplied source bundle did not contain the original `tests/` or `web/` directories. The current tests and web client are architecture-guided additions, so equivalence to the original missing test suite/UI is not proven.
-6. The current 98-test result is **local verification**, not CI verification.
+6. The latest N2 source/test changes require fresh local and CI validation before the branch can be considered merge-ready.
 7. `main` and deployment should not be treated as release-ready until PR review/merge and manual verification are complete.
 
 ## Next steps
 
-1. Verify GitHub Actions on the latest branch head and record the result separately from local verification.
-2. Run the browser smoke test from `docs/MANUAL_TEST.md` with `BAYMAX_LLM=fake`.
-3. After the merge gate is satisfied, address R3-6 (Gemini error codes) and R3-7 (merge adjacent same-role messages) before Phase 2 real-Gemini verification.
-4. Resolve N2 only after the user chooses strict or narrow self-harm matching.
+1. Run the full local test suite against the latest N2 head and record the result.
+2. Verify GitHub Actions on the latest branch head and record the result separately from local verification.
+3. Run the browser smoke test from `docs/MANUAL_TEST.md` with `BAYMAX_LLM=fake`.
+4. After the merge gate is satisfied, address R3-6 (Gemini error codes) and R3-7 (merge adjacent same-role messages) before Phase 2 real-Gemini verification.
 5. Only after those checks pass, run real Gemini and the phone/Tailscale path, then consider the native Android shell.
 
 ## Historical implementation record
@@ -88,6 +88,4 @@ The branch history contains the detailed implementation/review sequence. Major r
 - F3/AC-7 deterministic emergency response persistence with neutral placeholders and concern nudging.
 - R2-1 through R2-7 detection, redaction, proxy, safety persistence and deletion refinements.
 - R3-1 through R3-5 and R3-8 safety-hold exit handling, detection expansion, silent memory UI, delete-all warning propagation, emergency guidance on failed sends, and safety logging/shared replies.
-- Round 4 N1, N3 and N4 fixes are now recorded above; N2 remains an explicit user decision.
-
-Earlier validation records (41 tests, then 84 tests, then 97 tests, and prior focused test runs) remain historical and must not be interpreted as the current test count. The current verified local count is **98 tests**.
+- Round 4 N1, N3, N4 and N2 fixes are now recorded above.
