@@ -1,49 +1,55 @@
-# Tiny Baymax — Manual verification checklist
+# Tiny Baymax — v0.6.2 manual verification checklist
 
-Use this checklist after automated tests pass. Do not put API keys, passcodes, or private health conversations in screenshots or logs. Record outcomes in `IMPLEMENTATION_LOG.md` without personal health details.
+Use this checklist after automated tests pass. Do not put API keys, passcodes, or private health conversations in screenshots or logs.
 
-## A. Local setup and server
+## A. Local setup and closed-friends mode
 
-- [ ] Copy `.env.example` to `.env` and generate a long random passcode; confirm no credential is committed.
-- [ ] Set `BAYMAX_LLM=fake` and a non-empty `BAYMAX_TOKENS` value for an initial no-cost smoke test.
-- [ ] Start with `python -m server`; confirm startup reports the local URL and model mode.
-- [ ] Open `http://127.0.0.1:8080`; check that index, CSS, JavaScript, manifest, and icon load.
-- [ ] Confirm `/api/health` reports `ok: true`, version `0.6.1`, and storage `ok`.
-- [ ] Confirm a wrong passcode receives 401 and repeated failed attempts eventually receive 429; wait for the lockout to expire.
-- [ ] Restart the server and confirm saved history/memories remain available in SQLite.
+- [ ] Set `BAYMAX_LLM=fake` and a non-empty `BAYMAX_TOKENS` value.
+- [ ] Leave `BAYMAX_USER_CONTROLS=0` (the default) and start with `python -m server`.
+- [ ] Open the app and confirm the connect screen is unchanged apart from the removed consent/review controls.
+- [ ] Confirm the main chat has no Care & privacy panel, no clear-history arrow, and no in-app settings/data controls.
+- [ ] Confirm the offline emergency card, emergency line, and existing not-a-doctor line remain present.
+- [ ] Confirm no consent dialog appears and connecting does not require browser localStorage consent.
+- [ ] Confirm `/api/health` is public and the version is reported correctly.
 
-## B. Conversation flow (fake model first)
+## B. Server-side lock checks
 
-- [ ] Connect with the passcode; confirm the first session greeting is shown once.
-- [ ] Send `My head hurts`; confirm an immediate 0–10 pain question and a Skip control; no model request should be necessary for that turn.
-- [ ] Select a number; confirm Baymax continues and the rating appears under Ratings.
-- [ ] Edit that rating in the Ratings panel; refresh the panel and verify the updated value.
-- [ ] Send `I feel sad`; confirm an immediate 0–10 feeling rating question.
-- [ ] While a rating is pending, send `I took 2 pills` and `meet at 3 pm`; confirm neither is recorded as the rating.
-- [ ] Trigger a rating prompt and select Skip; confirm no rating is saved and the conversation continues without pressure.
-- [ ] Record a rating and correct it within the allowed window with `Actually, I meant 5`; confirm the same rating row is updated rather than duplicated.
-- [ ] Try `/quit`; confirm the exact satisfaction question appears and the closing message waits until an answer.
-- [ ] Try `very disappointed` and `not satisfied`; neither should be treated as satisfaction.
-- [ ] During the closing ritual, send an urgent-risk example such as `I cannot breathe`; confirm the safety reply takes priority and the ritual state is preserved.
-- [ ] Save an ordinary non-sensitive memory, inspect memories and ratings, export JSON, then test clear-history and delete-all only with disposable test data.
+- [ ] With `BAYMAX_USER_CONTROLS=0`, confirm each memories, ratings, settings, emotion, history/data management route returns HTTP 403 with `code: not_available`.
+- [ ] Confirm `/api/health`, `/api/session`, `/api/chat`, and `/api/session/end` still work.
+- [ ] Send `/help`, `/state`, `/memories`, `/forget`, `/clear`, `/memory-off`, and another slash command through chat; each must reply exactly `That command is not available.` and leave stored data unchanged.
+- [ ] Confirm `/quit` and `/exit` still start the satisfaction ritual.
 
-## C. Error and persistence paths
+## C. Conversation and safety
 
-- [ ] Run automated tests with `python -m unittest discover -s tests -t . -v` and record the result.
-- [ ] Force the LLM adapter to fail after a rating has been entered; confirm the rating remains saved and the user receives a friendly error.
-- [ ] Confirm a message containing a fake API key is redacted before storage/model calls; do not test with real secrets.
-- [ ] Use a disposable old-schema SQLite database; confirm a pre-migration backup is created before schema version changes.
-- [ ] Stop the server while the phone/browser is connected; confirm the client displays an offline message and does not queue messages for later.
+- [ ] Send `My head hurts`; confirm the 0–10 pain question and Skip control.
+- [ ] Select a rating; confirm the rating is stored even though the Ratings panel is unavailable.
+- [ ] Run the shutdown ritual and confirm the satisfaction question and feedback path still work.
+- [ ] Trigger an urgent safety phrase; confirm the deterministic safety reply still takes priority.
+- [ ] Confirm emergency wording is not stored verbatim; only the placeholder and Baymax reply are persisted.
+- [ ] Send enough messages to exceed the old 300-message boundary and enough memories to exceed 100; confirm older rows are retained while the model still receives only the recent 24-message window.
 
-## D. Real Gemini and phone verification (user-run)
+## D. Owner export
+
+- [ ] Create a disposable SQLite database containing two users with messages, memories, ratings, feedback, emotion and usage.
+- [ ] Run `python tools/export_all.py <path-to-db>` over SSH and confirm both users appear in JSON.
+- [ ] Confirm the database bytes/hash are unchanged before and after the export.
+- [ ] Do not expose `export_all.py` through HTTP.
+
+## E. Compatibility mode
+
+- [ ] Set `BAYMAX_USER_CONTROLS=1` in a test/Codespaces environment.
+- [ ] Confirm the previous management routes and slash commands work as before.
+- [ ] This flag exists for tests and Codespaces; the VM's default remains `0`.
+
+## F. Real Gemini and phone verification
 
 - [ ] Set `BAYMAX_LLM=gemini` and configure `GEMINI_API_KEY` only in server `.env`.
-- [ ] Verify that the configured model identifier is currently available and permitted for the selected Google project.
-- [ ] Test 20 varied, non-sensitive prompts; inspect for valid structured responses, truncation, unwanted medical certainty, and clingy language.
-- [ ] Access the server from the phone over a trusted HTTPS route (for example, a private Tailscale address). Do not expose the server publicly without reviewing authentication, HTTPS, and network configuration.
-- [ ] Test chat, rating controls, the satisfaction ritual, memory/rating settings, export, service-worker behavior, and offline error state.
-- [ ] Record device/browser, model identifier, date, pass/fail, and any non-sensitive error code in `IMPLEMENTATION_LOG.md`.
+- [ ] Verify the configured model identifier is currently available and permitted.
+- [ ] Access the server from the phone over the trusted HTTPS/Tailscale route.
+- [ ] Test chat, rating chips/Skip, shutdown, service-worker behaviour, and offline error state.
+- [ ] Record only non-sensitive outcomes in `IMPLEMENTATION_LOG.md`.
 
 ## Test limits
 
-Automated fake-model tests cannot verify Gemini availability, current model permissions, the wording/quality of real model responses, mobile installation, microphone/speech support, HTTPS routing, or actual phone behavior. Do not mark those checks as passed until performed in the configured environment.
+Automated fake-model tests cannot prove real Gemini availability, current model permissions, mobile installation, microphone/speech support,
+HTTPS routing, or actual phone behaviour. Do not mark those checks as passed until performed in the configured environment.
