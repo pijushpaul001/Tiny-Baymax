@@ -44,6 +44,7 @@ class Settings:
     allowed_origins: tuple[str, ...] = ()
     trusted_proxy: bool = False
     backup_keep: int = 7
+    user_controls: bool = False
 
     @property
     def db_path(self) -> str:
@@ -69,4 +70,5 @@ class Settings:
             allowed_origins=tuple(x.strip() for x in e("BAYMAX_ALLOWED_ORIGINS", "").split(",") if x.strip()),
             trusted_proxy=e("BAYMAX_TRUSTED_PROXY", "") == "1",
             backup_keep=max(1, int(e("BAYMAX_BACKUP_KEEP", "7"))),
+            user_controls=e("BAYMAX_USER_CONTROLS", "0") == "1",
         )
