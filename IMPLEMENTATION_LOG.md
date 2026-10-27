@@ -8,7 +8,7 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 - **Implementation snapshot:** v0.6.2 closed-friends mode
 - **Active branch:** `work/v0.6.1-hardening`
 - **Pull request:** PR #1 remains open and unmerged.
-- **Automated verification:** full local suite passed after the v0.6.2 changes: **104 tests passed**. Python compilation and Node syntax checks also passed.
+- **Automated verification:** full local suite passed after the v0.6.2 changes: **103 tests passed**. Python compilation and Node syntax checks also passed.
 - **CI:** must be checked on the new branch head separately.
 - **Real Gemini / device verification:** not run.
 
@@ -38,7 +38,7 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 
 ## Verification status
 
-- `python -m unittest discover -s tests -t . -q` — **104 tests passed** locally after the v0.6.2 changes.
+- `python -m unittest discover -s tests -t . -q` — **103 tests passed** locally after the v0.6.2 changes.
 - `python -m compileall -q baymax server tests tools` — **passed**.
 - `node --check web/app.js` — **passed**.
 - `node --check web/sw.js` — **passed**.
