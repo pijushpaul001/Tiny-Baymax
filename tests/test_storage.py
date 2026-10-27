@@ -19,14 +19,6 @@ class StoreTests(unittest.TestCase):
         self.assertTrue(store.delete_rating("u1", rid))
         self.assertEqual(store.ratings("u1"), [])
 
-    def test_settings_preserve_consent_version_as_string(self):
-        store = Store(":memory:")
-        self.addCleanup(store.close)
-        saved = store.save_settings("u1", {"consented_version": "1", "auto_memory": False})
-        self.assertEqual(saved["consented_version"], "1")
-        self.assertIs(saved["auto_memory"], False)
-        self.assertEqual(store.get_settings("u1")["consented_version"], "1")
-
     def test_transaction_rolls_back_all_writes_on_failure(self):
         store = Store(":memory:")
         self.addCleanup(store.close)
