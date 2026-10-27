@@ -12,10 +12,11 @@ MAX_BODY = 16 * 1024
 
 
 class Api:
-    def __init__(self, service, auth, allowed_origins=(), trusted_proxy=False):
+    def __init__(self, service, auth, allowed_origins=(), trusted_proxy=False, user_controls=True):
         self.service, self.store, self.auth = service, service.store, auth
         self.allowed_origins = frozenset(str(x).rstrip("/") for x in allowed_origins if str(x).strip())
         self.trusted_proxy = bool(trusted_proxy)
+        self.user_controls = bool(user_controls)
 
     def cors_headers(self, origin: str = "") -> dict:
         origin = (origin or "").rstrip("/")
@@ -43,6 +44,19 @@ class Api:
             return 401, {"error": "Passcode needed.", "code": "authentication_required"}
         if len(body or b"") > MAX_BODY:
             return 413, {"error": "Request too large.", "code": "request_too_large"}
+        if not self.user_controls and (
+            path == "/api/state"
+            or path == "/api/memories"
+            or path.startswith("/api/memories/")
+            or path == "/api/ratings"
+            or path.startswith("/api/ratings/")
+            or path == "/api/settings"
+            or path == "/api/clear"
+            or path == "/api/emotion/reset"
+            or path == "/api/export"
+            or path == "/api/data"
+        ):
+            return 403, {"error": "That feature is not available.", "code": "not_available"}
         data = {}
         if method in ("POST", "PATCH", "DELETE") and body:
             try:
@@ -61,6 +75,8 @@ class Api:
             msg = data.get("message")
             if not isinstance(msg, str):
                 return 400, {"error": "'message' must be text.", "code": "invalid_message"}
+            if not self.user_controls and msg.strip().startswith("/") and msg.strip().lower() not in ("/quit", "/exit"):
+                return 200, {"reply": "That command is not available."}
             return 200, svc.handle(uid, msg)
         if (method, path) == ("GET", "/api/state"):
             from baymax.emotion import EmotionState
