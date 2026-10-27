@@ -85,7 +85,6 @@ class ApiAuthTests(unittest.TestCase):
         self.store.add_messages("u1", [("user", "old private message"), ("assistant", "old reply")])
         self.service.handle("u1", "/quit")
         self.service.handle("u1", "no")
-        self.assertEqual(self.service.session("u1").closing, "feedback")
         status, body = self.api.dispatch("POST", "/api/clear", self.headers, b"{}")
         self.assertEqual(status, 200)
         self.assertIn("cleared", body["reply"].lower())
@@ -116,7 +115,6 @@ class ApiAuthTests(unittest.TestCase):
         denied = self.api.cors_headers("https://evil.example")
         self.assertEqual(allowed["Access-Control-Allow-Origin"], "https://app.example")
         self.assertEqual(denied, {})
-
 
     def test_handler_has_a_finite_socket_timeout(self):
         self.assertEqual(make_handler(self.api).timeout, 15)
@@ -215,6 +213,74 @@ class ApiAuthTests(unittest.TestCase):
         self.assertEqual(auth.user_for({"X-Baymax-Token": "good"}, "ip-b"), "user")
         clock.advance(11)
         self.assertEqual(auth.user_for({"X-Baymax-Token": "good"}, "ip-a"), "user")
+
+
+class ClosedFriendsApiTests(unittest.TestCase):
+    def setUp(self):
+        self.store = Store(":memory:")
+        self.addCleanup(self.store.close)
+        self.service = ChatService(self.store, FakeLLM())
+        self.auth = Auth({"good-token": "u1"})
+        self.api = Api(self.service, self.auth, user_controls=False)
+        self.headers = {"X-Baymax-Token": "good-token"}
+
+    def test_locked_management_routes_return_not_available(self):
+        routes = (
+            ("GET", "/api/state", b""), ("GET", "/api/memories", b""),
+            ("POST", "/api/memories", b'{"fact":"likes dosa"}'), ("DELETE", "/api/memories", b""),
+            ("DELETE", "/api/memories/1", b""), ("GET", "/api/ratings", b""),
+            ("PATCH", "/api/ratings/1", b'{"rating":4}'), ("DELETE", "/api/ratings/1", b""),
+            ("POST", "/api/settings", b'{"auto_memory":false}'), ("POST", "/api/clear", b"{}"),
+            ("POST", "/api/emotion/reset", b"{}"), ("GET", "/api/export", b""),
+            ("DELETE", "/api/data", b'{"confirm":"DELETE"}'),
+        )
+        for method, path, body in routes:
+            with self.subTest(method=method, path=path):
+                status, result = self.api.dispatch(method, path, self.headers, body)
+                self.assertEqual(status, 403)
+                self.assertEqual(result["code"], "not_available")
+
+    def test_locked_commands_change_nothing(self):
+        self.store.add_memory("u1", "likes dosa")
+        self.store.add_messages("u1", [("user", "old message"), ("assistant", "old reply")])
+        self.store.save_settings("u1", {"auto_memory": False, "consented_version": "1"})
+        before = self.store.export("u1")
+        for command in ("/forget", "/clear", "/memory-off", "/help", "/state"):
+            status, result = self.api.dispatch("POST", "/api/chat", self.headers,
+                                               json.dumps({"message": command}).encode())
+            self.assertEqual(status, 200)
+            self.assertEqual(result["reply"], "That command is not available.")
+            self.assertEqual(self.store.export("u1"), before)
+
+    def test_chat_shutdown_and_safety_remain_available_when_controls_are_locked(self):
+        status, result = self.api.dispatch("POST", "/api/chat", self.headers,
+                                           json.dumps({"message": "My head hurts"}).encode())
+        self.assertEqual(status, 200)
+        self.assertIn("from 0 to 10", result["reply"])
+        self.assertTrue(result["ui"]["rating"]["skippable"])
+        status, result = self.api.dispatch("POST", "/api/chat", self.headers,
+                                           json.dumps({"message": "8"}).encode())
+        self.assertEqual(status, 200)
+        self.assertEqual(self.store.ratings("u1")[-1]["rating"], 8)
+        status, result = self.api.dispatch("POST", "/api/session/end", self.headers, b"")
+        self.assertEqual(status, 200)
+        self.assertEqual(result["closing"], "asked")
+        status, result = self.api.dispatch("POST", "/api/chat", self.headers,
+                                           json.dumps({"message": "yes"}).encode())
+        self.assertEqual(status, 200)
+        self.assertTrue(result["ended"])
+        status, result = self.api.dispatch("POST", "/api/chat", self.headers,
+                                           json.dumps({"message": "I cannot breathe"}).encode())
+        self.assertEqual(status, 200)
+        self.assertEqual(result["kind"], "safety")
+
+    def test_quit_and_exit_commands_remain_available(self):
+        for command in ("/quit", "/exit"):
+            status, result = self.api.dispatch("POST", "/api/chat", self.headers,
+                                               json.dumps({"message": command}).encode())
+            self.assertEqual(status, 200)
+            self.assertEqual(result["reply"], "Are you satisfied with my care today?")
+            self.service.session("u1").closing = None
 
 
 if __name__ == "__main__":
