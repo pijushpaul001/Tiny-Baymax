@@ -39,7 +39,6 @@
           <button class="button button-primary" type="submit">Connect to Baymax</button>
         </form>
         <p id="connect-error" class="error-text" role="alert"></p>
-        <button id="review-consent" class="small-action" type="button">Review privacy &amp; safety</button>
         <div class="privacy-note"><span aria-hidden="true">◈</span><p>Messages are processed by the server and may be sent to Gemini. Baymax offers supportive information, not professional medical care.</p></div>
       </section>
 
@@ -47,7 +46,6 @@
         <section class="panel conversation-panel">
           <div class="conversation-heading">
             <div><p class="eyebrow">Your conversation</p><h2>How are you feeling today?</h2></div>
-            <button id="clear-history" class="icon-button" type="button" title="Clear conversation" aria-label="Clear conversation">↺</button>
           </div>
           <div id="messages" class="messages" aria-live="polite" aria-relevant="additions text"></div>
           <div id="interaction-tools" class="interaction-tools hidden"></div>
@@ -59,44 +57,10 @@
           <p id="emergency-line" class="hint emergency-line">In an emergency, contact your local emergency number.</p>
           <p class="disclaimer">Baymax is an AI companion, not a doctor or emergency service. Avoid sharing passwords, keys, or highly sensitive details.</p>
         </section>
-
-        <aside class="panel tools-panel">
-          <p class="eyebrow">Your controls</p>
-          <h2>Care &amp; privacy</h2>
-          <p class="muted">You stay in control of what is saved.</p>
-          <div class="control-grid">
-            <button id="show-memories" class="control-tile" type="button"><span>◌</span><strong>Memories</strong><small>Review or remove</small></button>
-            <button id="show-ratings" class="control-tile" type="button"><span>◷</span><strong>Ratings</strong><small>Edit or remove</small></button>
-            <button id="export-data" class="control-tile" type="button"><span>⇩</span><strong>Export data</strong><small>Download JSON</small></button>
-            <button id="reset-emotion" class="control-tile" type="button"><span>〰</span><strong>Reset state</strong><small>Simulated emotion</small></button>
-          </div>
-          <div id="settings-panel" class="settings-panel hidden"></div>
-          <div class="danger-zone">
-            <h3>Clear all data</h3>
-            <p>Deletes conversation history, memories, ratings, feedback, settings, and pre-migration backup snapshots saved on this server.</p>
-            <button id="delete-all" class="button button-danger" type="button">Delete my data</button>
-          </div>
-          <div class="privacy-note"><span aria-hidden="true">◈</span><p>Long-term memory is intended for stable, non-sensitive facts. Check saved items regularly. This app does not claim regulatory or medical-device compliance.</p></div>
-        </aside>
       </section>
     </main>
     <footer class="footer"><span id="app-version">Tiny Baymax</span><span>Calm, practical, and under your control.</span></footer>
   </div>
-
-  <dialog id="consent-dialog" class="consent-dialog">
-    <form method="dialog" id="consent-form">
-      <p class="eyebrow">Before your first chat</p>
-      <h2>A few things to know</h2>
-      <ul>
-        <li>Your messages are sent to the Baymax server and may be sent to Google’s Gemini service to generate replies.</li>
-        <li>The server can store redacted conversation history, ratings, settings, and approved memories. Automatic memory is on by default; send /memory-off to disable it and /memory-on to re-enable it. You can inspect, export, and delete stored data.</li>
-        <li>Baymax is a supportive AI prototype, not a doctor, medical device, or emergency service. Do not use it for emergencies.</li>
-      </ul>
-      <p class="muted">Continue only if you understand and agree to these terms.</p>
-      <p id="consent-error" class="error-text" role="alert"></p>
-      <div class="dialog-actions"><button id="decline-consent" class="button button-soft" type="submit" value="decline">Not now</button><button id="accept-consent" class="button button-primary" type="submit" value="accept">I understand</button></div>
-    </form>
-  </dialog>
   <script src="/app.js" defer></script>
 </body>
 </html>
