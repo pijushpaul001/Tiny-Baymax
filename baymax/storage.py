@@ -121,11 +121,6 @@ class Store:
                             "INSERT INTO messages(user_id, role, content, ts) VALUES (?,?,?,?)",
                             (uid, role, content, _now()),
                         )
-                    self.db.execute(
-                        "DELETE FROM messages WHERE user_id=? AND id NOT IN "
-                        "(SELECT id FROM messages WHERE user_id=? ORDER BY id DESC LIMIT ?)",
-                        (uid, uid, MAX_MESSAGES),
-                    )
                 if emotion is not None:
                     self.db.execute(
                         "INSERT INTO emotion(user_id, data) VALUES (?,?) "
@@ -155,11 +150,6 @@ class Store:
                         "INSERT INTO memories(user_id, fact, created) VALUES (?,?,?)", (uid, memory.strip(), _now())
                     )
                     result["memory_id"] = int(cur.lastrowid)
-                    self.db.execute(
-                        "DELETE FROM memories WHERE user_id=? AND id NOT IN "
-                        "(SELECT id FROM memories WHERE user_id=? ORDER BY id DESC LIMIT ?)",
-                        (uid, uid, MAX_MEMORIES),
-                    )
                 if bump:
                     self.db.execute(
                         "INSERT INTO usage(user_id, day, count) VALUES (?,?,1) "
@@ -177,7 +167,6 @@ class Store:
         except sqlite3.Error:
             return {"ok": False, "schema": None}
 
-    # ---- memories
     def memories(self, uid):
         return self._all("SELECT id, fact, created FROM memories WHERE user_id=? ORDER BY id", (uid,))
 
@@ -186,9 +175,6 @@ class Store:
             cur = self.db.execute("INSERT INTO memories(user_id, fact, created) VALUES (?,?,?)",
                                   (uid, fact.strip(), _now()))
             memory_id = int(cur.lastrowid)
-            self.db.execute("DELETE FROM memories WHERE user_id=? AND id NOT IN "
-                            "(SELECT id FROM memories WHERE user_id=? ORDER BY id DESC LIMIT ?)",
-                            (uid, uid, MAX_MEMORIES))
             self.db.commit()
             return memory_id
 
@@ -198,13 +184,10 @@ class Store:
     def clear_memories(self, uid):
         self._run("DELETE FROM memories WHERE user_id=?", (uid,))
 
-    # ---- conversation history
     def add_messages(self, uid, pairs):
         for role, content in pairs:
             self._run("INSERT INTO messages(user_id, role, content, ts) VALUES (?,?,?,?)",
                       (uid, role, content, _now()))
-        self._run("DELETE FROM messages WHERE user_id=? AND id NOT IN "
-                  "(SELECT id FROM messages WHERE user_id=? ORDER BY id DESC LIMIT ?)", (uid, uid, MAX_MESSAGES))
 
     def history(self, uid, limit=24):
         rows = self._all("SELECT role, content FROM messages WHERE user_id=? ORDER BY id DESC LIMIT ?", (uid, limit))
@@ -218,7 +201,6 @@ class Store:
     def clear_history(self, uid):
         self._run("DELETE FROM messages WHERE user_id=?", (uid,))
 
-    # ---- emotion + settings
     def get_emotion(self, uid) -> dict:
         r = self._all("SELECT data FROM emotion WHERE user_id=?", (uid,))
         return json.loads(r[0]["data"]) if r else {}
@@ -238,7 +220,6 @@ class Store:
             if key not in DEFAULT_SETTINGS:
                 continue
             if key == "consented_version":
-                # A version marker, not a health/profile field; cap it to avoid arbitrary payloads.
                 if isinstance(value, str) and len(value) <= 40:
                     clean[key] = value
             else:
@@ -248,7 +229,6 @@ class Store:
                   "ON CONFLICT(user_id) DO UPDATE SET data=excluded.data", (uid, json.dumps(merged)))
         return merged
 
-    # ---- ratings, feedback, usage
     def add_rating(self, uid, type_, subtype, rating):
         value = int(rating)
         if not 0 <= value <= 10:
@@ -288,7 +268,6 @@ class Store:
         self._run("INSERT INTO usage(user_id, day, count) VALUES (?,?,1) "
                   "ON CONFLICT(user_id, day) DO UPDATE SET count=count+1", (uid, date.today().isoformat()))
 
-    # ---- privacy: export and delete everything for one user
     def export(self, uid) -> dict:
         return {"memories": self.memories(uid), "messages": self.history_with_time(uid, MAX_MESSAGES),
                 "emotion": self.get_emotion(uid), "settings": self.get_settings(uid),
@@ -297,14 +276,11 @@ class Store:
                 "usage": self._all("SELECT day, count FROM usage WHERE user_id=? ORDER BY day", (uid,))}
 
     def purge_backups(self) -> int:
-        """Remove pre-migration database snapshots that may retain deleted conversation data."""
         if self.path == ":memory:":
             return 0
         source = Path(self.path)
         removed = 0
         for backup in source.parent.glob(f"{source.name}.pre-migration-*.bak"):
-            # Surface failures so the service does not claim deletion succeeded while a
-            # rollback snapshot containing the user's data remains on disk.
             backup.unlink()
             removed += 1
         return removed
