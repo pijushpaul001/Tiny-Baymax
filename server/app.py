@@ -59,7 +59,8 @@ def build_api(cfg: Settings, llm=None) -> Api:
                           DecisionConfig(emergency_hint=cfg.emergency_hint),
                           max_history=cfg.max_history, max_per_day=cfg.max_per_day)
     return Api(service, Auth(cfg.tokens, cfg.allow_no_auth),
-               allowed_origins=cfg.allowed_origins, trusted_proxy=cfg.trusted_proxy)
+               allowed_origins=cfg.allowed_origins, trusted_proxy=cfg.trusted_proxy,
+               user_controls=cfg.user_controls)
 
 
 def make_handler(api: Api):
@@ -68,7 +69,7 @@ def make_handler(api: Api):
         sys_version = ""
         timeout = 15
 
-        def log_message(self, fmt, *args):      # never log paths with message content; keep it quiet
+        def log_message(self, fmt, *args):
             pass
 
         def _send(self, status, payload: bytes, ctype: str, extra=None):
@@ -81,7 +82,6 @@ def make_handler(api: Api):
                 self.end_headers()
                 self.wfile.write(payload)
             except (BrokenPipeError, ConnectionResetError):
-                # The client went away; do not emit a traceback for a normal disconnect.
                 return
 
         def _json(self, status, obj, extra=None):
@@ -108,7 +108,6 @@ def make_handler(api: Api):
             except sqlite3.Error:
                 return self._json(503, {"error": "Storage is temporarily unavailable.", "code": "storage_unavailable"})
             except Exception as exc:
-                # No request/body data or credentials in logs.
                 print(f"[error] API request failed: {type(exc).__name__}")
                 return self._json(500, {"error": "An unexpected server error occurred.", "code": "server_error"})
             self._json(status, obj)
@@ -148,8 +147,6 @@ def make_handler(api: Api):
 def make_server(cfg: Settings, llm=None) -> ThreadingHTTPServer:
     api = build_api(cfg, llm)
     server = ThreadingHTTPServer((cfg.host, cfg.port), make_handler(api))
-    # Keep an explicit reference so the database can be closed on graceful shutdown
-    # and integration tests can clean up their temporary stores.
     server.baymax_api = api
     return server
 
