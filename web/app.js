@@ -1,23 +1,12 @@
 (() => {
   "use strict";
   const byId = (id) => document.getElementById(id);
-  const state = { token: null, busy: false, closing: null, messages: [] };
-  const CONSENT_VERSION = "1";
-  const CONSENT_KEY = `tiny-baymax-consent-v${CONSENT_VERSION}`;
+  const state = { token: null, busy: false, closing: null };
 
   function setStatus(text, connected = false) {
     const el = byId("connection-status");
     el.textContent = text;
     el.classList.toggle("connected", connected);
-  }
-
-  async function refreshVersion() {
-    try {
-      const health = await api("/api/health");
-      if (health.version) byId("app-version").textContent = `Tiny Baymax · v${health.version}`;
-    } catch (_) {
-      // Version display is optional when the server is offline.
-    }
   }
 
   async function api(path, options = {}) {
@@ -107,7 +96,6 @@
     clearTools();
     if (reply.ui?.rating) return showRating(reply.ui.rating);
     if (reply.ui?.quick_replies?.length) return showQuickReplies(reply.ui.quick_replies);
-
   }
 
   function setBusy(busy) {
@@ -157,11 +145,6 @@
   async function connect(event) {
     event.preventDefault();
     if (state.busy) return;
-    if (localStorage.getItem(CONSENT_KEY) !== "accepted") {
-      byId("consent-error").textContent = "Please review and accept the privacy and safety information before connecting.";
-      if (!consentDialog.open) consentDialog.showModal();
-      return;
-    }
     const token = byId("passcode").value.trim();
     if (!token) return;
     byId("connect-error").textContent = "";
@@ -169,11 +152,8 @@
     try {
       const health = await fetch("/api/health", { cache: "no-store" }).then(async r => ({ ok: r.ok, data: await r.json() }));
       if (!health.ok || !health.data.ok) throw new Error("The server or its storage is unavailable.");
-      state.token = token; // memory only; never localStorage/sessionStorage/cookies
+      state.token = token;
       const session = await api("/api/session");
-      if (localStorage.getItem(CONSENT_KEY) === "accepted") {
-        await api("/api/settings", { method: "POST", body: JSON.stringify({ consented_version: CONSENT_VERSION }) });
-      }
       state.closing = null;
       const emergencyHint = typeof session.emergency_hint === "string" && session.emergency_hint.trim()
         ? session.emergency_hint.trim() : "your local emergency number";
@@ -207,122 +187,15 @@
     } finally { setBusy(false); }
   }
 
-  function openSettings(title) {
-    const panel = byId("settings-panel");
-    panel.replaceChildren();
-    const heading = document.createElement("h3");
-    heading.textContent = title;
-    panel.append(heading);
-    panel.classList.remove("hidden");
-    return panel;
-  }
-
-  async function showMemories() {
-    try {
-      const data = await api("/api/memories");
-      const panel = openSettings("Saved memories");
-      if (!data.memories?.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "No saved memories."; panel.append(empty); return; }
-      for (const item of data.memories) {
-        const row = document.createElement("div"); row.className = "saved-item";
-        const text = document.createElement("p"); text.textContent = item.fact;
-        const remove = document.createElement("button"); remove.type = "button"; remove.className = "small-action"; remove.textContent = "Delete";
-        remove.addEventListener("click", async () => { try { await api(`/api/memories/${item.id}`, { method: "DELETE" }); row.remove(); } catch (e) { message("assistant", e.message, true); } });
-        row.append(text, remove); panel.append(row);
-      }
-      const clear = document.createElement("button"); clear.type = "button"; clear.className = "small-action"; clear.textContent = "Delete all memories";
-      clear.addEventListener("click", async () => { try { await api("/api/memories", { method: "DELETE" }); panel.replaceChildren(heading); const e = document.createElement("p"); e.textContent = "No saved memories."; panel.append(e); } catch (err) { message("assistant", err.message, true); } });
-      panel.append(clear);
-    } catch (error) { message("assistant", error.message, true); }
-  }
-
-  async function showRatings() {
-    try {
-      const data = await api("/api/ratings");
-      const panel = openSettings("Your self-reported ratings");
-      if (!data.ratings?.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "No ratings saved."; panel.append(empty); return; }
-      for (const item of data.ratings) {
-        const row = document.createElement("div"); row.className = "saved-item";
-        const text = document.createElement("p"); text.textContent = `${item.ts} · ${item.type}/${item.subtype}`;
-        const actions = document.createElement("div"); actions.className = "rating-edit";
-        const input = document.createElement("input"); input.type = "number"; input.min = "0"; input.max = "10"; input.step = "1"; input.value = String(item.rating); input.setAttribute("aria-label", "Rating from 0 to 10");
-        const save = document.createElement("button"); save.type = "button"; save.className = "small-action"; save.textContent = "Save";
-        save.addEventListener("click", async () => { const value = Number(input.value); if (!Number.isInteger(value) || value < 0 || value > 10) return; try { await api(`/api/ratings/${item.id}`, { method: "PATCH", body: JSON.stringify({ rating: value }) }); message("assistant", "Rating updated."); } catch (e) { message("assistant", e.message, true); } });
-        const remove = document.createElement("button"); remove.type = "button"; remove.className = "small-action"; remove.textContent = "×"; remove.setAttribute("aria-label", "Delete rating");
-        remove.addEventListener("click", async () => { try { await api(`/api/ratings/${item.id}`, { method: "DELETE" }); row.remove(); } catch (e) { message("assistant", e.message, true); } });
-        actions.append(input, save, remove); row.append(text, actions); panel.append(row);
-      }
-    } catch (error) { message("assistant", error.message, true); }
-  }
-
-  async function exportData() {
-    try {
-      const data = await api("/api/export");
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href = url; a.download = "tiny-baymax-export.json";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch (error) { message("assistant", error.message, true); }
-  }
-
-  async function resetEmotion() {
-    if (!window.confirm("Reset Baymax's simulated emotion state?")) return;
-    try { await api("/api/emotion/reset", { method: "POST", body: JSON.stringify({}) }); message("assistant", "My simulated state is back to baseline."); }
-    catch (error) { message("assistant", error.message, true); }
-  }
-
-  async function deleteAllData() {
-    if (!window.confirm("Delete all Baymax data stored for this account? This cannot be undone.")) return;
-    const typed = window.prompt('Type DELETE to confirm complete data deletion:');
-    if (typed !== "DELETE") return;
-    try {
-      const result = await api("/api/data", { method: "DELETE", body: JSON.stringify({ confirm: "DELETE" }) });
-      byId("messages").replaceChildren();
-      byId("settings-panel").classList.add("hidden");
-      message("assistant", result.backups_purged === false
-        ? (result.warning || "Your active data was deleted, but a backup could not be removed.")
-        : "Your saved data has been deleted.");
-    } catch (error) { message("assistant", error.message, true); }
-  }
-
   byId("connect-form").addEventListener("submit", connect);
   byId("chat-form").addEventListener("submit", (event) => { event.preventDefault(); sendMessage(); });
   byId("message-input").addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendMessage(); }
   });
   byId("end-session").addEventListener("click", endSession);
-  byId("show-memories").addEventListener("click", showMemories);
-  byId("show-ratings").addEventListener("click", showRatings);
-  byId("export-data").addEventListener("click", exportData);
-  byId("reset-emotion").addEventListener("click", resetEmotion);
-  byId("delete-all").addEventListener("click", deleteAllData);
-  byId("clear-history").addEventListener("click", async () => {
-    if (!window.confirm("Clear saved conversation history? Long-term memories stay intact.")) return;
-    try { await api("/api/clear", { method: "POST", body: JSON.stringify({}) }); byId("messages").replaceChildren(); clearTools(); message("assistant", "Conversation cleared. Long-term memories remain."); }
-    catch (error) { message("assistant", error.message, true); }
-  });
 
-  const consentDialog = byId("consent-dialog");
-  if (localStorage.getItem(CONSENT_KEY) !== "accepted") consentDialog.showModal();
-  byId("review-consent").addEventListener("click", () => {
-    byId("consent-error").textContent = "";
-    if (!consentDialog.open) consentDialog.showModal();
-  });
-  byId("consent-form").addEventListener("submit", (event) => {
-    const submitter = event.submitter;
-    if (submitter && submitter.value === "accept") {
-      localStorage.setItem(CONSENT_KEY, "accepted");
-      byId("consent-error").textContent = "";
-      byId("connect-error").textContent = "";
-    } else {
-      localStorage.removeItem(CONSENT_KEY);
-      byId("consent-error").textContent = "You have not accepted.";
-      byId("connect-error").textContent = "Consent not accepted. Review privacy & safety and accept before connecting.";
-    }
-  });
-
-  refreshVersion();
+  api("/api/health").then((health) => {
+    if (health.version) byId("app-version").textContent = `Tiny Baymax · v${health.version}`;
+  }).catch(() => {});
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
 })();
