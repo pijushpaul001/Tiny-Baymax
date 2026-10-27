@@ -252,6 +252,14 @@ class ClosedFriendsApiTests(unittest.TestCase):
             self.assertEqual(result["reply"], "That command is not available.")
             self.assertEqual(self.store.export("u1"), before)
 
+    def test_slash_prefixed_safety_text_still_reaches_normal_handling(self):
+        for text in ("/I want to die", "/ I cannot breathe", "/ my chest hurts"):
+            with self.subTest(text=text):
+                status, result = self.api.dispatch("POST", "/api/chat", self.headers,
+                                                   json.dumps({"message": text}).encode())
+                self.assertEqual(status, 200)
+                self.assertEqual(result["kind"], "safety")
+
     def test_chat_shutdown_and_safety_remain_available_when_controls_are_locked(self):
         status, result = self.api.dispatch("POST", "/api/chat", self.headers,
                                            json.dumps({"message": "My head hurts"}).encode())

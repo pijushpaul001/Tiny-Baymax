@@ -9,6 +9,10 @@ import re
 from baymax import __version__
 
 MAX_BODY = 16 * 1024
+KNOWN_COMMANDS = {
+    "/help", "/state", "/memories", "/remember", "/forget", "/clear",
+    "/emotion-reset", "/memory-on", "/memory-off", "/ratings", "/debug",
+}
 
 
 class Api:
@@ -75,8 +79,10 @@ class Api:
             msg = data.get("message")
             if not isinstance(msg, str):
                 return 400, {"error": "'message' must be text.", "code": "invalid_message"}
-            if not self.user_controls and msg.strip().startswith("/") and msg.strip().lower() not in ("/quit", "/exit"):
-                return 200, {"reply": "That command is not available."}
+            if not self.user_controls and msg.strip().startswith("/"):
+                command_name = msg.strip().split(None, 1)[0].lower()
+                if command_name in KNOWN_COMMANDS:
+                    return 200, {"reply": "That command is not available."}
             return 200, svc.handle(uid, msg)
         if (method, path) == ("GET", "/api/state"):
             from baymax.emotion import EmotionState
