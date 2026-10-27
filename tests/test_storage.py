@@ -114,6 +114,51 @@ class StoreTests(unittest.TestCase):
             finally:
                 cleaner.close()
 
+    def test_history_and_memories_are_retained_without_automatic_pruning(self):
+        store = Store(":memory:")
+        self.addCleanup(store.close)
+        for i in range(301):
+            store.add_messages("u1", [("user", f"message {i}")])
+        for i in range(101):
+            store.add_memory("u1", f"fact {i}")
+        all_messages = store._all("SELECT id, content FROM messages WHERE user_id=? ORDER BY id", ("u1",))
+        self.assertEqual(len(all_messages), 301)
+        self.assertEqual(all_messages[0]["content"], "message 0")
+        self.assertEqual(len(store.memories("u1")), 101)
+        self.assertEqual(len(store.history("u1", 24)), 24)
+
+    def test_read_only_owner_export_lists_both_users_without_changing_database(self):
+        import hashlib
+        from tools.export_all import export_all
+
+        with tempfile.TemporaryDirectory() as td:
+            db = Path(td) / "baymax.db"
+            store = Store(str(db))
+            store.add_messages("u1", [("user", "hello"), ("assistant", "hi")])
+            store.add_memory("u1", "likes dosa")
+            store.add_rating("u1", "physical", "pain", 4)
+            store.add_feedback("u1", "be more concise")
+            store.save_emotion("u1", {"concern": 0.2})
+            store.bump_usage("u1")
+            store.add_messages("u2", [("user", "hello from friend")])
+            store.add_memory("u2", "likes noodles")
+            store.add_rating("u2", "emotional", "feeling", 7)
+            store.save_emotion("u2", {"calmness": 0.8})
+            store.bump_usage("u2")
+            store.close()
+
+            before = hashlib.sha256(db.read_bytes()).hexdigest()
+            exported = export_all(str(db))
+            after = hashlib.sha256(db.read_bytes()).hexdigest()
+            self.assertEqual(before, after)
+            self.assertEqual(set(exported["users"]), {"u1", "u2"})
+            self.assertEqual(exported["users"]["u1"]["messages"][0]["content"], "hello")
+            self.assertEqual(exported["users"]["u2"]["memories"][0]["fact"], "likes noodles")
+            self.assertEqual(exported["users"]["u1"]["ratings"][0]["rating"], 4)
+            self.assertEqual(exported["users"]["u1"]["feedback"][0]["text"], "be more concise")
+            self.assertEqual(exported["users"]["u2"]["emotion"]["calmness"], 0.8)
+            self.assertTrue(exported["users"]["u2"]["usage"])
+
 
 if __name__ == "__main__":
     unittest.main()
