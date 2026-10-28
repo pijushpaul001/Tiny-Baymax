@@ -48,6 +48,8 @@ class TurnResult:
     memory_to_save: Optional[str]
     rating_event: Optional[dict]
     warnings: list
+    llm_error_code: Optional[str] = None
+    llm_error_type: Optional[str] = None
 
     @property
     def llm_failed(self) -> bool:
@@ -67,7 +69,8 @@ class BaymaxBrain:
              st: DecisionState, memory_enabled: bool = True, extra_system: str = "",
              raw_detection_text: Optional[str] = None) -> TurnResult:
         d = self.layer.decide(user_msg, emotion, memories, st, raw_detection_text=raw_detection_text)
-        warnings, mem_fact, signal = [], None, None\n        llm_error_code = llm_error_type = None
+        warnings, mem_fact, signal = [], None, None
+        llm_error_code = llm_error_type = None
         mode = d.mode
         rating_event = None
         if d.rating_action in {"record", "correct"} and d.rating is not None and st.episode:
@@ -113,7 +116,10 @@ class BaymaxBrain:
                         if not ok:
                             warnings.append(f"memory blocked: {why}")
             except Exception as e:                       # an API failure must never crash the app
-                warnings.append(f"llm error: {type(e).__name__}")
+                llm_error_code = classify_llm_error(e)
+                llm_error_type = getattr(e, "exception_type", None) or type(e).__name__
+                warnings.append(f"llm error: code={llm_error_code} type={llm_error_type}")
 
         st.recent_q = (st.recent_q + [reply.rstrip().endswith("?")])[-4:]
-        return TurnResult(reply, mode, signal, d, mem_fact, rating_event, warnings,\n                          llm_error_code=llm_error_code, llm_error_type=llm_error_type)
+        return TurnResult(reply, mode, signal, d, mem_fact, rating_event, warnings,
+                          llm_error_code=llm_error_code, llm_error_type=llm_error_type)
