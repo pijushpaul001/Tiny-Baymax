@@ -38,6 +38,13 @@ class LLMErrorClassificationTests(unittest.TestCase):
         )
         self.assertEqual(classify_llm_error(CodedError(400, "invalid request payload")), "other")
 
+    def test_blocklist_finish_reason_is_blocked(self):
+        response = type("Response", (), {
+            "prompt_feedback": None,
+            "candidates": [type("Candidate", (), {"finish_reason": "BLOCKLIST"})()],
+        })()
+        self.assertTrue(GeminiAdapter._response_blocked(response))
+
     def test_timeout_network_blocked_empty_and_other_are_classified(self):
         self.assertEqual(classify_llm_error(TimeoutError("timed out")), "unavailable")
         self.assertEqual(classify_llm_error(ConnectionError("network down")), "unavailable")
