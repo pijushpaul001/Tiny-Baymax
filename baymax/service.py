@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 
 from .brain import BaymaxBrain
 from .constants import GREETING
-from .decision import DecisionConfig, DecisionState
+from .decision import DecisionConfig, DecisionState, safety_hold_active
 from .detection import detect
 from .emotion import EmotionState
 from .persona import PERSONA
@@ -410,7 +410,7 @@ class ChatService:
             exception_type = r.llm_error_type or "Exception"
             logging.warning("LLM failure code=%s exception_type=%s", code, exception_type)
             reply = LLM_FAILURE_REPLIES.get(code, DEFAULT_LLM_FAILURE_REPLY)
-            if s.dstate.turn < s.dstate.safety_hold_until:
+            if safety_hold_active(s.dstate.turn, s.dstate.safety_hold_until):
                 hint = self.brain.layer.cfg.emergency_hint
                 emergency_line = (
                     f"If you might act on these thoughts, please contact {hint} "
