@@ -3,6 +3,7 @@
 Both the HTTP API and any future client (CLI, voice, robot) talk only to this class.
 """
 import re
+import logging
 import sqlite3
 import threading
 import time
@@ -93,6 +94,7 @@ class Session:
     dstate: DecisionState = field(default_factory=DecisionState)
     closing: str = None            # None -> "asked" -> ("feedback" -> "decide")
     greeted_at: float = 0.0
+    exit_checked: bool = False
     debug: bool = False
     invalidated: bool = False
     lock: threading.Lock = field(default_factory=threading.Lock)
@@ -156,13 +158,25 @@ class ChatService:
                 bump=False,
             )
             response["emotion"] = emotion.to_dict()
-        except (sqlite3.Error, OSError):
-            pass
+        except (sqlite3.Error, OSError) as exc:
+            logging.warning("Safety response persistence failed (%s)", type(exc).__name__)
         return response
+
+    def _exit_hold_response(self, s):
+        from .emotion import EmotionState
+        hint = self.brain.layer.cfg.emergency_hint
+        reply = (f"I am here with you. If you may act on these thoughts, please contact {hint} "
+                 "or a crisis line now, or ask someone nearby to stay with you. "
+                 "You may say goodbye again when you are ready.")
+        s.exit_checked = True
+        return {"reply": reply, "kind": "safety", "mode": "reassure", "ended": False,
+                "closing": s.closing, "emotion": EmotionState().to_dict()}
 
     def end_session(self, uid: str) -> dict:
         s = self.session(uid)
         with s.lock:
+            if s.dstate.turn < s.dstate.safety_hold_until and not s.exit_checked:
+                return self._exit_hold_response(s)
             s.closing = "asked"
             return self._resp(uid, "Are you satisfied with my care today?", kind="ritual", s=s,
                               ui={"quick_replies": ["Yes", "No"]})
@@ -282,6 +296,8 @@ class ChatService:
             s.closing = None
 
         if lower in QUIT_WORDS or is_exit_intent(lower):
+            if s.dstate.turn < s.dstate.safety_hold_until and not s.exit_checked:
+                return self._exit_hold_response(s)
             s.closing = "asked"
             return self._resp(uid, "Are you satisfied with my care today?", kind="ritual", s=s,
                               ui={"quick_replies": ["Yes", "No"]})
@@ -292,6 +308,7 @@ class ChatService:
             if cmd is not None:
                 return cmd
 
+        s.exit_checked = False
         return self._chat(uid, text, s)
 
     def _finish(self, uid, s, reply):
@@ -352,10 +369,10 @@ class ChatService:
                               kind="limit", s=s)
 
         safe, had_secret = redact_secrets(text)
-        raw_detection = detect(text)  # local category-only check; raw text is never passed to the LLM
+        raw_detection = detect(text)  # category-only local check; raw text is never passed to the LLM
         has_safety_or_difficulty = raw_detection.type != "none" or bool(raw_detection.red_flag)
         if had_secret and is_only_secret(safe) and not has_safety_or_difficulty:
-            # A secret-only shortcut must not suppress a real difficulty in the raw message.
+            # Do not let the secret-only shortcut suppress a real difficulty report.
             st.add_messages(uid, [("user", safe), ("assistant", SECRET_NOTE)])
             return self._resp(uid, SECRET_NOTE, kind="chat", s=s)
 
@@ -404,8 +421,6 @@ class ChatService:
             episode = s.dstate.episode
             about = "pain" if episode and episode.type == "physical" else "feeling"
             ui["rating"] = {"min": 0, "max": 10, "about": about, "skippable": True}
-        if memory_fact and persisted["memory_id"]:
-            ui["memory_saved"] = {"id": persisted["memory_id"], "fact": memory_fact}
         return self._resp(uid, r.reply, kind="chat", mode=r.mode, s=s,
                           memory_saved=memory_fact, trace=trace, **({"ui": ui} if ui else {}))
 

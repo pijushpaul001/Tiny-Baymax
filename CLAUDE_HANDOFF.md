@@ -32,9 +32,9 @@ Project-level rules from the user (also binding): Gemini is the language brain o
 
 ## Architecture status
 
-**Status: Draft, partly ready.**
+**Status: Draft, scope is "simple first" (section H). Phase 1 and 2 ready; Phase 3 (Android) unblocked.** User decisions of 2026-10-17 are recorded in section F. PR #1 review findings F1-F12 are tracked in `REVIEW_PR1.md` and must be fixed before merge.
 - **Ready for implementation now:** Phase 1 (hardening, v0.6.1) and Phase 2 (real-world verification). They need no user decisions.
-- **Needs user decisions before work starts:** Phase 3 (mobile shell) and Phase 4 (reminders). See section F.
+- **Phase 3 (Android shell):** unblocked by decisions F-1 and F-2. Phase 4 (reminders) still waits on F-5.
 - **Source not yet reviewed:** `tests/` and `web/` were not in the bundle. Statements about them are assumptions.
 
 ---
@@ -144,6 +144,8 @@ stateDiagram-v2
 
 Rules for the diagram: urgent-medical and self-harm detection are evaluated in **every** state, including the closing states. A red flag during the ritual answers the red flag first and leaves the ritual state unchanged (see B.5).
 
+**Exit during a safety hold (added 2026-10-23, review R3-1).** While the 3-turn self-harm hold is active, the *first* exit request (typed or End button) does not start the ritual. Python replies once with a short deterministic safety check (emergency hint restated, no claim that help was contacted) and sets `exit_checked`. A *second* exit request starts the normal ritual, so the user is never trapped. `exit_checked` resets on the next normal chat turn. The check needs neither model nor storage.
+
 #### B.4 Module responsibilities and contracts
 
 Existing modules keep their roles and signatures. Changes are additive.
@@ -193,6 +195,10 @@ Existing modules keep their roles and signatures. Changes are additive.
 **`config.py`**
 - New settings: `BAYMAX_ALLOWED_ORIGINS`, `BAYMAX_BACKUP_KEEP` (default 7). Update `.env.example`. No other change.
 
+**`llm/gemini.py`** (added 2026-10-23, review R3-6 and R3-7)
+- `LLMError` carries a `code` from a closed set: `auth`, `model_not_found`, `quota`, `unavailable`, `bad_request`, `empty`, `network`, `unknown`. The adapter maps status codes and exception class names to it. Only the code reaches `detail` and the server log. SDK message text is never logged or returned.
+- Before each call the adapter merges adjacent same-role contents (after dropping leading model turns). Storage is unchanged.
+
 #### B.5 Failure behaviour (contract)
 
 | Failure | Required behaviour |
@@ -211,7 +217,7 @@ Existing responses keep `reply, kind, mode, ended, closing, emotion`. Added:
 - `ui` (optional object) on chat responses:
   - `{"rating": {"min": 0, "max": 10, "about": "pain" | "feeling", "skippable": true}}` when the server just asked a rating question or is waiting for one. The app renders tappable 0-10 chips plus a Skip button. Chips send the plain text of the number (or `skip`) through the normal `/api/chat` path, so there is one parsing path.
   - `{"quick_replies": ["Yes", "No"]}` during `ClosingAsked`; `["Keep going", "Shut down"]` during `ClosingDecide`.
-  - `{"memory_saved": {"id": N, "fact": "..."}}` replaces the bare `memory_saved` string for new clients (keep `memory_saved` for old ones). The app shows "Saved: <fact>" with an Undo that calls `DELETE /api/memories/{id}`.
+  - `memory_saved` stays as it is today (a bare string or null). **Decision F-3 (2026-10-17): auto-save is silent.** The app shows no "Saved" notice and no Undo, and the `ui` object carries no memory field (review R3-3). Saved facts are still listed in Settings, where each can be deleted.
 - `POST /api/session/end` → enters `ClosingAsked` (End button).
 - `DELETE /api/ratings/{id}`, `PATCH /api/ratings/{id}` with `{"rating": 0-10}`.
 - Error responses add `code` next to the existing `error` string.
@@ -237,6 +243,7 @@ Existing responses keep `reply, kind, mode, ended, closing, emotion`. Added:
 | C10 | Urgent risk language | Deterministic reply, calm, tells the person to contact local emergency support, never says help was contacted, states that this is supportive information and not medical advice. Works with no model and no storage, in any state. | Partly (G12, G15) |
 | C11 | Model request fails | Friendly error, no crash, rating/emotion already decided are not lost. | Partly (G2) |
 | C12 | Storage missing | Startup refusal or 503 as in B.5; emergency path still works at runtime. | Missing (G7, G12) |
+| C13 | Exit request during a self-harm safety hold | First request gets one deterministic safety check, no ritual (B.3). Second request starts the ritual. | Missing (R3-1) |
 
 ---
 
@@ -245,7 +252,7 @@ Existing responses keep `reply, kind, mode, ended, closing, emotion`. Added:
 **Consent.** The first run of the app shows one plain-language screen before the first chat message:
 1. Messages are sent to Google's Gemini service. On free tiers Google may use content to improve its products. Use a paid-tier project before anyone else uses the app. Check Google's current terms; this document makes no claim about them.
 2. What is stored on the server (history, memories, ratings, feedback, settings) and that the user can view, export and delete all of it.
-3. Auto-memory on/off, with the current default **on** (preserving existing behaviour; see decision F-3).
+3. Auto-memory is **on** by default and saves silently. Say that plainly here, and that saved facts can be viewed and deleted in Settings, and auto-memory turned off there.
 4. Baymax is not a doctor and the app is not a medical device.
 
 Consent state is stored as a setting (`consented_version`). Bumping the consent text version re-prompts.
@@ -291,11 +298,11 @@ Implement in this order, each with tests: G3, G5, G2 + G10 (`persist_turn`), G12
 2. Add `web/platform.js`, a bridge with the same interface in browser and shell: `speak(text, opts)`, `listen() -> Promise<string>`, `secureGet/secureSet(key)`, `scheduleReminder(r)`, `cancelReminder(id)`. In a browser it falls back to the Web Speech API and local storage; in the shell it uses native plugins.
 3. First-run screen: server URL + passcode, validated with `/api/health` then `/api/session`.
 4. Settings `BAYMAX_ALLOWED_ORIGINS` for the shell's origin, or use the native HTTP plugin that bypasses the webview's cross-origin rule. Prefer an explicit allowed origin plus HTTPS.
-5. Rating chips, quick replies, End button, memory-saved toast with Undo, offline emergency card, consent screen (all driven by the `ui` hints in B.6).
-6. Android first: debug APK installed on the user's phone. iOS only if F-1 says so; as far as I know it needs a Mac with Xcode, and installing beyond short-lived test builds needs a paid Apple developer account. Verify current requirements before committing to it.
+5. Rating chips, quick replies, End button, offline emergency card, consent screen (all driven by the `ui` hints in B.6).
+6. Target is **Android** (decision F-1): a debug APK installed on the user's phone, built with Android Studio or the Capacitor CLI. iOS is out of scope; the web app stays usable in iPhone Safari.
 7. Voice delivery: expose speech rate, pitch and voice choice as settings with slow, soft defaults, tuned by ear. No voice cloning.
 
-**Phase 4: v0.7.0 reminders, spoken numbers, polish (optional now; matches the existing roadmap).**
+**Phase 4: v0.7.0 reminders, spoken numbers, polish. DEFERRED (decision H-1, 2026-10-17). Do not start.**
 - Reminders are created two ways: a `/remind` command and a model *proposal*. The model may output a structured reminder proposal, but Python validates it and the user must confirm it in the UI before it is saved.
 - Table `reminders(id, user_id, text, due_utc, tz, repeat, status, created)`. Endpoints: `GET/POST/DELETE /api/reminders`, `PATCH` to snooze or complete. Times are stored in UTC with the user's IANA zone from `X-Baymax-TZ`.
 - Delivery is **on-device local notifications**, scheduled by `platform.scheduleReminder`. No server push in this version. The app reschedules everything from the server on session open, so a reinstall does not lose reminders.
@@ -305,10 +312,16 @@ Implement in this order, each with tests: G3, G5, G2 + G10 (`persist_turn`), G12
 
 **Optional and later:** nightly SQLite backup with 7 kept (`BAYMAX_BACKUP_KEEP`); persisting session state if the server ever runs multi-process; moving `api.py` to FastAPI if load grows; a v0.5.1 Drive importer (needs sample files, U4).
 
-#### E.2 Hosting path
+#### E.2 Hosting path (decided 2026-10-17: free cloud host)
 
-- **Now:** run on the user's PC and reach it over Tailscale (private, free, needs the PC on and Tailscale on the phone).
-- **Later:** one small cloud VM or container with a persistent disk for `data/` and HTTPS in front. Run a single server process, because session state is in memory. No assumption is made about free tiers or pricing; check current terms when choosing.
+- **Constraint:** the server uses SQLite on local disk and keeps session state in memory. It needs an always-on process with a **persistent disk** and a **single instance**. Free platform-as-a-service tiers that sleep or reset their disk are not suitable.
+- **Candidates (third-party comparisons dated Sep-Oct 2026; verify on each provider's own page before signing up):**
+  - *Oracle Cloud Always Free*: a small always-on VM with block storage. Needs a card for verification; the Arm allowance was reportedly halved in June 2026; idle instances can be reclaimed; the home region is fixed at sign-up (choose an India region if available).
+  - *Google Cloud free tier*: one e2-micro VM (1 GB RAM) with a 30 GB standard disk in three US regions only, with a small monthly egress allowance; usage over the limits is billed, so set a budget alert.
+  - Either is enough for this app. No guarantee is made that either stays free.
+- **Access path:** run the server on the VM and put **Tailscale** on the VM and the Android phone. Use `tailscale serve` for HTTPS and keep the server bound to `127.0.0.1`. This needs no domain and exposes nothing publicly. Fix review finding F4 first, because the proxy makes all requests look local.
+- **Operations:** run under `systemd` (restart on failure), single process, `data/` on the persistent disk, `.env` readable only by the service user, nightly SQLite backup copy to a second location the user controls, firewall closed except SSH (or Tailscale SSH).
+- **Before sharing with anyone else:** switch the Google project to the paid Gemini tier (see section D).
 
 #### E.3 Acceptance criteria
 
@@ -331,6 +344,9 @@ Implement in this order, each with tests: G3, G5, G2 + G10 (`persist_turn`), G12
 | AC-15 | Simulated emotion changes behaviour (tone, humour, length, question budget) in tests, and no reply claims real feelings or says "I'll always be here", "you need me" or "don't go". | existing |
 | AC-16 | Existing tests (48) still pass after every phase; the DB migrates from schema 1 with a backup taken first. | 1 |
 | AC-17 | Reminders fire as local notifications at the right local time after app restart and reinstall; confirmation is required before a model-proposed reminder is saved. | 4 |
+| AC-18 | After a self-harm message, the first exit request or End press returns the safety check and does not end the session; the second starts the ritual; after the hold expires exit goes straight to the ritual. Works with no model and no storage. | 1 |
+| AC-19 | Emergency and self-harm phrasing table (apostrophe variants, "can't catch my breath", "heart attack", "wanna die", "wish I was dead" and the other phrases in R3-2) all return the deterministic reply; harmless controls do not. | 1 |
+| AC-20 | Chat responses never contain `ui.memory_saved`; the web client shows no save notice or Undo; on any failed send (401, 429, network) the emergency card is visible; the delete-all result shows the backup warning when a snapshot could not be removed. | 1 |
 
 #### E.4 Test plan
 
@@ -344,21 +360,49 @@ Add tests alongside the existing suite (I have not seen `tests/`, so ChatGPT mus
 
 ---
 
-### F. Decisions needed from the user
+### F. Decisions
 
-| ID | Question | Conservative assumption used until answered |
+| ID | Question | Status |
 |---|---|---|
-| F-1 | Android or iPhone? | Android first. iOS is deferred. The PWA on iPhone Safari remains the fallback. |
-| F-2 | Where does the server run? | PC + Tailscale for now. |
-| F-3 | Auto-memory default: keep **on** (current behaviour, with the visible "Saved" toast and Undo) or make it **off** until the user opts in? | Keep on, since changing it would change working behaviour. |
-| F-4 | Should an explicit "/remember" be allowed to save things the automatic gate blocks (for example a food allergy the user wants Baymax to know)? Today `/remember` still applies the block-list. | Keep blocked. |
-| F-5 | Are health-related reminders (for example medication times) acceptable, given they would be stored on the server? | Allowed because user-authored, kept out of Gemini context by default, and covered by export and delete. |
-| F-6 | Who uses it: only the user, or a few friends? | Only the user. A friend needs their own passcode, and the paid Gemini tier first. |
-| F-7 | Version numbering: accept v0.6.1 (hardening), v0.6.2 (mobile shell), v0.7.0 (reminders)? | Accepted as proposed; nothing is renumbered silently. |
+| F-1 | Android or iPhone? | **Decided 2026-10-17: Android.** iOS deferred. |
+| F-2 | Where does the server run? | **Decided 2026-10-17: free cloud host.** See E.2. |
+| F-3 | Auto-memory default? | **Decided 2026-10-17: on and silent.** No "Saved" toast, no Undo prompt. Transparency comes from the consent text and the Settings list (view, delete one, delete all, turn off). The automatic memory gate is unchanged. |
+| F-4 | May an explicit `/remember` save things the automatic gate blocks (for example a food allergy)? | **Open.** The reply "yes keep all memory" was ambiguous. It conflicts with project rule 4 ("Health and mood information is never long-term memory"), so nothing changes until the user confirms the rule is being amended. Secrets, keys, passwords and card numbers stay blocked in every case. Default: keep blocked. |
+| F-5 | Are health-related reminders (for example medication times) acceptable to store on the server? | **Open.** Default: allowed because user-authored, kept out of Gemini context, covered by export and delete. |
+| F-6 | Who uses it: only the user, or a few friends? | **Open.** Default: only the user. |
+| F-7 | Version numbering v0.6.1 (hardening), v0.6.2 (Android shell), v0.7.0 (reminders)? | **Decided 2026-10-17: accepted.** |
+| F-8 | What is kept after an emergency reply (review finding F3)? | **Decided 2026-10-17 on the user's delegation (user may override):** save only Baymax's reply plus a neutral placeholder user turn, and raise concern by 0.25. The user's emergency words are never stored. Best-effort, after the reply, never blocking it. |
+
+### H. Scope: simple first, movie-style Baymax (decided 2026-10-17)
+
+The user wants no fancy facilities yet: a simple companion that feels like Baymax from the film.
+
+**H-1. Scope freeze.** Build only what the non-negotiables and the Android app need.
+- **In scope:** chat; greeting; immediate 0-10 rating on pain/sadness with skip and correct; shutdown question; deterministic emergency replies; silent auto-memory with the existing gate; Settings (view/delete memories, export, delete all, clear history, reset emotion, speak on/off); the face; spoken replies; optional microphone input; one short first-run notice (what is sent to Gemini and what is stored); the Android shell; the free cloud host.
+- **Deferred, do not build:** reminders and notifications, calendar/weather/search tools, conversation summaries, semantic memory, voice-engine upgrades, extra rating UI polish, native push, multi-user features, any iOS work.
+- **Already built, leave alone:** rating chips and quick replies from PR #1 may stay if they work. Do not add more UI. Remove nothing that works.
+- **Bugs are not features.** Review findings F1-F5 and F7 remain required. F6, F8, F9, F11 and F12 are lower priority, in that order, and may wait until after the Android build.
+
+**H-2. The face (restores review finding F10; Phase 3a, in `web/`).**
+- Based on the supplied `icon.svg`: a plain white body shape, two black oval eyes joined by a thin horizontal line. No mouth, no colours, no extra features.
+- Only two behaviours: a slow blink every few seconds, and eye size/blink rate following the simulated emotion (more concern: eyes slightly larger and blinking slower; more happiness: eyes slightly smaller and softer). Changes are small and smooth. No other animation.
+- Reduced-motion setting turns the blink off.
+- Test: with a fixed emotion dict the face component sets the expected size/blink values (pure function, unit-tested).
+
+**H-3. Voice (Phase 3a).**
+- Spoken replies use the device's text-to-speech, **slow, soft and gentle**: start with rate about 0.85 and pitch about 0.9 and tune by ear. Pick a calm voice from those available. Speech on/off lives in Settings (the `speak` setting exists).
+- Optional microphone button using the browser's speech recognition where available. In the Android shell, native speech plugins replace it in Phase 3b.
+- No cloning or imitation of the film actor's voice.
+
+**H-4. Character fidelity ("movie accurate").** Accurate means the manner and the look, not copied dialogue.
+- Manner already in `persona.py` stays: short, calm, plain sentences; gently literal; mild deadpan humour; noticing rather than lecturing; curious about people; never clingy; never claims real feelings. Medical care stays careful: no diagnosis, no cures.
+- Do not reproduce lines from the film. The three fixed phrases the user specified (greeting, 0-10 question, "Are you satisfied with my care today?") stay exactly as they are.
+- New fixed Python replies are written in the same manner and checked against the "few contractions" rule (review item G16 leftovers).
+- Test: a small test that scans all fixed Python reply strings for banned clingy phrases and film-line blocklist entries the user maintains in a plain text file (`docs/film_lines_blocklist.txt`, may start empty).
 
 ### G. Instructions for the implementer (ChatGPT)
 
-1. Read `AGENTS.md`, this file and the existing code before changing anything. Check `tests/` for overlap first.
+1. Read `AGENTS.md`, this file (especially section H, the scope freeze) and the existing code before changing anything. Check `tests/` for overlap first.
 2. Implement phases in order. Within Phase 1 follow the listed order. One concern per commit or pull request, each with tests.
 3. Make only changes this spec asks for. If something in the spec looks wrong or ambiguous, note it in `IMPLEMENTATION_LOG.md` and ask; do not guess.
 4. Keep Gemini-specific code in `baymax/llm/gemini.py` and configuration in `config.py`. No behaviour rules in `server/`.
@@ -371,3 +415,9 @@ Add tests alongside the existing suite (I have not seen `tests/`, so ChatGPT mus
 
 - 2026-10-12: Initial handoff template created. No source files were present in the repository at creation time.
 - 2026-10-12: Source review of the v0.6.0 code bundle (22 files; `tests/`, `web/`, `.env`, `data/` not supplied). Corrected the project context (v0.6.0 server with SQLite, not the v0.5.1 Colab notebook). Added the full specification: current-state assessment with 18 findings (G1-G18) and 5 unknowns, target architecture with contracts, state model, failure behaviour and additive API changes, conversation requirements, privacy and safety design, a phased migration (Phase 0 to 4), 17 acceptance criteria, a test plan, and 7 open decisions. Status: Draft, Phase 1 and 2 ready for implementation.
+- 2026-10-17: Recorded user decisions F-1 (Android), F-2 (free cloud host), F-3 (auto-memory on), F-7 (version numbers); F-4 left open with a conflict noted against project rule 4. Rewrote E.2 hosting around an always-on free VM with a persistent disk plus Tailscale, and made Phase 3 Android-only. PR #1 (`work/v0.6.1-hardening`) reviewed: findings F1-F12 in `REVIEW_PR1.md`; fixing F1, F2, F3, F5 first, then F4 and F7, is required before merge.
+- 2026-10-17: Decision F-3 refined by the user: auto-memory is silent, with no save notification or Undo in the app. Removed the toast/Undo requirement from B.6, Phase 3 and section D; Settings still lists and deletes memories, and the consent screen discloses auto-save.
+- 2026-10-17: User asked to keep it simple and a movie-accurate Baymax. Added section H (scope freeze; face and voice defined; character fidelity without copied dialogue). Phase 4 reminders deferred. New order: Phase 1 fixes (F1-F5, F7 first), Phase 2 verification, Phase 3a face and voice in web, Phase 3b Android shell, host.
+- 2026-10-17: Added F-8 (emergency exchange retention) and refined the F3 fix in `REVIEW_PR1.md`: store the reply and a placeholder, not the user's words.
+- 2026-10-23: Round 2 review R2-4: the proxy client-id rule I gave for review finding F4 (in `REVIEW_PR1.md`) was wrong; use the last `X-Forwarded-For` entry, not the first. Round 2 review of commit 87c3694 in `REVIEW_PR1.md`: F1, F2, F3, F5, F7, F8, F9 verified fixed; new findings R2-1 to R2-8; not ready to merge.
+- 2026-10-23: Round 3 review of commit 68f1653 in `REVIEW_PR1.md`: R2-1 to R2-7 verified fixed (84 tests pass here); new findings R3-1 to R3-9. Spec additions: exit during a safety hold (B.3, C13, AC-18), emergency phrase coverage (AC-19), `ui` and web checks (B.6, AC-20), Gemini error codes and role merging (B.4). Real Gemini moves back to Phase 2 as E.1 says; it is no longer listed as a merge gate. Not ready to merge until R3-1 to R3-5 are fixed and CI is green on HEAD.
