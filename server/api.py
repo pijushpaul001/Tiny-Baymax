@@ -16,7 +16,7 @@ KNOWN_COMMANDS = {
 
 
 class Api:
-    def __init__(self, service, auth, allowed_origins=(), trusted_proxy=False, user_controls=True):
+    def __init__(self, service, auth, allowed_origins=(), trusted_proxy=False, user_controls=False):
         self.service, self.store, self.auth = service, service.store, auth
         self.allowed_origins = frozenset(str(x).rstrip("/") for x in allowed_origins if str(x).strip())
         self.trusted_proxy = bool(trusted_proxy)

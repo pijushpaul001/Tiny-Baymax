@@ -30,8 +30,12 @@ class ApiAuthTests(unittest.TestCase):
         self.addCleanup(self.store.close)
         self.service = ChatService(self.store, FakeLLM())
         self.auth = Auth({"good-token": "u1"})
-        self.api = Api(self.service, self.auth, allowed_origins=("https://app.example",))
+        self.api = Api(self.service, self.auth, allowed_origins=("https://app.example",), user_controls=True)
         self.headers = {"X-Baymax-Token": "good-token"}
+
+    def test_api_defaults_to_closed_friends_mode(self):
+        api = Api(self.service, self.auth)
+        self.assertFalse(api.user_controls)
 
     def test_health_is_public_and_includes_storage(self):
         status, body = self.api.dispatch("GET", "/api/health", {}, b"")
