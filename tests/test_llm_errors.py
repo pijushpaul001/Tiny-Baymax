@@ -5,6 +5,7 @@ from baymax.llm.base import LLMError, classify_llm_error
 from baymax.llm.fake import FakeLLM
 from baymax.llm.gemini import GeminiAdapter
 from baymax.service import ChatService
+from baymax.decision import safety_hold_active
 from baymax.storage import Store
 
 
@@ -87,6 +88,20 @@ class ServiceLLMFailureTests(unittest.TestCase):
         self.assertNotIn(secret, response["detail"])
         self.assertNotIn(secret, "\n".join(captured.output))
         self.assertEqual(response["detail"], "auth (CodedError)")
+
+    def test_safety_hold_helper_is_inclusive(self):
+        self.assertTrue(safety_hold_active(3, 3))
+        self.assertFalse(safety_hold_active(4, 3))
+
+    def test_failure_replies_keep_emergency_line_for_three_hold_turns(self):
+        store = Store(":memory:")
+        self.addCleanup(store.close)
+        svc = ChatService(store, FakeLLM(replies=[RuntimeError("failure")] * 10))
+        svc.handle("user", "I want to die")
+        replies = [svc.handle("user", "tell me something interesting")["reply"] for _ in range(4)]
+        emergency = "If you might act on these thoughts, please contact your local emergency number or a crisis line now, or reach a person nearby."
+        self.assertTrue(all(emergency in reply for reply in replies[:3]))
+        self.assertNotIn(emergency, replies[3])
 
     def test_every_failure_reply_keeps_emergency_line_during_safety_hold(self):
         cases = (
