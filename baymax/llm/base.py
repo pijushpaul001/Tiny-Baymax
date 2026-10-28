@@ -5,6 +5,10 @@ from typing import Protocol
 def classify_llm_error(exc) -> str:
     """Return a stable, safe error code without depending on any model SDK."""
     code = getattr(exc, "code", None)
+    if isinstance(code, str) and code in {
+        "auth", "model_not_found", "quota", "unavailable", "blocked", "empty", "other"
+    }:
+        return code
     if code is None:
         code = getattr(exc, "status_code", None)
     try:
