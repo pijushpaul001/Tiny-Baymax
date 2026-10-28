@@ -416,7 +416,7 @@ class ChatService:
                     f"If you might act on these thoughts, please contact {hint} "
                     "or a crisis line now, or reach a person nearby."
                 )
-                reply = f"{reply}\\n\\n{emergency_line}"
+                reply = f"{reply}\n\n{emergency_line}"
             return self._resp(uid, reply, kind="error", s=s,
                               detail=f"{code} ({exception_type})", trace=trace)
         if r.used_fallback:                          # graceful failure: don't pollute history
