@@ -5,7 +5,7 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 ## Current status — 2026-10-28
 
 - **Repository:** `pijushpaul001/Tiny-Baymax`
-- **Implementation snapshot:** v0.6.3 Gemini-ready (R3-6 and R3-7 changes staged on a fresh branch from `main`).
+- **Implementation snapshot:** v0.6.3 Gemini-ready (R3-6 and R3-7 implemented on a fresh branch from `main`).
 - **Active branch:** `work/v0.6.3-gemini-ready`, created from the updated `main`, not the old work branch.
 - **Previous PR:** PR #1 was squash-merged into `main`; the prior status above was stale.
 - **Automated verification:** not run locally for v0.6.3. No test count is claimed.
