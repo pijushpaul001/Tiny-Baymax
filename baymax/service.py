@@ -21,6 +21,14 @@ from .storage import Store
 MAX_MESSAGE_CHARS = 2000
 GREET_AFTER_SECONDS = 6 * 3600
 
+LLM_FAILURE_REPLIES = {
+    "quota": "I have reached my usage limit for now. Please try again later.",
+    "unavailable": "I had trouble reaching my cloud brain. Please try again in a moment.",
+    "auth": "I am not set up correctly right now. Please tell the owner.",
+    "model_not_found": "I am not set up correctly right now. Please tell the owner.",
+}
+DEFAULT_LLM_FAILURE_REPLY = "I could not answer that one. Could you say it a different way?"
+
 YES = re.compile(
     r"(?:y|yes|yeah|yep|yup|sure|of course|definitely|satisfied|very satisfied|"
     r"i'?m (?:very )?satisfied|i am (?:very )?satisfied|"
@@ -398,8 +406,19 @@ class ChatService:
             persisted = st.persist_turn(uid, pairs=None, emotion=emotion.to_dict(),
                                         rating_event=r.rating_event, bump=False)
             self._remember_rating_id(s, r.rating_event, persisted["rating_id"])
-            return self._resp(uid, "I had trouble reaching my cloud brain. Please try again in a moment.",
-                              kind="error", s=s, detail="; ".join(r.warnings), trace=trace)
+            code = r.llm_error_code or "other"
+            exception_type = r.llm_error_type or "Exception"
+            logging.warning("LLM failure code=%s exception_type=%s", code, exception_type)
+            reply = LLM_FAILURE_REPLIES.get(code, DEFAULT_LLM_FAILURE_REPLY)
+            if s.dstate.turn < s.dstate.safety_hold_until:
+                hint = self.brain.layer.cfg.emergency_hint
+                emergency_line = (
+                    f"If you might act on these thoughts, please contact {hint} "
+                    "or a crisis line now, or reach a person nearby."
+                )
+                reply = f"{reply}\\n\\n{emergency_line}"
+            return self._resp(uid, reply, kind="error", s=s,
+                              detail=f"{code} ({exception_type})", trace=trace)
         if r.used_fallback:                          # graceful failure: don't pollute history
             persisted = st.persist_turn(uid, pairs=None, emotion=emotion.to_dict(),
                                         rating_event=r.rating_event, bump=False)
