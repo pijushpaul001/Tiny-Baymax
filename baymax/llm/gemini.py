@@ -15,7 +15,7 @@ def build_gemini_messages(history, user_msg):
         role = "user" if item["role"] == "user" else "model"
         content = item["content"]
         if messages and messages[-1]["role"] == role:
-            messages[-1]["content"] += "\\n\\n" + content
+            messages[-1]["content"] += "\n\n" + content
         else:
             messages.append({"role": role, "content": content})
 
@@ -23,7 +23,7 @@ def build_gemini_messages(history, user_msg):
         messages.pop(0)
 
     if messages and messages[-1]["role"] == "user":
-        messages[-1]["content"] += "\\n\\n" + user_msg
+        messages[-1]["content"] += "\n\n" + user_msg
     else:
         messages.append({"role": "user", "content": user_msg})
     return messages
