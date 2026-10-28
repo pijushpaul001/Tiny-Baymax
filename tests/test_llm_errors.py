@@ -31,6 +31,13 @@ class LLMErrorClassificationTests(unittest.TestCase):
             with self.subTest(status=status):
                 self.assertEqual(classify_llm_error(CodedError(status)), expected)
 
+    def test_bad_api_key_400_is_auth_but_other_400_is_other(self):
+        self.assertEqual(
+            classify_llm_error(CodedError(400, "API key not valid. Please pass a valid API key.")),
+            "auth",
+        )
+        self.assertEqual(classify_llm_error(CodedError(400, "invalid request payload")), "other")
+
     def test_timeout_network_blocked_empty_and_other_are_classified(self):
         self.assertEqual(classify_llm_error(TimeoutError("timed out")), "unavailable")
         self.assertEqual(classify_llm_error(ConnectionError("network down")), "unavailable")
