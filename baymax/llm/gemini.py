@@ -4,6 +4,31 @@ import time
 from .base import LLMError
 
 
+def build_gemini_messages(history, user_msg):
+    """Build Gemini's alternating user/model history without importing the SDK.
+
+    Consecutive messages with the same role are joined with a blank line. Leading
+    assistant messages are dropped, and the current user message is always last.
+    """
+    messages = []
+    for item in history:
+        role = "user" if item["role"] == "user" else "model"
+        content = item["content"]
+        if messages and messages[-1]["role"] == role:
+            messages[-1]["content"] += "\\n\\n" + content
+        else:
+            messages.append({"role": role, "content": content})
+
+    while messages and messages[0]["role"] == "model":
+        messages.pop(0)
+
+    if messages and messages[-1]["role"] == "user":
+        messages[-1]["content"] += "\\n\\n" + user_msg
+    else:
+        messages.append({"role": "user", "content": user_msg})
+    return messages
+
+
 class GeminiAdapter:
     def __init__(self, api_key: str, model: str, fallback_model: str = None):
         if not api_key:
@@ -34,11 +59,9 @@ class GeminiAdapter:
 
     def generate(self, system, history, user_msg, schema):
         t = self._types
-        contents = [t.Content(role="user" if h["role"] == "user" else "model",
-                              parts=[t.Part.from_text(text=h["content"])]) for h in history]
-        contents.append(t.Content(role="user", parts=[t.Part.from_text(text=user_msg)]))
-        while contents and contents[0].role == "model":     # Gemini wants a user turn first
-            contents.pop(0)
+        messages = build_gemini_messages(history, user_msg)
+        contents = [t.Content(role=item["role"],
+                              parts=[t.Part.from_text(text=item["content"])]) for item in messages]
         config = t.GenerateContentConfig(system_instruction=system, response_mime_type="application/json",
                                          response_schema=schema, temperature=0.75, max_output_tokens=700)
         try:
