@@ -1,7 +1,7 @@
 """Gemini adapter - the ONLY file that imports google-genai."""
 import time
 
-from .base import LLMError
+from .base import LLMError, classify_llm_error
 
 
 def build_gemini_messages(history, user_msg):
@@ -67,8 +67,28 @@ class GeminiAdapter:
         try:
             resp = self._call(contents, config)
         except Exception as e:
-            raise LLMError(f"{type(e).__name__}: {str(e)[:200]}") from e
+            raise LLMError("Gemini request failed.", code=classify_llm_error(e),
+                           exception_type=type(e).__name__) from e
+        if self._response_blocked(resp):
+            raise LLMError("Gemini response blocked.", code="blocked")
         raw = (resp.text or "").strip()
         if not raw:
-            raise LLMError("Gemini returned an empty response.")
+            raise LLMError("Gemini returned an empty response.", code="empty")
         return raw
+
+    @staticmethod
+    def _response_blocked(resp) -> bool:
+        """Detect safety-filtered responses using response metadata only."""
+        feedback = getattr(resp, "prompt_feedback", None)
+        reason = getattr(feedback, "block_reason", None) if feedback is not None else None
+        if reason is not None and str(reason).split(".")[-1].upper() not in {
+            "", "NONE", "UNSPECIFIED", "BLOCK_REASON_UNSPECIFIED"
+        }:
+            return True
+        for candidate in getattr(resp, "candidates", None) or []:
+            reason = getattr(candidate, "finish_reason", None)
+            if reason is not None and str(reason).split(".")[-1].upper() in {
+                "SAFETY", "BLOCKED", "PROHIBITED_CONTENT"
+            }:
+                return True
+        return False
