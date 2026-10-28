@@ -14,6 +14,11 @@ from .detection import (ANAPHORA, CELEBRATE, CONCISE, ENCOURAGE, EMOTION_ADJ, EX
 from .emotion import EmotionState
 
 
+def safety_hold_active(turn: int, hold_until: int) -> bool:
+    """Return whether the current turn is within the inclusive safety hold."""
+    return turn <= hold_until
+
+
 SELF_HARM_REPLY = (
     "I am glad you told me. Your safety matters. If you might act on these thoughts, "
     "please contact {emergency_hint} or a crisis line now, or reach a person nearby. "
@@ -190,7 +195,7 @@ class DecisionLayer:
         mode, src = self._mode(msg, det, rating, emotion, st)
         recent_q = st.recent_q[-2:]
         q_budget = 0 if (not style["question_ok"] or (len(recent_q) == 2 and all(recent_q))
-                         or st.turn <= st.safety_hold_until) else 1
+                         or safety_hold_active(st.turn, st.safety_hold_until)) else 1
         trace.append(f"mode: {mode} ({src}), question_budget={q_budget}")
 
         brief = self._brief(mode, style, q_budget, hits, det, rating, action, ctx_hint, ep, st)
@@ -212,7 +217,7 @@ class DecisionLayer:
         return [m for s, m in sorted(scored, reverse=True) if s > 0][: self.cfg.max_memory_hits]
 
     def _mode(self, msg, det, rating, emotion, st):
-        if det.red_flag or st.turn <= st.safety_hold_until: return "reassure", "rule"
+        if det.red_flag or safety_hold_active(st.turn, st.safety_hold_until): return "reassure", "rule"
         if rating is not None:                               return "reassure", "rule"
         if det.type == "emotional":                          return "listen", "rule"
         if det.type != "none":                               return "reassure", "rule"
@@ -233,7 +238,7 @@ class DecisionLayer:
              "- Use recent conversation to resolve short follow-ups. Never invent implications or facts about the user."]
         if ctx: L.append(f"- Context: {ctx}")
         if hits: L.append("- Known stable facts (use only if natural): " + "; ".join(hits))
-        if st.turn <= st.safety_hold_until:
+        if safety_hold_active(st.turn, st.safety_hold_until):
             L.append("- SAFETY PRIORITY: the user mentioned possible self-harm. Stay calm and present, encourage "
                      f"contact with a nearby person or {self.cfg.emergency_hint}. No ratings. No jokes.")
         elif rating is not None:
