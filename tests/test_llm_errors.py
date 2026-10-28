@@ -2,7 +2,8 @@ import logging
 import unittest
 
 from baymax.llm.base import LLMError, classify_llm_error
-from baymax.llm.fake import FakeLLM\nfrom baymax.llm.gemini import GeminiAdapter
+from baymax.llm.fake import FakeLLM
+from baymax.llm.gemini import GeminiAdapter
 from baymax.service import ChatService
 from baymax.storage import Store
 
