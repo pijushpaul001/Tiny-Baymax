@@ -2,15 +2,32 @@
 
 This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or commit API keys, passcodes, private health conversations, or other identifying/sensitive data.
 
-## Current status — 2026-10-27
+## Current status — 2026-10-28
 
 - **Repository:** `pijushpaul001/Tiny-Baymax`
-- **Implementation snapshot:** v0.6.2 closed-friends mode
-- **Active branch:** `work/v0.6.1-hardening`
-- **Pull request:** PR #1 remains open and unmerged.
-- **Automated verification:** not run locally for Round 5; GitHub Actions is the verification gate. Do not infer a test count from earlier snapshots.
-- **CI:** must be checked on the new branch head separately.
+- **Implementation snapshot:** v0.6.3 Gemini-ready (R3-6 and R3-7 changes staged on a fresh branch from `main`).
+- **Active branch:** `work/v0.6.3-gemini-ready`, created from the updated `main`, not the old work branch.
+- **Previous PR:** PR #1 was squash-merged into `main`; the prior status above was stale.
+- **Automated verification:** not run locally for v0.6.3. No test count is claimed.
+- **CI:** not verified for the v0.6.3 branch head.
 - **Real Gemini / device verification:** not run.
+
+## v0.6.3 — Gemini-ready (R3-7 and R3-6)
+
+### R3-7 — merge same-role messages
+
+- Added the SDK-free `build_gemini_messages` helper and wired it into `GeminiAdapter.generate`.
+- Consecutive user/model messages are joined with a blank line; leading model messages are removed; the new user message is appended or merged with the final user turn.
+- Added no-network unit tests for leading assistant messages, consecutive user messages, a history ending in a user message, empty history, role alternation and final-user-turn behavior.
+
+### R3-6 — stable LLM error codes
+
+- Added SDK-free `classify_llm_error` and `LLMError.code`.
+- Gemini API errors are wrapped without copying provider exception text. Safety-filtered and empty responses get explicit `blocked` and `empty` codes.
+- The service maps codes to fixed user-facing replies, exposes only the code and exception type in the detail field/log, and adds the existing emergency guidance line while a safety hold is active.
+- Kept the existing rating persistence path on model failure.
+- Added no-network tests for status-code classification, timeout/network failures, blocked/empty/other classification, fixed replies, secret-text non-disclosure, safety-hold emergency guidance, and Gemini safety metadata.
+- **Verification:** tests have not been run locally; CI and live Gemini/device behavior remain unverified.
 
 ## v0.6.2 — deliberate change to rule 9
 
