@@ -253,7 +253,10 @@ class ClosedFriendsApiTests(unittest.TestCase):
             self.assertEqual(self.store.export("u1"), before)
 
     def test_slash_prefixed_safety_text_still_reaches_normal_handling(self):
-        for text in ("/I want to die", "/ I cannot breathe", "/ my chest hurts"):
+        for text in (
+            "/I want to die", "/ I cannot breathe", "/ my chest hurts",
+            "/forget I want to die", "/remember I cannot breathe",
+        ):
             with self.subTest(text=text):
                 status, result = self.api.dispatch("POST", "/api/chat", self.headers,
                                                    json.dumps({"message": text}).encode())

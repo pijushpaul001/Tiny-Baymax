@@ -82,7 +82,9 @@ class Api:
             if not self.user_controls and msg.strip().startswith("/"):
                 command_name = msg.strip().split(None, 1)[0].lower()
                 if command_name in KNOWN_COMMANDS:
-                    return 200, {"reply": "That command is not available."}
+                    # Crisis language takes priority even when the message starts with a command.
+                    if svc.brain.layer.safety_check(msg) is None:
+                        return 200, {"reply": "That command is not available."}
             return 200, svc.handle(uid, msg)
         if (method, path) == ("GET", "/api/state"):
             from baymax.emotion import EmotionState
