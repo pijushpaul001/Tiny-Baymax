@@ -35,6 +35,11 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 - Exception text is inspected only for classification and is not included in replies, details, or logs.
 - Added focused classification tests. Tests were not run locally; no test count is claimed.
 
+## v0.6.3 follow-up — additional Gemini blocked reasons
+
+- Added `BLOCKLIST` and `SPII` to blocked Gemini candidate finish reasons.
+- Added a focused `BLOCKLIST` regression test. Tests were not run locally; no test count is claimed.
+
 ## v0.6.2 — deliberate change to rule 9
 
 2026-10-27 - Deliberate change to the non-negotiable rule on user data access (v0.6.2). The app is for the owner and one friend only, not published. Users no longer inspect, edit, export or delete stored data in the app, and the consent dialog and Care and privacy panel are removed. Stored data is kept without automatic deletion. Only the owner reads all users' data, with a read-only script on the server. Locked routes and commands are refused on the server, not only hidden in the page. Safety rules are unchanged: deterministic emergency replies, no diagnosis, secret redaction, and the satisfaction question before shutdown.
