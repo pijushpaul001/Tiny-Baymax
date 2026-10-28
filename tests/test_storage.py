@@ -124,7 +124,9 @@ class StoreTests(unittest.TestCase):
         from tools.export_all import export_all
 
         with tempfile.TemporaryDirectory() as td:
-            db = Path(td) / "baymax.db"
+            db_dir = Path(td) / "dir#1"
+            db_dir.mkdir()
+            db = db_dir / "baymax.db"
             store = Store(str(db))
             store.add_messages("u1", [("user", "hello"), ("assistant", "hi")])
             store.add_memory("u1", "likes dosa")

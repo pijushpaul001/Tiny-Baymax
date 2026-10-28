@@ -24,7 +24,7 @@ def export_all(db_path):
     path = Path(db_path).expanduser().resolve()
     if not path.is_file():
         raise SystemExit(f"SQLite database not found: {path}")
-    uri = f"file:{path.as_posix()}?mode=ro"
+    uri = path.as_uri() + "?mode=ro"
     conn = sqlite3.connect(uri, uri=True)
     conn.row_factory = sqlite3.Row
     try:
