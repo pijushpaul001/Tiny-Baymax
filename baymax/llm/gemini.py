@@ -88,7 +88,7 @@ class GeminiAdapter:
         for candidate in getattr(resp, "candidates", None) or []:
             reason = getattr(candidate, "finish_reason", None)
             if reason is not None and str(reason).split(".")[-1].upper() in {
-                "SAFETY", "BLOCKED", "PROHIBITED_CONTENT"
+                "SAFETY", "BLOCKED", "PROHIBITED_CONTENT", "BLOCKLIST", "SPII"
             }:
                 return True
         return False
