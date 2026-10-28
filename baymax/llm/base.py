@@ -26,7 +26,9 @@ def classify_llm_error(exc) -> str:
         return "unavailable"
 
     name = type(exc).__name__.lower()
-    if isinstance(exc, OSError):\n        return "unavailable"\n    if any(token in name for token in ("timeout", "deadlineexceeded", "connectionerror",
+    if isinstance(exc, OSError):
+        return "unavailable"
+    if any(token in name for token in ("timeout", "deadlineexceeded", "connectionerror",
                                         "connecterror", "networkerror", "socketerror", "transporterror", "serviceunavailable",
                                         "servererror", "internalservererror")):
         return "unavailable"
