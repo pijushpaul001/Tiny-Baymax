@@ -32,7 +32,7 @@ def build_gemini_messages(history, user_msg):
 class GeminiAdapter:
     def __init__(self, api_key: str, model: str, fallback_model: str = None):
         if not api_key:
-            raise LLMError("GEMINI_API_KEY is not set.")
+            raise LLMError("Gemini is not configured.", code="auth")
         from google import genai          # imported lazily so tests need no SDK
         from google.genai import types
         self._types = types
