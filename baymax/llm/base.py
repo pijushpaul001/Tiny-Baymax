@@ -16,6 +16,10 @@ def classify_llm_error(exc) -> str:
     except (TypeError, ValueError):
         code = None
 
+    if code == 400:
+        message = str(exc).casefold()
+        if "api key not valid" in message or "api_key_invalid" in message:
+            return "auth"
     if code in (401, 403):
         return "auth"
     if code == 404:
