@@ -113,3 +113,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - The retry adds explicit rewrite instructions; it remains limited to one retry.
 - Added FakeLLM regressions that return a violating draft followed by a clean reply.
 - **Local verification:** tests were not run locally; no test count is claimed. Retry behavior with a live Gemini model remains unverified.
+
+
+## v0.6.4 chat fixes — S4 BRIEF
+
+- Added an unconditional brief instruction to focus only on the problem currently being reported, without reviving an earlier different problem unless the user does.
+- Added dependency-cue detection for "i need you", "you are all i have" and "don't leave me"; matching messages select reassure mode and add the requested trusted-person instruction.
+- Added brief regressions for "i need you" and the current-problem scope rule.
+- **Local verification:** tests were not run locally; no test count is claimed. Conversation-level behavior remains unverified against a live model.
