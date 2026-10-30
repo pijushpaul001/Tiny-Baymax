@@ -26,8 +26,11 @@ LLM_FAILURE_REPLIES = {
     "unavailable": "I had trouble reaching my cloud brain. Please try again in a moment.",
     "auth": "I am not set up correctly right now. Please tell the owner.",
     "model_not_found": "I am not set up correctly right now. Please tell the owner.",
+    "empty": RETRY_LLM_FAILURE_REPLY,
+    "other": RETRY_LLM_FAILURE_REPLY,
 }
 DEFAULT_LLM_FAILURE_REPLY = "I could not answer that one. Could you say it a different way?"
+RETRY_LLM_FAILURE_REPLY = "I had trouble answering. Please try again in a moment."
 
 YES = re.compile(
     r"(?:y|yes|yeah|yep|yup|sure|of course|definitely|satisfied|very satisfied|"

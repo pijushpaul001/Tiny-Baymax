@@ -97,3 +97,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Preserved existing exit phrases and the existing safety-hold exit path.
 - Added regression cases for the requested polite farewells and ordinary sentences containing farewell words.
 - **Local verification:** tests were not run locally; no test count is claimed. GitHub Actions and safety-hold regression execution remain unverified.
+
+
+## v0.6.4 chat fixes — S2 FAILURE TEXT
+
+- Kept the existing blocked-response wording and the quota, auth, model-not-found and unavailable messages unchanged.
+- Changed only `empty` and `other` failures to: "I had trouble answering. Please try again in a moment."
+- Updated fixed-reply regression expectations.
+- **Local verification:** tests were not run locally; no test count is claimed. CI and provider-side failure behavior remain unverified.
