@@ -509,8 +509,17 @@ class ChatService:
         settings = st.get_settings(uid)
         history = st.history(uid, self.max_history)
         memories = [m["fact"] for m in st.memories(uid)]
-        extra = ("\n\nSIMULATED BAYMAX STATE:\n" + emotion.report() + "\n\nLONG-TERM MEMORY:\n"
-                 + ("\n".join(f"- {m}" for m in memories) if memories else "No memories are currently saved."))
+        summaries = st.summaries(uid, 5)
+        summary_context = (
+            "\\n\\nPREVIOUS CONVERSATIONS (topic summaries, oldest first)\\n"
+            + ("\\n".join(f"- [{item['ts'][:10]}] {item['text']}" for item in summaries)
+               if summaries else "No topic summaries are currently saved.")
+            + "\\n- Mention these summaries only when relevant. They are summaries, not exact quotes. "
+              "Never claim details beyond what they contain."
+        )
+        extra = ("\\n\\nSIMULATED BAYMAX STATE:\\n" + emotion.report() + "\\n\\nLONG-TERM MEMORY:\\n"
+                 + ("\\n".join(f"- {m}" for m in memories) if memories else "No memories are currently saved.")
+                 + summary_context)
 
         r = self.brain.turn(
             safe, history, memories, emotion, s.dstate, settings["auto_memory"], extra_system=extra,

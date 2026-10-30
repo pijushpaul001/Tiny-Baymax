@@ -146,3 +146,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Summary output is secret-redacted, capped at 400 characters, and rejected if the existing memory-gate blocklist matches or if it contains advice/bullets. Summary errors are suppressed; logs contain only a stable error code.
 - Added FakeLLM regressions for ritual summary creation/once-only behavior, fewer than four messages, secret redaction, sensitive-word rejection, and silent LLM failure.
 - **Local verification:** tests and compilation were not run locally. No test count is claimed.
+
+
+## v0.7.0 SESSION MEMORY — M3 USE
+
+- Added the last five per-user topic summaries to every model turn under `PREVIOUS CONVERSATIONS (topic summaries, oldest first)`, ordered oldest first.
+- Added explicit instructions to mention summaries only when relevant, treat them as summaries rather than exact quotes, and never claim details beyond them.
+- Added a FakeLLM prompt regression for summary inclusion and the guard instructions.
+- **Local verification:** tests and compilation were not run locally. No test count is claimed.

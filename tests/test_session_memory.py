@@ -58,6 +58,19 @@ class SessionSummaryTests(unittest.TestCase):
         service.handle("u1", "yes")
         self.assertEqual(self.store.summaries("u1"), [])
 
+
+    def test_previous_summaries_are_in_next_session_prompt(self):
+        llm = FakeLLM()
+        self.store.add_summary("u1", 1, 9, "We discussed hiking and cooking.")
+        service = ChatService(self.store, llm)
+        service.open_session("u1")
+        service.handle("u1", "Tell me something.")
+        prompt = llm.calls[-1][0]
+        self.assertIn("PREVIOUS CONVERSATIONS (topic summaries, oldest first)", prompt)
+        self.assertIn("We discussed hiking and cooking.", prompt)
+        self.assertIn("summaries, not exact quotes", prompt)
+        self.assertIn("Never claim details beyond what they contain", prompt)
+
     def test_failing_summary_llm_does_not_break_session_open_or_chat(self):
         llm = FakeLLM(replies=["A calm reply."] * 4 + [RuntimeError("private provider error")])
         service = self._session_with_four_messages(llm)
