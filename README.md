@@ -22,7 +22,7 @@ it is not exposed through HTTP. `BAYMAX_USER_CONTROLS=1` restores the old manage
    cp .env.example .env
    ```
 2. Set:
-   - `GEMINI_API_KEY` on the server
+   - `GEMINI_API_KEY` on the server. Google AI Studio now issues keys starting with `AQ.`; these are normal API keys and are about 53 characters long.
    - `BAYMAX_TOKENS=owner=<long-random-passcode>,friend=<long-random-passcode>`
    - leave `BAYMAX_USER_CONTROLS=0` for the normal two-user deployment
 3. Run:

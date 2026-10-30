@@ -69,8 +69,8 @@ class ServiceLLMFailureTests(unittest.TestCase):
             (CodedError(401), "I am not set up correctly right now. Please tell the owner."),
             (CodedError(404), "I am not set up correctly right now. Please tell the owner."),
             (BlockedError(), "I could not answer that one. Could you say it a different way?"),
-            (EmptyResponseError(), "I could not answer that one. Could you say it a different way?"),
-            (RuntimeError("unexpected"), "I could not answer that one. Could you say it a different way?"),
+            (EmptyResponseError(), "I had trouble answering. Please try again in a moment."),
+            (RuntimeError("unexpected"), "I had trouble answering. Please try again in a moment."),
             (TimeoutError("timed out"), "I had trouble reaching my cloud brain. Please try again in a moment."),
         )
         for error, expected in cases:

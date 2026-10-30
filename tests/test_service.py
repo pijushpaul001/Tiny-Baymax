@@ -169,6 +169,25 @@ class ServiceTests(unittest.TestCase):
         response = svc.handle("u1", "good night")
         self.assertEqual(response["reply"], "Are you satisfied with my care today?")
 
+
+    def test_polite_short_farewells_start_the_shutdown_ritual(self):
+        for phrase in (
+            "ok bye baymax", "bye baymax", "ok bye", "good night baymax",
+            "see you later", "thanks bye", "gtg", "i have to go now",
+        ):
+            with self.subTest(phrase=phrase):
+                svc = self.build()
+                response = svc.handle("u1", phrase)
+                self.assertEqual(response["kind"], "ritual")
+                self.assertEqual(response["reply"], "Are you satisfied with my care today?")
+
+    def test_farewell_words_inside_ordinary_sentences_are_not_exit_intent(self):
+        for phrase in ("I said bye to my friend today", "goodbye is a hard word"):
+            with self.subTest(phrase=phrase):
+                svc = self.build()
+                response = svc.handle("u1", phrase)
+                self.assertNotEqual(response["kind"], "ritual")
+
     def test_shutdown_decision_accepts_natural_short_phrases(self):
         for phrase in ("shut down please", "yes shut down", "let's stop"):
             with self.subTest(phrase=phrase):

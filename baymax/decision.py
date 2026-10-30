@@ -14,6 +14,11 @@ from .detection import (ANAPHORA, CELEBRATE, CONCISE, ENCOURAGE, EMOTION_ADJ, EX
 from .emotion import EmotionState
 
 
+DEPENDENCY_CUE = re.compile(
+    r"\bi need you\b|\byou are all i have\b|\bdon['’]t leave me\b", re.I
+)
+
+
 def safety_hold_active(turn: int, hold_until: int) -> bool:
     """Return whether the current turn is within the inclusive safety hold."""
     return turn <= hold_until
@@ -198,7 +203,7 @@ class DecisionLayer:
                          or safety_hold_active(st.turn, st.safety_hold_until)) else 1
         trace.append(f"mode: {mode} ({src}), question_budget={q_budget}")
 
-        brief = self._brief(mode, style, q_budget, hits, det, rating, action, ctx_hint, ep, st)
+        brief = self._brief(mode, style, q_budget, hits, det, rating, action, ctx_hint, ep, st, msg)
         return Decision(det, mode, src, action, rating, det_reply, hits, style, q_budget, brief, trace,
                         rating_action=rating_action)
 
@@ -218,6 +223,7 @@ class DecisionLayer:
 
     def _mode(self, msg, det, rating, emotion, st):
         if det.red_flag or safety_hold_active(st.turn, st.safety_hold_until): return "reassure", "rule"
+        if DEPENDENCY_CUE.search(msg):                         return "reassure", "rule"
         if rating is not None:                               return "reassure", "rule"
         if det.type == "emotional":                          return "listen", "rule"
         if det.type != "none":                               return "reassure", "rule"
@@ -228,15 +234,18 @@ class DecisionLayer:
         if EXPLAIN.match(msg):                               return "explain", "rule"
         return "listen", "default"
 
-    def _brief(self, mode, style, qb, hits, det, rating, action, ctx, ep, st):
+    def _brief(self, mode, style, qb, hits, det, rating, action, ctx, ep, st, msg):
         L = ["DECISION BRIEF (already decided by the application; follow it, never mention it):",
              f"- Interaction mode: {mode}.",
              f"- Tone: {', '.join(style['tone']) or 'calm, friendly'}. Reassurance level: {style['reassurance']}.",
              f"- Max {style['max_sentences']} sentences unless the user asked for detail.",
              f"- Humor: {'light humor is fine' if style['humor'] else 'no jokes'}.",
              "- Questions: " + ("you may ask at most ONE useful question." if qb else "do NOT end with a question."),
-             "- Use recent conversation to resolve short follow-ups. Never invent implications or facts about the user."]
+             "- Use recent conversation to resolve short follow-ups. Never invent implications or facts about the user.",
+             "- Talk only about the problem the user is reporting now. Do not mention an earlier, different problem unless they do."]
         if ctx: L.append(f"- Context: {ctx}")
+        if DEPENDENCY_CUE.search(msg):
+            L.append("- Respond warmly and calmly. Do not imply you are their only support. Gently mention a trusted person.")
         if hits: L.append("- Known stable facts (use only if natural): " + "; ".join(hits))
         if safety_hold_active(st.turn, st.safety_hold_until):
             L.append("- SAFETY PRIORITY: the user mentioned possible self-harm. Stay calm and present, encourage "

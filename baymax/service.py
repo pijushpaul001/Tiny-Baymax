@@ -21,13 +21,16 @@ from .storage import Store
 MAX_MESSAGE_CHARS = 2000
 GREET_AFTER_SECONDS = 6 * 3600
 
+DEFAULT_LLM_FAILURE_REPLY = "I could not answer that one. Could you say it a different way?"
+RETRY_LLM_FAILURE_REPLY = "I had trouble answering. Please try again in a moment."
 LLM_FAILURE_REPLIES = {
     "quota": "I have reached my usage limit for now. Please try again later.",
     "unavailable": "I had trouble reaching my cloud brain. Please try again in a moment.",
     "auth": "I am not set up correctly right now. Please tell the owner.",
     "model_not_found": "I am not set up correctly right now. Please tell the owner.",
+    "empty": RETRY_LLM_FAILURE_REPLY,
+    "other": RETRY_LLM_FAILURE_REPLY,
 }
-DEFAULT_LLM_FAILURE_REPLY = "I could not answer that one. Could you say it a different way?"
 
 YES = re.compile(
     r"(?:y|yes|yeah|yep|yup|sure|of course|definitely|satisfied|very satisfied|"
@@ -48,9 +51,29 @@ EXIT_PHRASES = {
 
 
 def is_exit_intent(text: str) -> bool:
-    """Recognize a short, whole-message exit request without catching ordinary prose."""
+    """Recognize concise whole-message exit requests, including polite farewells."""
     normalized = re.sub(r"[.!?]+$", "", (text or "").strip().lower())
-    return len(normalized.split()) <= 5 and normalized in EXIT_PHRASES
+    if len(normalized.split()) <= 5 and normalized in EXIT_PHRASES:
+        return True
+
+    words = re.findall(r"[a-z']+", (text or "").lower())
+    if not words or len(words) > 6:
+        return False
+    filler = {"ok", "okay", "thanks", "baymax", "now", "then", "please", "alright", "well", "so"}
+    remaining, index = [], 0
+    while index < len(words):
+        if words[index:index + 2] == ["thank", "you"]:
+            index += 2
+            continue
+        if words[index] not in filler:
+            remaining.append(words[index])
+        index += 1
+    farewell = " ".join(remaining)
+    return farewell in {
+        "bye", "bye bye", "goodbye", "good night", "goodnight", "see you",
+        "see you later", "talk later", "talk to you later", "ttyl", "gtg",
+        "i have to go", "i must go", "i am leaving",
+    }
 
 
 def _closing_should_end(text: str) -> bool:

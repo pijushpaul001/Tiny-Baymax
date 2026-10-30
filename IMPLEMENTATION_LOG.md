@@ -89,3 +89,42 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 ## Historical record
 
 Earlier Rounds 1–4 hardening work remains in the branch history and included rating persistence, shutdown handling, deterministic safety paths, secret redaction, authentication throttling, SQLite migrations, urgent-medical detection expansion, version assertions, and hosting documentation alignment.
+
+
+## v0.6.4 chat fixes — S1 EXIT
+
+- Expanded short whole-message exit recognition to remove the specified filler words before matching farewell phrases, with a six-word input limit.
+- Preserved existing exit phrases and the existing safety-hold exit path.
+- Added regression cases for the requested polite farewells and ordinary sentences containing farewell words.
+- **Local verification:** tests were not run locally; no test count is claimed. GitHub Actions and safety-hold regression execution remain unverified.
+
+
+## v0.6.4 chat fixes — S2 FAILURE TEXT
+
+- Kept the existing blocked-response wording and the quota, auth, model-not-found and unavailable messages unchanged.
+- Changed only `empty` and `other` failures to: "I had trouble answering. Please try again in a moment."
+- Updated fixed-reply regression expectations.
+- **Local verification:** tests were not run locally; no test count is claimed. CI and provider-side failure behavior remain unverified.
+
+
+## v0.6.4 chat fixes — S3 STYLE GUARD
+
+- Extended the existing single-retry style check to catch rating echoes after a rating was just supplied and invented body/mechanical wording (battery, lithium, charging, sensors, circuits).
+- The retry adds explicit rewrite instructions; it remains limited to one retry.
+- Added FakeLLM regressions that return a violating draft followed by a clean reply.
+- **Local verification:** tests were not run locally; no test count is claimed. Retry behavior with a live Gemini model remains unverified.
+
+
+## v0.6.4 chat fixes — S4 BRIEF
+
+- Added an unconditional brief instruction to focus only on the problem currently being reported, without reviving an earlier different problem unless the user does.
+- Added dependency-cue detection for "i need you", "you are all i have" and "don't leave me"; matching messages select reassure mode and add the requested trusted-person instruction.
+- Added brief regressions for "i need you" and the current-problem scope rule.
+- **Local verification:** tests were not run locally; no test count is claimed. Conversation-level behavior remains unverified against a live model.
+
+
+## v0.6.4 chat fixes — S5 CLEANUP
+
+- Removed the `temperature` argument from the Gemini generation configuration.
+- Added the README note that Google AI Studio keys beginning with `AQ.` are normal API keys and are about 53 characters long.
+- **Local verification:** tests and compilation were not run locally; no test count is claimed. Gemini request compatibility was not tested against the live API.

@@ -63,7 +63,7 @@ class GeminiAdapter:
         contents = [t.Content(role=item["role"],
                               parts=[t.Part.from_text(text=item["content"])]) for item in messages]
         config = t.GenerateContentConfig(system_instruction=system, response_mime_type="application/json",
-                                         response_schema=schema, temperature=0.75, max_output_tokens=700)
+                                         response_schema=schema, max_output_tokens=700)
         try:
             resp = self._call(contents, config)
         except Exception as e:
