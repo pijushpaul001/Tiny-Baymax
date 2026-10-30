@@ -21,6 +21,8 @@ from .storage import Store
 MAX_MESSAGE_CHARS = 2000
 GREET_AFTER_SECONDS = 6 * 3600
 
+DEFAULT_LLM_FAILURE_REPLY = "I could not answer that one. Could you say it a different way?"
+RETRY_LLM_FAILURE_REPLY = "I had trouble answering. Please try again in a moment."
 LLM_FAILURE_REPLIES = {
     "quota": "I have reached my usage limit for now. Please try again later.",
     "unavailable": "I had trouble reaching my cloud brain. Please try again in a moment.",
@@ -29,8 +31,6 @@ LLM_FAILURE_REPLIES = {
     "empty": RETRY_LLM_FAILURE_REPLY,
     "other": RETRY_LLM_FAILURE_REPLY,
 }
-DEFAULT_LLM_FAILURE_REPLY = "I could not answer that one. Could you say it a different way?"
-RETRY_LLM_FAILURE_REPLY = "I had trouble answering. Please try again in a moment."
 
 YES = re.compile(
     r"(?:y|yes|yeah|yep|yup|sure|of course|definitely|satisfied|very satisfied|"
