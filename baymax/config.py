@@ -45,6 +45,7 @@ class Settings:
     trusted_proxy: bool = False
     backup_keep: int = 7
     user_controls: bool = False
+    summary_detail: str = "topics"
 
     @property
     def db_path(self) -> str:
@@ -54,6 +55,9 @@ class Settings:
     def from_env(cls):
         load_dotenv()
         e = os.environ.get
+        summary_detail = e("BAYMAX_SUMMARY_DETAIL", "topics")
+        if summary_detail != "topics":
+            raise ValueError("BAYMAX_SUMMARY_DETAIL currently allows only 'topics'.")
         return cls(
             data_dir=Path(e("BAYMAX_DATA_DIR", "data")),
             llm=e("BAYMAX_LLM", "gemini").lower(),
@@ -71,4 +75,5 @@ class Settings:
             trusted_proxy=e("BAYMAX_TRUSTED_PROXY", "") == "1",
             backup_keep=max(1, int(e("BAYMAX_BACKUP_KEEP", "7"))),
             user_controls=e("BAYMAX_USER_CONTROLS", "0") == "1",
+            summary_detail=summary_detail,
         )

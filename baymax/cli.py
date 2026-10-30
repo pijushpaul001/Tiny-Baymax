@@ -17,7 +17,7 @@ def main():
         from .llm.gemini import GeminiAdapter
         llm = GeminiAdapter(cfg.gemini_api_key, cfg.model, cfg.fallback_model or None)
     svc = ChatService(Store(cfg.db_path), llm, DecisionConfig(emergency_hint=cfg.emergency_hint),
-                      cfg.max_history, cfg.max_per_day)
+                      cfg.max_history, cfg.max_per_day, summary_detail=cfg.summary_detail)
     uid = "cli"
     for m in svc.open_session(uid)["history"][-1:]:
         print("Baymax:", m["content"])

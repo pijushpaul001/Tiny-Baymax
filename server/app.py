@@ -57,7 +57,7 @@ def build_api(cfg: Settings, llm=None) -> Api:
     cfg.data_dir.mkdir(parents=True, exist_ok=True)
     service = ChatService(Store(cfg.db_path, backup_keep=cfg.backup_keep), llm or build_llm(cfg),
                           DecisionConfig(emergency_hint=cfg.emergency_hint),
-                          max_history=cfg.max_history, max_per_day=cfg.max_per_day)
+                          max_history=cfg.max_history, max_per_day=cfg.max_per_day, summary_detail=cfg.summary_detail)
     return Api(service, Auth(cfg.tokens, cfg.allow_no_auth),
                allowed_origins=cfg.allowed_origins, trusted_proxy=cfg.trusted_proxy,
                user_controls=cfg.user_controls)

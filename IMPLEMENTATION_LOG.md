@@ -128,3 +128,12 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Removed the `temperature` argument from the Gemini generation configuration.
 - Added the README note that Google AI Studio keys beginning with `AQ.` are normal API keys and are about 53 characters long.
 - **Local verification:** tests and compilation were not run locally; no test count is claimed. Gemini request compatibility was not tested against the live API.
+
+
+## v0.7.0 SESSION MEMORY — M1 SESSIONS + SCHEMA
+
+- Raised SQLite schema to v2 and added the per-user `summaries` table with the requested columns and user index. The existing online-backup-before-migration path remains in use for upgrades.
+- Added session message-range and last-message helpers, six-hour idle-boundary handling, and explicit ended-session state after the shutdown ritual.
+- Added `BAYMAX_SUMMARY_DETAIL=topics` to central settings and the example environment file. Other values are rejected.
+- Existing message, memory, and other user data are preserved by the ordered migration.
+- **Local verification:** tests and compilation were not run locally. Migration and session-boundary regression tests were added; no test count is claimed.

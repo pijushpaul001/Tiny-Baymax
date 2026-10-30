@@ -128,13 +128,18 @@ class Session:
     exit_checked: bool = False
     debug: bool = False
     invalidated: bool = False
+    ended: bool = False
+    start_message_id: int = None
     lock: threading.Lock = field(default_factory=threading.Lock)
 
 
 class ChatService:
     def __init__(self, store: Store, llm, decision_cfg: DecisionConfig = None,
-                 max_history: int = 24, max_per_day: int = 200):
+                 max_history: int = 24, max_per_day: int = 200, summary_detail: str = "topics"):
+        if summary_detail != "topics":
+            raise ValueError("summary_detail currently allows only 'topics'.")
         self.store, self.max_history, self.max_per_day = store, max_history, max_per_day
+        self.summary_detail = summary_detail
         self.brain = BaymaxBrain(llm, PERSONA, decision_cfg, history_turns=max_history)
         self._sessions, self._guard = {}, threading.Lock()
 
@@ -143,17 +148,40 @@ class ChatService:
         with self._guard:
             return self._sessions.setdefault(uid, Session())
 
+    def _idle_gap(self, uid):
+        last = self.store.last_message(uid)
+        if not last:
+            return False
+        from datetime import timedelta
+        return datetime.now() - datetime.fromisoformat(last["ts"]) >= timedelta(seconds=GREET_AFTER_SECONDS)
+
+    def _reset_session_state(self, s):
+        s.dstate = DecisionState()
+        s.closing = None
+        s.exit_checked = False
+        s.ended = True
+        s.start_message_id = None
+
     def open_session(self, uid: str) -> dict:
-        """Called when the app opens. Greets once per session (and again after a long gap)."""
+        """Open the active session; a six-hour message gap starts a new one."""
         while True:
             s = self.session(uid)
             with s.lock:
                 if s.invalidated:
                     continue
-                if time.time() - s.greeted_at > GREET_AFTER_SECONDS:
+                gap = self._idle_gap(uid)
+                if gap:
+                    # M2 attaches topic-summary generation to this session boundary.
+                    self._reset_session_state(s)
+                if not s.greeted_at or gap or s.ended:
+                    existing = self.store.session_messages(uid)
+                    if s.start_message_id is None and existing and not gap:
+                        s.start_message_id = existing[0]["id"]
+                    ids = self.store.add_messages(uid, [("assistant", " ".join(GREETING))])
+                    if s.start_message_id is None and ids:
+                        s.start_message_id = ids[0]
                     s.greeted_at = time.time()
-                    s.closing = None
-                    self.store.add_messages(uid, [("assistant", " ".join(GREETING))])
+                    s.ended = False
                 break
         return {"history": self.store.history_with_time(uid, 40), "emotion": self._emotion(uid).to_dict(),
                 "settings": self.store.get_settings(uid)}
@@ -209,6 +237,7 @@ class ChatService:
             if s.dstate.turn < s.dstate.safety_hold_until and not s.exit_checked:
                 return self._exit_hold_response(s)
             s.closing = "asked"
+            s.ended = False
             return self._resp(uid, "Are you satisfied with my care today?", kind="ritual", s=s,
                               ui={"quick_replies": ["Yes", "No"]})
 
@@ -290,6 +319,9 @@ class ChatService:
             if s.invalidated:
                 return {"reply": "This session was reset. Please send your message again.", "kind": "error",
                         "mode": None, "ended": False, "closing": None, "emotion": EmotionState().to_dict()}
+            if self._idle_gap(uid):
+                # M2 attaches topic-summary generation to this session boundary.
+                self._reset_session_state(s)
             return self._handle_locked(uid, text, s)
 
     def _handle_locked(self, uid, text, s):
@@ -345,6 +377,7 @@ class ChatService:
     def _finish(self, uid, s, reply):
         s.closing = None
         s.greeted_at = 0.0                           # greet again next time the app opens
+        s.ended = True
         return self._resp(uid, reply, kind="ritual", ended=True, s=s)
 
     # ------------------------------------------------------------ commands
@@ -458,6 +491,9 @@ class ChatService:
             rating_event=r.rating_event, memory=memory_fact, bump=True
         )
         self._remember_rating_id(s, r.rating_event, persisted["rating_id"])
+        if s.start_message_id is None:
+            s.start_message_id = persisted["first_message_id"]
+        s.ended = False
         ui = {}
         if r.decision.rating_action in {"ask", "confirm"}:
             episode = s.dstate.episode

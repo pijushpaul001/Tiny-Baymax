@@ -27,7 +27,7 @@ CREATE INDEX IF NOT EXISTS idx_rat_user ON ratings(user_id, id);
 DEFAULT_SETTINGS = {"auto_memory": True, "speak": True, "consented_version": ""}
 MAX_MEMORIES = 100
 MAX_MESSAGES = 300
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 def _now() -> str:
@@ -82,7 +82,7 @@ class Store:
         return str(backup)
 
     def _migrate(self, version: int):
-        """Apply ordered, transactional schema migrations. Version 1 is the baseline schema."""
+        """Apply ordered, transactional schema migrations. Version 1 is the baseline."""
         with self._lock:
             try:
                 self.db.execute("BEGIN IMMEDIATE")
@@ -91,6 +91,14 @@ class Store:
                         if statement.strip():
                             self.db.execute(statement)
                     self.db.execute("PRAGMA user_version = 1")
+                if version < 2:
+                    self.db.execute(
+                        "CREATE TABLE IF NOT EXISTS summaries("
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, ts TEXT NOT NULL, "
+                        "first_msg_id INTEGER NOT NULL, last_msg_id INTEGER NOT NULL, text TEXT NOT NULL)"
+                    )
+                    self.db.execute("CREATE INDEX IF NOT EXISTS idx_summary_user ON summaries(user_id, id)")
+                    self.db.execute("PRAGMA user_version = 2")
                 self.db.commit()
             except Exception:
                 self.db.rollback()
@@ -112,15 +120,19 @@ class Store:
 
     def persist_turn(self, uid, pairs=None, emotion=None, rating_event=None, memory=None, bump=True):
         """Persist one turn's writes atomically; return inserted/updated rating and memory IDs."""
-        result = {"rating_id": None, "memory_id": None}
+        result = {"rating_id": None, "memory_id": None, "first_message_id": None, "last_message_id": None}
         with self._lock:
             with self.db:
                 if pairs is not None:
                     for role, content in pairs:
-                        self.db.execute(
+                        cur = self.db.execute(
                             "INSERT INTO messages(user_id, role, content, ts) VALUES (?,?,?,?)",
                             (uid, role, content, _now()),
                         )
+                        message_id = int(cur.lastrowid)
+                        if result["first_message_id"] is None:
+                            result["first_message_id"] = message_id
+                        result["last_message_id"] = message_id
                 if emotion is not None:
                     self.db.execute(
                         "INSERT INTO emotion(user_id, data) VALUES (?,?) "
@@ -185,9 +197,45 @@ class Store:
         self._run("DELETE FROM memories WHERE user_id=?", (uid,))
 
     def add_messages(self, uid, pairs):
-        for role, content in pairs:
-            self._run("INSERT INTO messages(user_id, role, content, ts) VALUES (?,?,?,?)",
-                      (uid, role, content, _now()))
+        ids = []
+        with self._lock:
+            with self.db:
+                for role, content in pairs:
+                    cur = self.db.execute(
+                        "INSERT INTO messages(user_id, role, content, ts) VALUES (?,?,?,?)",
+                        (uid, role, content, _now()),
+                    )
+                    ids.append(int(cur.lastrowid))
+        return ids
+
+    def last_message(self, uid):
+        rows = self._all(
+            "SELECT id, role, content, ts FROM messages WHERE user_id=? ORDER BY id DESC LIMIT 1", (uid,)
+        )
+        return rows[0] if rows else None
+
+    def session_messages(self, uid, start_id=None):
+        """Return one user's current contiguous session, stopping at a six-hour message gap."""
+        if start_id is not None:
+            return self._all(
+                "SELECT id, role, content, ts FROM messages WHERE user_id=? AND id>=? ORDER BY id",
+                (uid, int(start_id)),
+            )
+        rows = self._all(
+            "SELECT id, role, content, ts FROM messages WHERE user_id=? ORDER BY id DESC", (uid,)
+        )
+        if not rows:
+            return []
+        from datetime import timedelta
+        selected = [rows[0]]
+        newer_ts = datetime.fromisoformat(rows[0]["ts"])
+        for row in rows[1:]:
+            older_ts = datetime.fromisoformat(row["ts"])
+            if newer_ts - older_ts >= timedelta(hours=6):
+                break
+            selected.append(row)
+            newer_ts = older_ts
+        return list(reversed(selected))
 
     def history(self, uid, limit=24):
         rows = self._all("SELECT role, content FROM messages WHERE user_id=? ORDER BY id DESC LIMIT ?", (uid, limit))

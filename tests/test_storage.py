@@ -44,6 +44,8 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(store.ratings("u1")[0]["rating"], 8)
         self.assertEqual(len(store.history("u1")), 2)
         self.assertEqual(store.usage_today("u1"), 1)
+        self.assertIsNotNone(rid["first_message_id"])
+        self.assertEqual(rid["last_message_id"], rid["first_message_id"] + 1)
 
     def test_legacy_database_is_backed_up_before_schema_upgrade(self):
         with tempfile.TemporaryDirectory() as td:
@@ -57,6 +59,9 @@ class StoreTests(unittest.TestCase):
 
             store = Store(str(db), backup_keep=2)
             self.assertEqual(store.health()["schema"], SCHEMA_VERSION)
+            self.assertTrue(store.db.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='summaries'"
+            ).fetchone())
             self.assertTrue(store.backup_path)
             self.assertTrue(Path(store.backup_path).exists())
             backup = sqlite3.connect(store.backup_path)
