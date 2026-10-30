@@ -237,6 +237,29 @@ class Store:
             newer_ts = older_ts
         return list(reversed(selected))
 
+    def summary_exists(self, uid, first_msg_id, last_msg_id):
+        return bool(self._all(
+            "SELECT 1 FROM summaries WHERE user_id=? AND first_msg_id=? AND last_msg_id=? LIMIT 1",
+            (uid, int(first_msg_id), int(last_msg_id)),
+        ))
+
+    def add_summary(self, uid, first_msg_id, last_msg_id, text):
+        with self._lock:
+            cur = self.db.execute(
+                "INSERT OR IGNORE INTO summaries(user_id, ts, first_msg_id, last_msg_id, text) "
+                "VALUES (?,?,?,?,?)",
+                (uid, _now(), int(first_msg_id), int(last_msg_id), text),
+            )
+            self.db.commit()
+            return cur.rowcount > 0
+
+    def summaries(self, uid, limit=5):
+        rows = self._all(
+            "SELECT id, ts, first_msg_id, last_msg_id, text FROM summaries "
+            "WHERE user_id=? ORDER BY id DESC LIMIT ?", (uid, int(limit))
+        )
+        return list(reversed(rows))
+
     def history(self, uid, limit=24):
         rows = self._all("SELECT role, content FROM messages WHERE user_id=? ORDER BY id DESC LIMIT ?", (uid, limit))
         return rows[::-1]
@@ -318,6 +341,7 @@ class Store:
 
     def export(self, uid) -> dict:
         return {"memories": self.memories(uid), "messages": self.history_with_time(uid, MAX_MESSAGES),
+                "summaries": self.summaries(uid, 10000),
                 "emotion": self.get_emotion(uid), "settings": self.get_settings(uid),
                 "ratings": self.ratings(uid, None),
                 "feedback": self._all("SELECT ts, text FROM feedback WHERE user_id=? ORDER BY id", (uid,)),
@@ -336,5 +360,5 @@ class Store:
     def delete_all(self, uid):
         with self._lock:
             with self.db:
-                for table in ("memories", "messages", "emotion", "settings", "ratings", "feedback", "usage"):
+                for table in ("memories", "messages", "emotion", "settings", "ratings", "feedback", "usage", "summaries"):
                     self.db.execute(f"DELETE FROM {table} WHERE user_id=?", (uid,))

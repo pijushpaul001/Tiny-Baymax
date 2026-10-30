@@ -137,3 +137,12 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added `BAYMAX_SUMMARY_DETAIL=topics` to central settings and the example environment file. Other values are rejected.
 - Existing message, memory, and other user data are preserved by the ordered migration.
 - **Local verification:** tests and compilation were not run locally. Migration and session-boundary regression tests were added; no test count is claimed.
+
+
+## v0.7.0 SESSION MEMORY — M2 SUMMARY
+
+- Added best-effort summary generation at shutdown completion and six-hour session boundaries. A session needs at least four eligible user messages and an unsummarized message-ID range.
+- The fixed prompt requests 2–4 plain sentences about non-sensitive topics only. Difficulty/red-flag user messages and their immediate assistant replies are excluded before the one summary call.
+- Summary output is secret-redacted, capped at 400 characters, and rejected if the existing memory-gate blocklist matches or if it contains advice/bullets. Summary errors are suppressed; logs contain only a stable error code.
+- Added FakeLLM regressions for ritual summary creation/once-only behavior, fewer than four messages, secret redaction, sensitive-word rejection, and silent LLM failure.
+- **Local verification:** tests and compilation were not run locally. No test count is claimed.

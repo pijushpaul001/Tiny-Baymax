@@ -9,13 +9,13 @@ import threading
 import time
 from dataclasses import dataclass, field
 
-from .brain import BaymaxBrain
+from .brain import BaymaxBrain, validate_output
 from .constants import GREETING
 from .decision import DecisionConfig, DecisionState, safety_hold_active
 from .detection import detect
 from .emotion import EmotionState
-from .persona import PERSONA
-from .safety import SECRET_NOTE, is_only_secret, memory_gate, redact_secrets
+from .persona import PERSONA, RESPONSE_SCHEMA
+from .safety import BLOCK, SECRET_NOTE, is_only_secret, memory_gate, redact_secrets
 from .storage import Store
 
 MAX_MESSAGE_CHARS = 2000
@@ -148,6 +148,69 @@ class ChatService:
         with self._guard:
             return self._sessions.setdefault(uid, Session())
 
+    def _summary_rows(self, uid, s):
+        if s.start_message_id is not None:
+            return self.store.session_messages(uid, s.start_message_id)
+        return self.store.session_messages(uid)
+
+    def _summarize_session(self, uid, s):
+        """Best-effort topic-only summary; failures never affect chat or session transitions."""
+        try:
+            rows = self._summary_rows(uid, s)
+            if not rows:
+                return False
+            first_id, last_id = rows[0]["id"], rows[-1]["id"]
+            if self.store.summary_exists(uid, first_id, last_id):
+                return False
+
+            safe_rows, skip_assistant = [], False
+            user_count = 0
+            for row in rows:
+                if row["role"] == "assistant" and skip_assistant:
+                    skip_assistant = False
+                    continue
+                if row["role"] == "user":
+                    detected = detect(row["content"])
+                    if detected.type != "none" or detected.red_flag:
+                        skip_assistant = True
+                        continue
+                    user_count += 1
+                safe_text, _ = redact_secrets(row["content"])
+                safe_rows.append(f"{row['role']}: {safe_text}")
+            if user_count < 4 or not safe_rows:
+                return False
+
+            prompt = (
+                "Write exactly 2 to 4 plain sentences summarizing only the safe conversation topics "
+                "discussed, such as interests, hobbies, plans, and questions. Do not include symptoms, "
+                "pain, moods, ratings, relationships, money, locations, secrets, or personal identifying "
+                "details. Give no advice. Do not infer facts that were not stated. Return only the sentences."
+            )
+            transcript = "\n".join(safe_rows)
+            raw = self.brain.llm.generate(prompt, [], transcript, RESPONSE_SCHEMA)
+            data, _ = validate_output(raw)
+            if not data:
+                return False
+            summary, _ = redact_secrets(data["reply"].strip())
+            summary = re.sub(
+                r"\\b(?:api[ _-]?key|password|passcode|secret|token|pin|otp)\\b\\s*\\[REDACTED\\]",
+                "[REDACTED]", summary, flags=re.I
+            )
+            summary = summary[:400].strip()
+            if not summary or BLOCK.search(summary):
+                return False
+            if re.search(r"(^|\n)\s*[-*•]|\b(?:you should|i recommend|try to|you could)\b", summary, re.I):
+                return False
+            sentences = [x for x in re.split(r"(?<=[.!?])\s+", summary) if x.strip()]
+            if not 2 <= len(sentences) <= 4 or not summary.endswith((".", "!", "?")):
+                return False
+            return self.store.add_summary(uid, first_id, last_id, summary)
+        except Exception as exc:
+            from .llm.base import classify_llm_error
+            code = classify_llm_error(exc)
+            logging.warning("Session summary failed code=%s", code)
+            return False
+
     def _idle_gap(self, uid):
         last = self.store.last_message(uid)
         if not last:
@@ -170,8 +233,9 @@ class ChatService:
                 if s.invalidated:
                     continue
                 gap = self._idle_gap(uid)
-                if gap:
-                    # M2 attaches topic-summary generation to this session boundary.
+                if gap or s.ended:
+                    if gap and not s.ended:
+                        self._summarize_session(uid, s)
                     self._reset_session_state(s)
                 if not s.greeted_at or gap or s.ended:
                     existing = self.store.session_messages(uid)
@@ -320,7 +384,7 @@ class ChatService:
                 return {"reply": "This session was reset. Please send your message again.", "kind": "error",
                         "mode": None, "ended": False, "closing": None, "emotion": EmotionState().to_dict()}
             if self._idle_gap(uid):
-                # M2 attaches topic-summary generation to this session boundary.
+                self._summarize_session(uid, s)
                 self._reset_session_state(s)
             return self._handle_locked(uid, text, s)
 
@@ -375,6 +439,7 @@ class ChatService:
         return self._chat(uid, text, s)
 
     def _finish(self, uid, s, reply):
+        self._summarize_session(uid, s)
         s.closing = None
         s.greeted_at = 0.0                           # greet again next time the app opens
         s.ended = True
