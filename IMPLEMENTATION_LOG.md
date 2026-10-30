@@ -105,3 +105,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Changed only `empty` and `other` failures to: "I had trouble answering. Please try again in a moment."
 - Updated fixed-reply regression expectations.
 - **Local verification:** tests were not run locally; no test count is claimed. CI and provider-side failure behavior remain unverified.
+
+
+## v0.6.4 chat fixes — S3 STYLE GUARD
+
+- Extended the existing single-retry style check to catch rating echoes after a rating was just supplied and invented body/mechanical wording (battery, lithium, charging, sensors, circuits).
+- The retry adds explicit rewrite instructions; it remains limited to one retry.
+- Added FakeLLM regressions that return a violating draft followed by a clean reply.
+- **Local verification:** tests were not run locally; no test count is claimed. Retry behavior with a live Gemini model remains unverified.
