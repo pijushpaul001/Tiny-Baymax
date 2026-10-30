@@ -154,3 +154,12 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added explicit instructions to mention summaries only when relevant, treat them as summaries rather than exact quotes, and never claim details beyond them.
 - Added a FakeLLM prompt regression for summary inclusion and the guard instructions.
 - **Local verification:** tests and compilation were not run locally. No test count is claimed.
+
+
+## v0.7.0 SESSION MEMORY — M4 RECALL SEARCH
+
+- Added per-user message recall search. SQLite FTS5 is used when available; the same query falls back to user-scoped keyword `LIKE` search when FTS5 is unavailable.
+- Recall-style questions add up to five matching messages, each limited to 300 characters and labeled with its stored date. Empty results add the exact instruction: "No older messages match; say you do not see it."
+- Search joins/filter by the requesting user ID; another user's messages and summaries are not exposed.
+- Added FakeLLM prompt regressions for a historical "honey" match with date, no-match wording, and cross-user isolation.
+- **Local verification:** tests and compilation were not run locally. No test count is claimed.

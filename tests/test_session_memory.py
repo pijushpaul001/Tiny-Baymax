@@ -71,6 +71,34 @@ class SessionSummaryTests(unittest.TestCase):
         self.assertIn("summaries, not exact quotes", prompt)
         self.assertIn("Never claim details beyond what they contain", prompt)
 
+
+    def test_recall_search_finds_old_honey_message_with_date(self):
+        llm = FakeLLM()
+        self.store.add_messages("u1", [("user", "We talked about honey in tea last time.")])
+        service = ChatService(self.store, llm)
+        service.handle("u1", "Do you remember honey?")
+        prompt = llm.calls[-1][0]
+        self.assertIn("OLD MESSAGES MATCHING THE QUESTION", prompt)
+        self.assertIn("honey in tea", prompt)
+        self.assertIn(self.store.last_message("u1")["ts"][:10], prompt)
+
+    def test_recall_without_match_tells_model_not_to_claim_recall(self):
+        llm = FakeLLM()
+        service = ChatService(self.store, llm)
+        service.handle("u1", "What did we talk about honey?")
+        self.assertIn("No older messages match; say you do not see it.", llm.calls[-1][0])
+
+    def test_user_cannot_recall_another_users_messages_or_summaries(self):
+        llm = FakeLLM()
+        self.store.add_messages("user-b", [("user", "We talked about honey from a secret api key.")])
+        self.store.add_summary("user-b", 1, 2, "User B likes honey.")
+        service = ChatService(self.store, llm)
+        service.handle("user-a", "Do you remember honey?")
+        prompt = llm.calls[-1][0]
+        self.assertIn("No older messages match; say you do not see it.", prompt)
+        self.assertNotIn("User B likes honey", prompt)
+        self.assertNotIn("secret api key", prompt)
+
     def test_failing_summary_llm_does_not_break_session_open_or_chat(self):
         llm = FakeLLM(replies=["A calm reply."] * 4 + [RuntimeError("private provider error")])
         service = self._session_with_four_messages(llm)

@@ -54,6 +54,7 @@ class Store:
             if version < SCHEMA_VERSION and existed:
                 self.backup_path = self._backup_before_migration(path)
             self._migrate(version)
+            self._ensure_message_fts()
         except Exception:
             try:
                 self.db.close()
@@ -103,6 +104,52 @@ class Store:
             except Exception:
                 self.db.rollback()
                 raise
+
+    def _ensure_message_fts(self):
+        """Create a private FTS5 index when SQLite supports it; LIKE remains the fallback."""
+        try:
+            self.db.execute(
+                "CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(content, content='messages', content_rowid='id')"
+            )
+            self.db.execute(
+                "CREATE TRIGGER IF NOT EXISTS messages_fts_ai AFTER INSERT ON messages BEGIN "
+                "INSERT INTO messages_fts(rowid, content) VALUES (new.id, new.content); END"
+            )
+            self.db.execute(
+                "CREATE TRIGGER IF NOT EXISTS messages_fts_ad AFTER DELETE ON messages BEGIN "
+                "INSERT INTO messages_fts(messages_fts, rowid, content) VALUES ('delete', old.id, old.content); END"
+            )
+            self.db.execute("INSERT INTO messages_fts(messages_fts) VALUES ('rebuild')")
+            self.db.commit()
+            self._fts_available = True
+        except sqlite3.OperationalError:
+            self.db.rollback()
+            self._fts_available = False
+
+    def search_messages(self, uid, query, limit=5):
+        """Search only one user's stored messages, preferring FTS5 and falling back to LIKE."""
+        import re
+        terms = list(dict.fromkeys(re.findall(r"[a-z0-9]+", (query or "").lower())))
+        if not terms:
+            return []
+        with self._lock:
+            if getattr(self, "_fts_available", False):
+                expression = " OR ".join('"' + term.replace('"', '""') + '"' for term in terms)
+                try:
+                    return [dict(row) for row in self.db.execute(
+                        "SELECT m.id, m.role, m.content, m.ts FROM messages_fts "
+                        "JOIN messages m ON m.id=messages_fts.rowid "
+                        "WHERE messages_fts MATCH ? AND m.user_id=? ORDER BY rank, m.id DESC LIMIT ?",
+                        (expression, uid, int(limit)),
+                    ).fetchall()]
+                except sqlite3.OperationalError:
+                    self._fts_available = False
+            clauses = " OR ".join("content LIKE ?" for _ in terms)
+            args = [uid] + [f"%{term}%" for term in terms] + [int(limit)]
+            return [dict(row) for row in self.db.execute(
+                f"SELECT id, role, content, ts FROM messages WHERE user_id=? AND ({clauses}) "
+                "ORDER BY id DESC LIMIT ?", args
+            ).fetchall()]
 
     def close(self):
         with self._lock:

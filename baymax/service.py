@@ -23,6 +23,8 @@ GREET_AFTER_SECONDS = 6 * 3600
 
 DEFAULT_LLM_FAILURE_REPLY = "I could not answer that one. Could you say it a different way?"
 RETRY_LLM_FAILURE_REPLY = "I had trouble answering. Please try again in a moment."
+RECALL_QUESTION = re.compile(r"\\b(?:what did we talk about|do you remember|did i tell you|remember when)\\b", re.I)
+RECALL_STOP = set("what did we talk about do you remember did i tell you remember when the a an and or to of in on is was i you me about".split())
 LLM_FAILURE_REPLIES = {
     "quota": "I have reached my usage limit for now. Please try again later.",
     "unavailable": "I had trouble reaching my cloud brain. Please try again in a moment.",
@@ -147,6 +149,19 @@ class ChatService:
     def session(self, uid: str) -> Session:
         with self._guard:
             return self._sessions.setdefault(uid, Session())
+
+    def _recall_context(self, uid, text):
+        if not RECALL_QUESTION.search(text or ""):
+            return ""
+        terms = [word for word in re.findall(r"[a-z0-9]+", (text or "").lower())
+                 if word not in RECALL_STOP and len(word) > 1]
+        matches = self.store.search_messages(uid, " ".join(terms), 5) if terms else []
+        if not matches:
+            return "\\n\\nOLD MESSAGES MATCHING THE QUESTION\\nNo older messages match; say you do not see it."
+        lines = ["\\n\\nOLD MESSAGES MATCHING THE QUESTION"]
+        for row in matches:
+            lines.append(f"- [{row['ts'][:10]}] {row['role']}: {row['content'][:300]}")
+        return "\\n".join(lines)
 
     def _summary_rows(self, uid, s):
         if s.start_message_id is not None:
@@ -509,6 +524,7 @@ class ChatService:
         settings = st.get_settings(uid)
         history = st.history(uid, self.max_history)
         memories = [m["fact"] for m in st.memories(uid)]
+        recall_context = self._recall_context(uid, safe)
         summaries = st.summaries(uid, 5)
         summary_context = (
             "\\n\\nPREVIOUS CONVERSATIONS (topic summaries, oldest first)\\n"
@@ -519,7 +535,7 @@ class ChatService:
         )
         extra = ("\\n\\nSIMULATED BAYMAX STATE:\\n" + emotion.report() + "\\n\\nLONG-TERM MEMORY:\\n"
                  + ("\\n".join(f"- {m}" for m in memories) if memories else "No memories are currently saved.")
-                 + summary_context)
+                 + summary_context + recall_context)
 
         r = self.brain.turn(
             safe, history, memories, emotion, s.dstate, settings["auto_memory"], extra_system=extra,
