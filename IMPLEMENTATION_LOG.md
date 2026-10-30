@@ -121,3 +121,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added dependency-cue detection for "i need you", "you are all i have" and "don't leave me"; matching messages select reassure mode and add the requested trusted-person instruction.
 - Added brief regressions for "i need you" and the current-problem scope rule.
 - **Local verification:** tests were not run locally; no test count is claimed. Conversation-level behavior remains unverified against a live model.
+
+
+## v0.6.4 chat fixes — S5 CLEANUP
+
+- Removed the `temperature` argument from the Gemini generation configuration.
+- Added the README note that Google AI Studio keys beginning with `AQ.` are normal API keys and are about 53 characters long.
+- **Local verification:** tests and compilation were not run locally; no test count is claimed. Gemini request compatibility was not tested against the live API.
