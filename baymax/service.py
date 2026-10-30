@@ -5,6 +5,7 @@ Both the HTTP API and any future client (CLI, voice, robot) talk only to this cl
 import re
 import logging
 import sqlite3
+from datetime import datetime
 import threading
 import time
 from dataclasses import dataclass, field
@@ -23,8 +24,9 @@ GREET_AFTER_SECONDS = 6 * 3600
 
 DEFAULT_LLM_FAILURE_REPLY = "I could not answer that one. Could you say it a different way?"
 RETRY_LLM_FAILURE_REPLY = "I had trouble answering. Please try again in a moment."
-RECALL_QUESTION = re.compile(r"\\b(?:what did we talk about|do you remember|did i tell you|remember when)\\b", re.I)
+RECALL_QUESTION = re.compile(r"\b(?:what did we talk about|do you remember|did i tell you|remember when)\b", re.I)
 RECALL_STOP = set("what did we talk about do you remember did i tell you remember when the a an and or to of in on is was i you me about".split())
+SUMMARY_MOOD = re.compile(r"\b(?:sadness|distress)\b", re.I)
 LLM_FAILURE_REPLIES = {
     "quota": "I have reached my usage limit for now. Please try again later.",
     "unavailable": "I had trouble reaching my cloud brain. Please try again in a moment.",
@@ -150,6 +152,27 @@ class ChatService:
         with self._guard:
             return self._sessions.setdefault(uid, Session())
 
+    @staticmethod
+    def _memory_facts_for_turn(query, memory_rows):
+        """Return at most ten relevance-ranked facts plus ten newest, without duplicates."""
+        tokens = {word for word in re.findall(r"[a-z0-9]+", (query or "").lower()) if len(word) > 2}
+        scored = []
+        for row in memory_rows:
+            fact_tokens = set(re.findall(r"[a-z0-9]+", row["fact"].lower()))
+            score = len(tokens & fact_tokens)
+            if score:
+                scored.append((score, int(row["id"]), row["fact"]))
+        relevant = [fact for _, _, fact in sorted(scored, key=lambda item: (item[0], item[1]), reverse=True)[:10]]
+        newest_rows = sorted(memory_rows, key=lambda row: int(row["id"]), reverse=True)[:10]
+        selected = list(relevant)
+        seen = {fact.casefold() for fact in selected}
+        for row in newest_rows:
+            fact = row["fact"]
+            if fact.casefold() not in seen:
+                selected.append(fact)
+                seen.add(fact.casefold())
+        return selected
+
     def _recall_context(self, uid, text):
         if not RECALL_QUESTION.search(text or ""):
             return ""
@@ -157,11 +180,11 @@ class ChatService:
                  if word not in RECALL_STOP and len(word) > 1]
         matches = self.store.search_messages(uid, " ".join(terms), 5) if terms else []
         if not matches:
-            return "\\n\\nOLD MESSAGES MATCHING THE QUESTION\\nNo older messages match; say you do not see it."
-        lines = ["\\n\\nOLD MESSAGES MATCHING THE QUESTION"]
+            return "\n\nOLD MESSAGES MATCHING THE QUESTION\nNo older messages match; say you do not see it."
+        lines = ["\n\nOLD MESSAGES MATCHING THE QUESTION"]
         for row in matches:
             lines.append(f"- [{row['ts'][:10]}] {row['role']}: {row['content'][:300]}")
-        return "\\n".join(lines)
+        return "\n".join(lines)
 
     def _summary_rows(self, uid, s):
         if s.start_message_id is not None:
@@ -181,9 +204,10 @@ class ChatService:
             safe_rows, skip_assistant = [], False
             user_count = 0
             for row in rows:
-                if row["role"] == "assistant" and skip_assistant:
+                if skip_assistant:
                     skip_assistant = False
-                    continue
+                    if row["role"] == "assistant":
+                        continue
                 if row["role"] == "user":
                     detected = detect(row["content"])
                     if detected.type != "none" or detected.red_flag:
@@ -208,11 +232,11 @@ class ChatService:
                 return False
             summary, _ = redact_secrets(data["reply"].strip())
             summary = re.sub(
-                r"\\b(?:api[ _-]?key|password|passcode|secret|token|pin|otp)\\b\\s*\\[REDACTED\\]",
+                r"\b(?:api[ _-]?key|password|passcode|secret|token|pin|otp)\b\s*\[REDACTED\]",
                 "[REDACTED]", summary, flags=re.I
             )
             summary = summary[:400].strip()
-            if not summary or BLOCK.search(summary):
+            if not summary or BLOCK.search(summary) or SUMMARY_MOOD.search(summary):
                 return False
             if re.search(r"(^|\n)\s*[-*•]|\b(?:you should|i recommend|try to|you could)\b", summary, re.I):
                 return False
@@ -227,7 +251,10 @@ class ChatService:
             return False
 
     def _idle_gap(self, uid):
-        last = self.store.last_message(uid)
+        try:
+            last = self.store.last_message(uid)
+        except (sqlite3.Error, OSError):
+            return False
         if not last:
             return False
         from datetime import timedelta
@@ -248,14 +275,16 @@ class ChatService:
                 if s.invalidated:
                     continue
                 gap = self._idle_gap(uid)
-                if gap or s.ended:
+                boundary = gap or s.ended
+                if boundary:
                     if gap and not s.ended:
                         self._summarize_session(uid, s)
                     self._reset_session_state(s)
-                if not s.greeted_at or gap or s.ended:
-                    existing = self.store.session_messages(uid)
-                    if s.start_message_id is None and existing and not gap:
-                        s.start_message_id = existing[0]["id"]
+                if not s.greeted_at or boundary:
+                    if not boundary:
+                        existing = self.store.session_messages(uid)
+                        if s.start_message_id is None and existing:
+                            s.start_message_id = existing[0]["id"]
                     ids = self.store.add_messages(uid, [("assistant", " ".join(GREETING))])
                     if s.start_message_id is None and ids:
                         s.start_message_id = ids[0]
@@ -289,12 +318,14 @@ class ChatService:
         try:
             emotion = self._emotion(uid)
             emotion.nudge(concern=0.25)
-            self.store.persist_turn(
+            persisted = self.store.persist_turn(
                 uid,
                 pairs=[("user", "(message not saved)"), ("assistant", decision.deterministic_reply)],
                 emotion=emotion.to_dict(),
                 bump=False,
             )
+            if s.start_message_id is None:
+                s.start_message_id = persisted["first_message_id"]
             response["emotion"] = emotion.to_dict()
         except (sqlite3.Error, OSError) as exc:
             logging.warning("Safety response persistence failed (%s)", type(exc).__name__)
@@ -398,9 +429,13 @@ class ChatService:
             if s.invalidated:
                 return {"reply": "This session was reset. Please send your message again.", "kind": "error",
                         "mode": None, "ended": False, "closing": None, "emotion": EmotionState().to_dict()}
-            if self._idle_gap(uid):
-                self._summarize_session(uid, s)
+            gap = self._idle_gap(uid)
+            if gap or s.ended:
+                if gap and not s.ended:
+                    self._summarize_session(uid, s)
                 self._reset_session_state(s)
+                s.ended = False
+                s.greeted_at = time.time()
             return self._handle_locked(uid, text, s)
 
     def _handle_locked(self, uid, text, s):
@@ -517,24 +552,28 @@ class ChatService:
         has_safety_or_difficulty = raw_detection.type != "none" or bool(raw_detection.red_flag)
         if had_secret and is_only_secret(safe) and not has_safety_or_difficulty:
             # Do not let the secret-only shortcut suppress a real difficulty report.
-            st.add_messages(uid, [("user", safe), ("assistant", SECRET_NOTE)])
+            ids = st.add_messages(uid, [("user", safe), ("assistant", SECRET_NOTE)])
+            if s.start_message_id is None and ids:
+                s.start_message_id = ids[0]
             return self._resp(uid, SECRET_NOTE, kind="chat", s=s)
 
         emotion = self._emotion(uid)
         settings = st.get_settings(uid)
         history = st.history(uid, self.max_history)
-        memories = [m["fact"] for m in st.memories(uid)]
+        memory_rows = st.memories(uid)
+        all_memory_facts = [m["fact"] for m in memory_rows]
+        memories = self._memory_facts_for_turn(safe, memory_rows)
         recall_context = self._recall_context(uid, safe)
         summaries = st.summaries(uid, 5)
         summary_context = (
-            "\\n\\nPREVIOUS CONVERSATIONS (topic summaries, oldest first)\\n"
-            + ("\\n".join(f"- [{item['ts'][:10]}] {item['text']}" for item in summaries)
+            "\n\nPREVIOUS CONVERSATIONS (topic summaries, oldest first)\n"
+            + ("\n".join(f"- [{item['ts'][:10]}] {item['text']}" for item in summaries)
                if summaries else "No topic summaries are currently saved.")
-            + "\\n- Mention these summaries only when relevant. They are summaries, not exact quotes. "
+            + "\n- Mention these summaries only when relevant. They are summaries, not exact quotes. "
               "Never claim details beyond what they contain."
         )
-        extra = ("\\n\\nSIMULATED BAYMAX STATE:\\n" + emotion.report() + "\\n\\nLONG-TERM MEMORY:\\n"
-                 + ("\\n".join(f"- {m}" for m in memories) if memories else "No memories are currently saved.")
+        extra = ("\n\nSIMULATED BAYMAX STATE:\n" + emotion.report() + "\n\nLONG-TERM MEMORY:\n"
+                 + ("\n".join(f"- {m}" for m in memories) if memories else "No memories are currently saved.")
                  + summary_context + recall_context)
 
         r = self.brain.turn(
@@ -573,7 +612,7 @@ class ChatService:
 
         memory_fact = None
         if r.memory_to_save and settings["auto_memory"]:
-            ok, _ = memory_gate(r.memory_to_save, memories)
+            ok, _ = memory_gate(r.memory_to_save, all_memory_facts)
             if ok:
                 memory_fact = r.memory_to_save
         persisted = st.persist_turn(

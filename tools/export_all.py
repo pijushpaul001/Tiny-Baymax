@@ -8,6 +8,7 @@ from pathlib import Path
 
 TABLES = {
     "messages": "SELECT id, role, content, ts FROM messages WHERE user_id=? ORDER BY id",
+    "summaries": "SELECT id, ts, first_msg_id, last_msg_id, text FROM summaries WHERE user_id=? ORDER BY id",
     "memories": "SELECT id, fact, created FROM memories WHERE user_id=? ORDER BY id",
     "ratings": "SELECT id, ts, type, subtype, rating FROM ratings WHERE user_id=? ORDER BY id",
     "feedback": "SELECT id, ts, text FROM feedback WHERE user_id=? ORDER BY id",
@@ -37,6 +38,7 @@ def export_all(db_path):
             emotion = json.loads(emotion_rows[0]["data"]) if emotion_rows else {}
             users[user_id] = {
                 "messages": rows(conn, TABLES["messages"], user_id),
+                "summaries": rows(conn, TABLES["summaries"], user_id),
                 "memories": rows(conn, TABLES["memories"], user_id),
                 "ratings": rows(conn, TABLES["ratings"], user_id),
                 "feedback": rows(conn, TABLES["feedback"], user_id),

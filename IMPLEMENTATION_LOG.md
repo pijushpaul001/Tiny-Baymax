@@ -143,7 +143,7 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Added best-effort summary generation at shutdown completion and six-hour session boundaries. A session needs at least four eligible user messages and an unsummarized message-ID range.
 - The fixed prompt requests 2–4 plain sentences about non-sensitive topics only. Difficulty/red-flag user messages and their immediate assistant replies are excluded before the one summary call.
-- Summary output is secret-redacted, capped at 400 characters, and rejected if the existing memory-gate blocklist matches or if it contains advice/bullets. Summary errors are suppressed; logs contain only a stable error code.
+- Summary output is secret-redacted (including secret labels), capped at 400 characters, and rejected if the existing memory-gate blocklist matches or if it contains advice/bullets. The filter skips only the immediate assistant reply after a detected difficulty/red flag. Summary errors are suppressed; logs contain only a stable error code.
 - Added FakeLLM regressions for ritual summary creation/once-only behavior, fewer than four messages, secret redaction, sensitive-word rejection, and silent LLM failure.
 - **Local verification:** tests and compilation were not run locally. No test count is claimed.
 
@@ -163,3 +163,17 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Search joins/filter by the requesting user ID; another user's messages and summaries are not exposed.
 - Added FakeLLM prompt regressions for a historical "honey" match with date, no-match wording, and cross-user isolation.
 - **Local verification:** tests and compilation were not run locally. No test count is claimed.
+
+
+## v0.7.0 SESSION MEMORY — M5 FACTS
+
+- Each turn now sends at most ten relevance-ranked long-term facts plus ten newest facts, deduplicated. Memory-gate duplicate checks still see the full stored fact set.
+- Extended the read-only owner export to include each user's topic summaries. Per-user export also includes summaries.
+- Added FakeLLM coverage for the 10+10 prompt limit and relevance/newest selection, plus owner-export coverage for summaries.
+- **Local verification:** tests and compilation were not run locally. No test count is claimed.
+
+
+## v0.7.0 verification
+
+- **Local:** the unit-test suite and Python compilation were not run locally.
+- **GitHub Actions:** the full unit/API suite and compile step passed on Python 3.10, 3.11 and 3.12 for the v0.7.0 branch implementation. No live Gemini API or device testing was run.

@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from baymax.storage import SCHEMA_VERSION, Store
+from baymax.storage import SCHEMA, SCHEMA_VERSION, Store
 
 
 class StoreTests(unittest.TestCase):
@@ -51,9 +51,16 @@ class StoreTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             db = Path(td) / "baymax.db"
             conn = sqlite3.connect(db)
-            conn.execute("CREATE TABLE legacy (value TEXT)")
-            conn.execute("INSERT INTO legacy VALUES ('preserve')")
-            conn.execute("PRAGMA user_version = 0")
+            conn.executescript(SCHEMA)
+            conn.execute(
+                "INSERT INTO messages(user_id, role, content, ts) VALUES (?,?,?,?)",
+                ("u1", "user", "preserve this conversation", "2026-10-01T12:00:00"),
+            )
+            conn.execute(
+                "INSERT INTO memories(user_id, fact, created) VALUES (?,?,?)",
+                ("u1", "likes music", "2026-10-01T12:00:00"),
+            )
+            conn.execute("PRAGMA user_version = 1")
             conn.commit()
             conn.close()
 
@@ -66,10 +73,12 @@ class StoreTests(unittest.TestCase):
             self.assertTrue(Path(store.backup_path).exists())
             backup = sqlite3.connect(store.backup_path)
             try:
-                self.assertEqual(backup.execute("SELECT value FROM legacy").fetchone()[0], "preserve")
+                self.assertEqual(backup.execute("SELECT content FROM messages WHERE user_id='u1'").fetchone()[0],
+                                 "preserve this conversation")
             finally:
                 backup.close()
-            self.assertEqual(store.db.execute("SELECT value FROM legacy").fetchone()[0], "preserve")
+            self.assertEqual(store.history("u1", 10)[0]["content"], "preserve this conversation")
+            self.assertEqual(store.memories("u1")[0]["fact"], "likes music")
             store.close()
 
     def test_delete_all_is_user_scoped(self):
@@ -135,6 +144,7 @@ class StoreTests(unittest.TestCase):
             store = Store(str(db))
             store.add_messages("u1", [("user", "hello"), ("assistant", "hi")])
             store.add_memory("u1", "likes dosa")
+            store.add_summary("u1", 1, 2, "We discussed dosa and cooking.")
             store.add_rating("u1", "physical", "pain", 4)
             store.add_feedback("u1", "be more concise")
             store.save_emotion("u1", {"concern": 0.2})
@@ -152,6 +162,7 @@ class StoreTests(unittest.TestCase):
             self.assertEqual(before, after)
             self.assertEqual(set(exported["users"]), {"u1", "u2"})
             self.assertEqual(exported["users"]["u1"]["messages"][0]["content"], "hello")
+            self.assertEqual(exported["users"]["u1"]["summaries"][0]["text"], "We discussed dosa and cooking.")
             self.assertEqual(exported["users"]["u2"]["memories"][0]["fact"], "likes noodles")
             self.assertEqual(exported["users"]["u1"]["ratings"][0]["rating"], 4)
             self.assertEqual(exported["users"]["u1"]["feedback"][0]["text"], "be more concise")
