@@ -89,3 +89,11 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 ## Historical record
 
 Earlier Rounds 1–4 hardening work remains in the branch history and included rating persistence, shutdown handling, deterministic safety paths, secret redaction, authentication throttling, SQLite migrations, urgent-medical detection expansion, version assertions, and hosting documentation alignment.
+
+
+## v0.6.4 chat fixes — S1 EXIT
+
+- Expanded short whole-message exit recognition to remove the specified filler words before matching farewell phrases, with a six-word input limit.
+- Preserved existing exit phrases and the existing safety-hold exit path.
+- Added regression cases for the requested polite farewells and ordinary sentences containing farewell words.
+- **Local verification:** tests were not run locally; no test count is claimed. GitHub Actions and safety-hold regression execution remain unverified.

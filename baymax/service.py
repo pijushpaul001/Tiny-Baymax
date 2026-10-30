@@ -48,9 +48,29 @@ EXIT_PHRASES = {
 
 
 def is_exit_intent(text: str) -> bool:
-    """Recognize a short, whole-message exit request without catching ordinary prose."""
+    """Recognize concise whole-message exit requests, including polite farewells."""
     normalized = re.sub(r"[.!?]+$", "", (text or "").strip().lower())
-    return len(normalized.split()) <= 5 and normalized in EXIT_PHRASES
+    if len(normalized.split()) <= 5 and normalized in EXIT_PHRASES:
+        return True
+
+    words = re.findall(r"[a-z']+", (text or "").lower())
+    if not words or len(words) > 6:
+        return False
+    filler = {"ok", "okay", "thanks", "baymax", "now", "then", "please", "alright", "well", "so"}
+    remaining, index = [], 0
+    while index < len(words):
+        if words[index:index + 2] == ["thank", "you"]:
+            index += 2
+            continue
+        if words[index] not in filler:
+            remaining.append(words[index])
+        index += 1
+    farewell = " ".join(remaining)
+    return farewell in {
+        "bye", "bye bye", "goodbye", "good night", "goodnight", "see you",
+        "see you later", "talk later", "talk to you later", "ttyl", "gtg",
+        "i have to go", "i must go", "i am leaving",
+    }
 
 
 def _closing_should_end(text: str) -> bool:
