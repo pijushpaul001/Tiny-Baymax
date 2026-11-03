@@ -2,15 +2,18 @@
 
 This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or commit API keys, passcodes, private health conversations, or other identifying/sensitive data.
 
-## Current status — 2026-10-28
+## Current status — 2026-11-03
 
 - **Repository:** `pijushpaul001/Tiny-Baymax`
-- **Implementation snapshot:** v0.6.3 Gemini-ready (R3-6 and R3-7 implemented on a fresh branch from `main`).
-- **Active branch:** `work/v0.6.3-gemini-ready`, created from the updated `main`, not the old work branch.
-- **Previous PR:** PR #1 was squash-merged into `main`; the prior status above was stale.
-- **Automated verification:** not run locally for v0.6.3. No test count is claimed.
-- **CI:** not verified for the v0.6.3 branch head.
-- **Real Gemini / device verification:** not run.
+- **Active branch:** `work/v0.6.5-cleanup`, created from the current `main` head (`a379b5dd040caa11f1ebab576e75f161d17a36d6`). The branch contains the cleanup commits listed below; `main` was not modified.
+- **Latest implemented version on this branch:** v0.6.4. The package version was deliberately synchronized to 0.6.4 in commit `39bf48fdacb0e8ead56b2356b56fe5021ecc7415`; it is not yet v0.6.5.
+- **v0.6.4 scope:** S1 exit/farewell recognition, S2 fixed LLM failure text, S3 style retry guard, S4 decision brief/dependency cue, and S5 Gemini generation-config cleanup. These are recorded in the v0.6.4 entries below. The package metadata sync also adds a health-version assertion.
+- **Automated tests:** not run in this implementation environment. The new API version assertion and 305-message export regression are added but not locally executed. Therefore these changes are **not verified green**.
+- **CI:** not verified for the current branch head. The repository status endpoint returned no status checks and no workflow runs were returned for the v0.6.4 base commit; no green CI result is claimed for this branch or its cleanup commits.
+- **Main/base verification:** the branch was created from main at `a379b5dd040caa11f1ebab576e75f161d17a36d6`. The current main head's combined status query returned no status entries. This is not evidence of a green CI run.
+- **Real Gemini:** owner-reported: the first real call worked in Codespaces with `gemini-3.5-flash-lite`; the quality check is in progress. This report has not been independently reproduced or verified here.
+- **Device/PWA, HTTPS/Tailscale, and visual/end-to-end checks:** not verified.
+- **Next gate:** run the required unittest suite and verify CI on this branch head. The v0.6.5 version bump is intentionally deferred until tasks 2 and 3 are verified green.
 
 ## v0.6.3 — Gemini-ready (R3-7 and R3-6)
 
@@ -141,3 +144,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Repository grep/review found `MAX_MEMORIES` only at its declaration (automatic memory pruning had already been removed); `MAX_MESSAGES` was only declared and used by export. Removed both obsolete constants.
 - Added a regression test that stores 305 messages and asserts export returns all 305 in insertion order.
 - **Verification:** test code added; local tests have not been run in this environment. CI status for this commit is pending.
+
+
+## v0.6.4 Gemini check findings
+
+- **Owner-provided result:** the first real Gemini call worked in Codespaces using `gemini-3.5-flash-lite`; the response-quality check remains in progress.
+- **Paste-in findings:** none supplied. The task's paste-in field contains only its placeholder, with no prompts, model replies, or specific problems.
+- **Diagnosis / proposed fixes:** not applicable until concrete examples are provided. No Gemini behavior, prompt, detection pattern, safety logic, or shutdown behavior was changed for this check.
+- **Verification:** the live call is owner-reported and not independently verified by this implementation. No quality conclusion is claimed.
