@@ -134,3 +134,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Deliberately synchronized `baymax.__version__` from `0.6.1` to `0.6.4`. The main-branch implementation log and source already contain the v0.6.4 S1–S5 chat-fix work; the package metadata had not been advanced with those changes. This is a metadata sync, not a silent version change or a new behaviour change.
 - Added an API regression assertion that public `GET /api/health` returns the value of `baymax.__version__`.
 - **Verification:** no local test execution has been performed in this environment. CI status for the new commit is pending.
+
+## v0.6.4 export retention correction
+
+- Changed `Store.export()` to query every message for the user directly, ordered by message ID. It no longer calls the bounded `history_with_time()` helper, which remains appropriate for conversation history windows.
+- Repository grep/review found `MAX_MEMORIES` only at its declaration (automatic memory pruning had already been removed); `MAX_MESSAGES` was only declared and used by export. Removed both obsolete constants.
+- Added a regression test that stores 305 messages and asserts export returns all 305 in insertion order.
+- **Verification:** test code added; local tests have not been run in this environment. CI status for this commit is pending.
