@@ -128,3 +128,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Removed the `temperature` argument from the Gemini generation configuration.
 - Added the README note that Google AI Studio keys beginning with `AQ.` are normal API keys and are about 53 characters long.
 - **Local verification:** tests and compilation were not run locally; no test count is claimed. Gemini request compatibility was not tested against the live API.
+
+## v0.6.4 version metadata sync
+
+- Deliberately synchronized `baymax.__version__` from `0.6.1` to `0.6.4`. The main-branch implementation log and source already contain the v0.6.4 S1–S5 chat-fix work; the package metadata had not been advanced with those changes. This is a metadata sync, not a silent version change or a new behaviour change.
+- Added an API regression assertion that public `GET /api/health` returns the value of `baymax.__version__`.
+- **Verification:** no local test execution has been performed in this environment. CI status for the new commit is pending.

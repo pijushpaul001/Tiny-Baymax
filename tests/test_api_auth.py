@@ -6,6 +6,7 @@ import threading
 import unittest
 from pathlib import Path
 
+from baymax import __version__
 from baymax.llm.fake import FakeLLM
 from baymax.service import ChatService
 from baymax.storage import Store
@@ -41,7 +42,7 @@ class ApiAuthTests(unittest.TestCase):
         status, body = self.api.dispatch("GET", "/api/health", {}, b"")
         self.assertEqual(status, 200)
         self.assertEqual(body["storage"], "ok")
-        self.assertIn("version", body)
+        self.assertEqual(body["version"], __version__)
 
     def test_wrong_passcode_is_rate_limited_after_threshold(self):
         clock = FakeClock()
