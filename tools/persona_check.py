@@ -61,6 +61,16 @@ END_OFFER = re.compile(r"\b(?:stop talking|end the conversation)\b", re.I)
 SKIP_KINDS = {"ritual", "command", "safety"}
 
 
+class _FailedLLM:
+    """Defer adapter-construction errors so every affected message is recorded."""
+
+    def __init__(self, error):
+        self.error = error
+
+    def generate(self, system, history, user_msg, schema):
+        raise self.error
+
+
 def flag_reply(user_text, reply, kind):
     """Return wording flags for a reply. Pure function: no model, I/O or state."""
     if kind in SKIP_KINDS:
@@ -179,7 +189,11 @@ def run_check(llm_name="gemini", output_path="persona_check_output.md", sleep_se
             llm = FakeLLM()
         else:
             from baymax.llm.gemini import GeminiAdapter
-            llm = GeminiAdapter(cfg.gemini_api_key, cfg.model, cfg.fallback_model or None)
+            try:
+                llm = GeminiAdapter(cfg.gemini_api_key, cfg.model, cfg.fallback_model or None)
+            except Exception as exc:
+                # Defer setup failures into each model-backed turn; never expose exception text.
+                llm = _FailedLLM(exc)
 
         store = Store(cfg.db_path)
         try:

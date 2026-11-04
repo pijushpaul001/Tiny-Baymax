@@ -294,3 +294,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Source review found that ChatService only attaches decision traces to chat/safety responses; the closing ritual responses in Group E had no trace field even with debug enabled. Updated the shared response builder to attach an explicit diagnostic note for deterministic paths that have no decision trace, without changing their reply or state behavior.
 - Added a service regression proving a debug-enabled ritual response carries the diagnostic trace note.
 - **Verification:** test added; local tests not run; Actions not yet run.
+
+
+### Task 3 Gemini initialization failure handling
+
+- Deferred Gemini adapter-construction failures through a tiny failing adapter so the service can record a per-message error and continue the transcript, including when the key is absent or the SDK is unavailable. Exception text is not written; only the exception type reaches the transcript.
+- **Verification:** code committed; local tests not run; Actions not yet run.
