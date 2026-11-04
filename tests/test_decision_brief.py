@@ -38,5 +38,19 @@ class DecisionBriefRegressionTests(unittest.TestCase):
         self.assertNotIn("Do not say you are unable to tell jokes.", decision.brief)
 
 
+    def test_brief_does_not_assume_user_pain_or_offer_to_end_chat(self):
+        for message in ("i need you", "you are useless"):
+            with self.subTest(message=message):
+                decision = DecisionLayer().decide(message, EmotionState(), [], DecisionState())
+                self.assertIn(
+                    "Do not attribute pain or feelings to the user that their latest message does not state.",
+                    decision.brief,
+                )
+                self.assertIn(
+                    "Do not offer to end the conversation unless the user asks.",
+                    decision.brief,
+                )
+
+
 if __name__ == "__main__":
     unittest.main()

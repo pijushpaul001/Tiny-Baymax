@@ -242,7 +242,8 @@ class DecisionLayer:
              f"- Humor: {'light humor is fine' if style['humor'] else 'no jokes'}.",
              "- Questions: " + ("you may ask at most ONE useful question." if qb else "do NOT end with a question."),
              "- Use recent conversation to resolve short follow-ups. Never invent implications or facts about the user.",
-             "- Talk only about the problem the user is reporting now. Do not mention an earlier, different problem unless they do."]
+             "- Talk only about the problem the user is reporting now. Do not mention an earlier, different problem unless they do.",
+             "- Do not attribute pain or feelings to the user that their latest message does not state. Do not offer to end the conversation unless the user asks."]
         if mode == "playful" and not style["humor"]:
             L.append("- Do not say you are unable to tell jokes. Gently note that a joke may suit a lighter moment, and offer one light, non-joking observation instead.")
         if ctx: L.append(f"- Context: {ctx}")

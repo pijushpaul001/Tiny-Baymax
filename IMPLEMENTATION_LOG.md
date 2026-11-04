@@ -192,3 +192,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Corrected the retry test to inspect the system prompt from FakeLLM's documented call tuple `(system, history, user_msg)`.
 - **Verification:** assertion corrected; test suite not run locally.
+
+
+## 2026-11-04 — v0.6.6 assumption and exit wording
+
+- Added persona and decision-brief rules not to attribute unstated pain or feelings to the user and not to offer ending the conversation unless the user asks.
+- Added decision-brief regressions for "i need you" and "you are useless".
+- **Verification:** tests added; local execution and Actions have not yet been run for this branch.
