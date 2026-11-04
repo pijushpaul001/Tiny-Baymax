@@ -1,7 +1,7 @@
 import unittest
 
 from baymax.detection import detect, parse_rating, parse_rating_reply
-from baymax.safety import memory_gate, redact_secrets
+from baymax.safety import SECRET_NOTE, memory_gate, redact_secrets
 
 
 class RatingParserTests(unittest.TestCase):
@@ -286,6 +286,14 @@ class MemoryHealthGateTests(unittest.TestCase):
         for fact in ("Likes dosa", "Plays guitar", "Wants to be a doctor"):
             with self.subTest(fact=fact):
                 self.assertEqual(memory_gate(fact, [], enabled=True), (True, "ok"))
+
+
+class FixedWordingTests(unittest.TestCase):
+    def test_secret_note_uses_non_contracted_wording(self):
+        self.assertEqual(
+            SECRET_NOTE,
+            "I cannot accept or store keys or passwords, so I hid that part. Please do not share them here.",
+        )
 
 
 if __name__ == "__main__":

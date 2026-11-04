@@ -64,7 +64,7 @@ class ServiceTests(unittest.TestCase):
         svc = self.build()
         response = svc.handle("u1", "my password is Hunter2! My head hurts")
         self.assertIn("from 0 to 10", response["reply"])
-        self.assertNotIn("can't accept or store keys", response["reply"].lower())
+        self.assertNotIn("cannot accept or store keys", response["reply"].lower())
         self.assertNotIn("Hunter2", str(self.store.history("u1", 10)))
 
     def test_raw_secret_never_reaches_llm_input(self):

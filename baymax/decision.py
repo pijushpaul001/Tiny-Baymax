@@ -211,7 +211,7 @@ class DecisionLayer:
     def _rating_question(self, det: Detection, turn: int) -> str:
         if det.type == "emotional":
             adj = EMOTION_ADJ.get(det.label, det.label)
-            return f"How would you rate how {adj} you're feeling right now, from 0 to 10? You can also say skip."
+            return f"How would you rate how {adj} you are feeling right now, from 0 to 10? You can also say skip."
         return ("I am sorry. How would you rate the pain from 0 to 10? You can also say skip." if turn % 2
                 else "How would you rate the pain from 0 to 10? You can also say skip.")
 

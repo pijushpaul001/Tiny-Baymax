@@ -52,5 +52,14 @@ class DecisionBriefRegressionTests(unittest.TestCase):
                 )
 
 
+    def test_emotional_rating_question_keeps_scale_and_skip_shape_without_contraction(self):
+        from baymax.detection import detect
+
+        question = DecisionLayer()._rating_question(detect("I feel sad"), 1)
+        self.assertIn("you are feeling right now, from 0 to 10?", question)
+        self.assertIn("You can also say skip.", question)
+        self.assertNotIn("you're", question.lower())
+
+
 if __name__ == "__main__":
     unittest.main()

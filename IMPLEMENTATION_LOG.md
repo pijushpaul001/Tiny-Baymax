@@ -199,3 +199,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added persona and decision-brief rules not to attribute unstated pain or feelings to the user and not to offer ending the conversation unless the user asks.
 - Added decision-brief regressions for "i need you" and "you are useless".
 - **Verification:** tests added; local execution and Actions have not yet been run for this branch.
+
+
+## 2026-11-04 — v0.6.6 fixed-string contraction cleanup
+
+- Rewrote contractions in the emotional rating question, secret-redaction note and daily message-limit reply without changing the rating question's 0–10/skip shape or the greeting and shutdown question.
+- Updated the existing secret-note exclusion assertion and added focused wording checks for the rating question and secret note.
+- **Verification:** tests added/updated; local execution and Actions have not yet been run for this branch.

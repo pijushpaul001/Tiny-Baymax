@@ -28,7 +28,7 @@ SECRET_RX = re.compile(
 # This avoids leaving the tail of very long IDs and avoids treating six two-digit
 # values ("10 20 30 40 50 60") as a secret solely because their sum is 12 digits.
 _NUMBER_GROUP_RX = re.compile(r"(?<!\d)\d[\d -]{10,}\d(?!\d)")
-SECRET_NOTE = "I can't accept or store keys or passwords, so I hid that part. Please don't share them here."
+SECRET_NOTE = "I cannot accept or store keys or passwords, so I hid that part. Please do not share them here."
 
 
 def redact_secrets(text: str):
