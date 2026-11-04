@@ -9,8 +9,8 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 - **Package version:** `0.6.8` (bumped in its own commit after Tasks 1–6).
 - **Implemented scope:** structured persona examples and copied-example retry; expanded persona-check transcript, Group F and failure handling; local environment/swap-file ignore rules; daily-quota fallback handling; Gemini free-tier/privacy comments; requested status wording. Tests were added with code changes.
 - **Local unittest:** **not run**. A local clone attempt failed because this environment could not resolve github.com; no local test result is claimed.
-- **GitHub Actions on the last pre-bump commit:** no workflow run was visible for `699f997956f473132664e1c4234fd63f7e2a1db6`.
-- **PR Actions:** pending after PR creation.
+- **GitHub Actions on the last pre-bump commit:** run [41812930363](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41812930363) passed: **162 tests passed** on Python 3.10, 3.11 and 3.12; compileall passed in all three jobs.
+- **PR Actions:** run [41813050593](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41813050593) passed: **162 tests passed** on Python 3.10, 3.11 and 3.12; compileall passed in all three jobs.
 - **Real Gemini and device checks:** **not run**.
 - **Scope exclusions:** no changes to `work/v0.7.0-session-memory`, `web/`, detection patterns, emergency/safety replies, shutdown ritual, or any files outside the requested scope. `baymax/llm/gemini.py` was changed only for Task 4.
 
@@ -401,3 +401,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Bumped `baymax.__version__` from `0.6.7` to `0.6.8` in this version-only code commit after Tasks 1–6 were committed.
 - **Verification:** no Actions run was visible for the last commit before this bump (`699f997956f473132664e1c4234fd63f7e2a1db6)); PR Actions pending after PR creation; local unittest **not run** (clone failed because github.com could not be resolved); real Gemini and device checks **not run**.
+
+
+### v0.6.8 Actions verification update
+
+- The last commit before the version bump (`699f997956f473132664e1c4234fd63f7e2a1db6`) passed GitHub Actions run [41812930363](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41812930363): 162 tests passed on Python 3.10, 3.11 and 3.12; compileall passed in all jobs.
+- PR #7 head `7a6c3c18a83de437f872c70119943999f05db1e3` passed GitHub Actions run [41813050593](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41813050593): 162 tests passed on Python 3.10, 3.11 and 3.12; compileall passed in all jobs.
+- Local unittest remains **not run**. Real Gemini and device checks remain **not run**.
