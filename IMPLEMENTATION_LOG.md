@@ -307,7 +307,7 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 ## v0.6.7 — Task 5: implementation log and release gate
 
 - Recorded each task, its test additions, and follow-up corrections in the entries above.
-- Confirmed the v0.6.7 branch is nine commits ahead of current main with no behind commits; the compared file list contains only the requested persona, brain, CLI/service debug, script, manual test, log and test files.
+- Confirmed the v0.6.7 branch is based on current main with no behind commits; the final compared file list contains only persona, brain, CLI, script, manual test, log and test files.
 - **Release gate:** do not bump `baymax.__version__` until the owner confirms Actions is green on the final branch head. Persona wording is not final until the persona-check script reports zero flags and the owner has read the transcript once. Further persona edits after that require evidence from the script.
 - **Verification:** local unittest **not run**; Actions run `41789549445` green on `b84aabe` (150 passed on each of Python 3.10, 3.11 and 3.12); real Gemini and device checks **not run**.
 
@@ -316,3 +316,8 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Reverted all changes to `baymax/service.py` and `tests/test_service.py` that had been added solely to attach a debug trace to ritual responses. The final diff must not include service.py or change shutdown behavior.
 - The script reports trace unavailability honestly for those responses; the requirement that every Group E response carry a trace remains blocked by the explicit no-shutdown-ritual-change rule and is raised for owner clarification.
+
+
+### Scope cleanup follow-up
+
+- Restored tests/test_service.py byte-for-byte to the main-branch version. The final change set contains no service.py or test_service.py changes; shutdown ritual code and its tests are untouched.
