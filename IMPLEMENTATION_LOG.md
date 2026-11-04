@@ -9,7 +9,7 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 - **Package version:** remains `0.6.6`; no v0.6.7 version bump has been made.
 - **Implemented scope:** exact owner-supplied persona rewrite; style-guard additions and AI-companion non-match regression; isolated five-group persona check script and pure reply flagger; manual test instructions; CLI trace display and deterministic debug trace metadata. Every task has a corresponding test change and log entry.
 - **Local tests:** not run by the implementer. A local clone attempt failed because this environment could not resolve github.com; no local test result is claimed.
-- **GitHub Actions:** run `41789549445` was queued on code commit `b84aabe` when this status was written. Earlier run `41789464896` passed on `6356a42`, before the final per-message Gemini-initialization handling change.
+- **GitHub Actions:** run [41789549445](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41789549445) passed on code commit `b84aabe`: **150 tests passed** on each of Python 3.10, 3.11 and 3.12, including compileall.
 - **Real Gemini persona transcript and device checks:** not run. The new script is provided for the owner to run.
 - **Scope exclusions:** no changes to `web/`, `baymax/detection.py` detection patterns, emergency/safety reply text, shutdown ritual behavior, or `baymax/llm/gemini.py`. Branch `work/v0.7.0-session-memory` was not modified.
 
@@ -307,4 +307,4 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Recorded each task, its test additions, and follow-up corrections in the entries above.
 - Confirmed the v0.6.7 branch is nine commits ahead of current main with no behind commits; the compared file list contains only the requested persona, brain, CLI/service debug, script, manual test, log and test files.
 - **Release gate:** do not bump `baymax.__version__` until the owner confirms Actions is green on the final branch head. Persona wording is not final until the persona-check script reports zero flags and the owner has read the transcript once. Further persona edits after that require evidence from the script.
-- **Verification at log time:** local unittest **not run**; Actions run `41789549445` queued on `b84aabe`; real Gemini and device checks **not run**.
+- **Verification:** local unittest **not run**; Actions run `41789549445` green on `b84aabe` (150 passed on each of Python 3.10, 3.11 and 3.12); real Gemini and device checks **not run**.
