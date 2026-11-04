@@ -258,3 +258,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Final source review found the two new patterns had been declared but were not yet included in the retry decision. Wired both into the existing one-retry violation expression and expanded the retry instruction to cover the full technical-word guard.
 - **Verification:** source correction committed; tests not run locally; Actions not yet run.
+
+
+## v0.6.7 — Task 3: persona check script
+
+- Added `tools/persona_check.py` with Gemini as the default and a FakeLLM dry-run option. It reads settings through `Settings.from_env()`, uses a temporary database directory, isolates each group under a fresh user id, enables debug traces, waits one second between calls, and records per-message failures without exception text.
+- Added the pure `flag_reply(user_text, reply, kind)` checker for the requested ten flags and the required kind exclusions. The report contains all five groups, reply kinds, trace warnings, and the requested summary/flagged-reply list; the same summary is printed to the terminal.
+- Added table-driven positive/negative flag tests and a FakeLLM dry-run test for the full five-group report. Added the owner instructions to `docs/MANUAL_TEST.md`.
+- **Verification:** tests added; local test execution and Actions have not yet been run on this branch. Real Gemini is not run by this implementation.
