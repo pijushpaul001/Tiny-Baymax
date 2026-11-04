@@ -273,3 +273,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Corrected the fallback flag's table-driven positive/negative fixture so the positive case is the exact brain fallback text and the negative case is a different, non-exact phrase.
 - Clarified the silent shell-key entry command in the manual test instructions.
 - **Verification:** fixture/doc correction committed; local tests not run; Actions not yet run.
+
+
+## v0.6.7 — Task 4: CLI trace display
+
+- Added the optional `readline` import with an `ImportError` fallback.
+- The CLI now prints a response's non-empty `trace` immediately after its reply.
+- Added a CLI test proving trace output follows the reply.
+- **Verification:** test added; local test execution and Actions have not yet been run on this branch.
