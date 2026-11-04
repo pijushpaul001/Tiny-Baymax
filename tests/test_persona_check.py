@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from baymax.brain import FALLBACK
-from tools.persona_check import flag_reply, main, parse_args
+from tools.persona_check import count_identical_example_replies, flag_reply, main, parse_args
 
 
 class FlagReplyTests(unittest.TestCase):
@@ -57,6 +57,15 @@ class PersonaCheckArgumentTests(unittest.TestCase):
                 parse_args(["--delay", "-0.1"])
         self.assertEqual(raised.exception.code, 2)
 
+    def test_identical_example_reply_count_normalizes_case_punctuation_and_spaces(self):
+        from baymax.persona import EXAMPLE_REPLIES
+        replies = [
+            EXAMPLE_REPLIES[0],
+            "  HELLO,   it is nice to talk with you!!! ",
+            "That is a different reply.",
+        ]
+        self.assertEqual(count_identical_example_replies(replies), 2)
+
 
 class PersonaCheckDryRunTests(unittest.TestCase):
     def test_fake_main_writes_all_groups_and_prints_summary(self):
@@ -72,15 +81,20 @@ class PersonaCheckDryRunTests(unittest.TestCase):
                 "## Group B — Everyday",
                 "## Group C — Difficulty then humour off",
                 "## Group D — Sadness and tiredness",
+                "## Group F — Paraphrases",
                 "## Group E — Closing",
                 "## Summary",
-                "Total messages: 30",
+                "Model: gemini-3.5-flash-lite",
+                "Fallback model: None",
+                "Delay: 0 seconds",
+                "Replies identical to a persona example: 0",
+                "Total messages: 46",
                 "Trace unavailable for this response kind",
             ):
                 with self.subTest(heading=heading):
                     self.assertIn(heading, report)
             self.assertIn("Persona check summary", terminal.getvalue())
-            self.assertIn("Total messages: 30", terminal.getvalue())
+            self.assertIn("Total messages: 46", terminal.getvalue())
 
 
 if __name__ == "__main__":

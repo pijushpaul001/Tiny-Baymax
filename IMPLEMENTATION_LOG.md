@@ -5,13 +5,14 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 ## Current status — 2026-11-04
 
 - **Repository:** `pijushpaul001/Tiny-Baymax`
-- **Active implementation branch:** `work/v0.6.7-persona-examples`, created from updated `main` at `2624c9434ea6b2962b181d27a7f39f173754ea3a` (v0.6.6 merged).
-- **Package version:** `0.6.7` (version metadata committed separately after the persona-check delay change).
-- **Implemented scope:** exact owner-supplied persona rewrite; style-guard additions and AI-companion non-match regression; isolated five-group persona check script and pure reply flagger; manual test instructions; CLI trace display; the persona checker records when ChatService supplies no trace. Every task has a corresponding test change and log entry.
-- **Local tests:** not run by the implementer. A local clone attempt failed because this environment could not resolve github.com; no local test result is claimed.
-- **GitHub Actions:** run [41790139437](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41790139437) passed on code commit `b88dccd`: **149 tests passed** on each of Python 3.10, 3.11 and 3.12, including compileall.
-- **Real Gemini persona transcript and device checks:** not run. The new script is provided for the owner to run.
-- **Scope exclusions:** no changes to `web/`, `baymax/detection.py` detection patterns, emergency/safety reply text, shutdown ritual behavior, or `baymax/llm/gemini.py`. Branch `work/v0.7.0-session-memory` was not modified.
+- **Active implementation branch:** `work/v0.6.8-persona-variation`, created from current `main` at `b26e16d0e4a2cc99416294c8a053edf2f1c1e490` (v0.6.7 merged).
+- **Package version:** `0.6.8` (bumped in its own commit after Tasks 1–6).
+- **Implemented scope:** structured persona examples and copied-example retry; expanded persona-check transcript, Group F and failure handling; local environment/swap-file ignore rules; daily-quota fallback handling; Gemini free-tier/privacy comments; requested status wording. Tests were added with code changes.
+- **Local unittest:** **not run**. A local clone attempt failed because this environment could not resolve github.com; no local test result is claimed.
+- **GitHub Actions on the last pre-bump commit:** run [41812930363](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41812930363) passed: **162 tests passed** on Python 3.10, 3.11 and 3.12; compileall passed in all three jobs.
+- **PR Actions:** run [41813050593](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41813050593) passed: **162 tests passed** on Python 3.10, 3.11 and 3.12; compileall passed in all three jobs.
+- **Real Gemini and device checks:** **not run**.
+- **Scope exclusions:** no changes to `work/v0.7.0-session-memory`, `web/`, detection patterns, emergency/safety replies, shutdown ritual, or any files outside the requested scope. `baymax/llm/gemini.py` was changed only for Task 4.
 
 ## v0.6.3 — Gemini-ready (R3-7 and R3-6)
 
@@ -342,3 +343,68 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Bumped `baymax.__version__` to `0.6.7` in a separate commit after the persona-check delay change.
 - **Verification:** Actions green on `b88dccd` (149 passed on Python 3.10, 3.11 and 3.12); the delay and version commits are verified only by the pull request's Actions run; local unittest not run; real Gemini and device checks not run. Group E has no trace by design because ritual replies never call the model.
+
+
+## v0.6.8 — Task 1: structured persona examples and copied-example retry
+
+- Moved the existing example exchanges into `EXAMPLES` tuples and generated the existing manner-example block from them. Exported `EXAMPLE_REPLIES`; changed only the instruction sentence before the examples as requested.
+- Added normalized exact-reply detection to the existing model-reply violation check. It uses the existing single retry with the requested instruction; a second copied reply is accepted and deterministic Python replies never enter this check.
+- Added FakeLLM tests for retry-and-rewrite, a non-example pass, acceptance of a copied reply on retry, and deterministic-reply exclusion. Added a prompt test that the rendered example block is generated from the tuple data.
+- **Verification:** tests added; local unittest and Actions not yet run for this branch.
+
+
+### Task 1 normalization-test correction
+
+- Strengthened the copied-example FakeLLM case to vary capitalization and punctuation while preserving the normalized sentence, and corrected the generated-block assertion to join lines with actual newline characters.
+- **Verification:** source/test correction committed; local unittest and Actions not run.
+
+
+## v0.6.8 — Task 2: persona-check coverage and failure handling
+
+- Added model, fallback-model and selected delay headers to the Markdown transcript; the API key is never included.
+- Added Group F paraphrases after Group D. Each Group F prompt receives a unique user id. Added informational counting of replies identical to persona examples after case/punctuation/whitespace normalization.
+- Added a missing-Gemini-key check before the script creates temporary data or starts model work, inserted the repository root into `sys.path`, and added one stderr progress line per message.
+- Added model-call tracking so delay occurs only after an actual model attempt. After three consecutive LLM failures, the script stops, writes the partial transcript, and reports the stop reason without exception text.
+- Added pure count tests and expanded the FakeLLM dry-run expectations for Group F and transcript headers.
+- **Verification:** tests added; local unittest and Actions not yet run for this branch.
+
+
+## v0.6.8 — Task 3: local environment and swap-file ignores
+
+- Added ignore rules for `.env.*` and `*.swp`, followed immediately by `!.env.example` so the example configuration remains trackable.
+- **Verification:** `git check-ignore -v` confirmed `.env`, `.env.local` and `editor.swp` are ignored; `git check-ignore .env.example` returned exit status 1 (not ignored). Check was run in a temporary local Git repository using the committed ignore rules. No unit test applies to this configuration-only change.
+
+
+## v0.6.8 — Task 4: bypass retries for daily Gemini quota
+
+- Added a narrow 429 check for provider exception text containing `PerDay` or `requests per day`, case-insensitively. A daily-quota response immediately advances to the configured fallback model, or raises when no fallback exists.
+- Per-minute 429 handling retains the existing three-attempt backoff and fallback sequence. Provider exception text is used only for the daily-quota decision and is not logged or returned.
+- Added fake-exception tests for daily quota with fallback, daily quota without fallback, and per-minute retry preservation.
+- **Verification:** tests added; local unittest and Actions not yet run for this branch.
+
+
+## v0.6.8 — Task 5: Gemini free-tier and privacy notes
+
+- Added owner-specified comments to `.env.example` covering the stated per-model free-tier daily request limits, Gemma token-per-minute cap, and the free-tier content-use warning. The comments explicitly say quotas are small, model-specific and can change.
+- Added the instruction to use the paid tier before sharing the app. No credentials or values were added.
+- **Verification:** documentation-only change reviewed in the resulting file; local unittest not applicable and Actions not yet run.
+
+
+## v0.6.8 — Task 6: explicit status wording in persona
+
+- Added the requested sentence immediately after the technical-terms sentence in `WHAT BAYMAX IS`.
+- Added a prompt-content assertion. Existing style-guard patterns and the one-retry limit were not changed for this item.
+- **Verification:** test added and source diff reviewed; local unittest and Actions not yet run for this branch.
+
+
+## v0.6.8 — package version
+
+- Bumped `baymax.__version__` from `0.6.7` to `0.6.8` in this version-only code commit after Tasks 1–6 were committed.
+- **Verification:** no Actions run was visible for the last commit before this bump (`699f997956f473132664e1c4234fd63f7e2a1db6)); PR Actions pending after PR creation; local unittest **not run** (clone failed because github.com could not be resolved); real Gemini and device checks **not run**.
+
+
+### v0.6.8 Actions verification update
+
+- The last commit before the version bump (`699f997956f473132664e1c4234fd63f7e2a1db6`) passed GitHub Actions run [41812930363](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41812930363): 162 tests passed on Python 3.10, 3.11 and 3.12; compileall passed in all jobs.
+- PR #7 head `7a6c3c18a83de437f872c70119943999f05db1e3` passed GitHub Actions run [41813050593](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41813050593): 162 tests passed on Python 3.10, 3.11 and 3.12; compileall passed in all jobs.
+- Local unittest remains **not run**. Real Gemini and device checks remain **not run**.

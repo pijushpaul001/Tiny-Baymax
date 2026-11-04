@@ -6,11 +6,18 @@ Usage:
 import argparse
 import math
 import re
+import sys
 import tempfile
 import time
+import unicodedata
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 from baymax.brain import FALLBACK
+from baymax.persona import EXAMPLE_REPLIES
 from baymax.config import Settings
 from baymax.decision import DecisionConfig
 from baymax.llm import FakeLLM
@@ -36,6 +43,15 @@ GROUPS = (
     ("D", "Sadness and tiredness", (
         "I feel sad", "skip", "I feel tired today", "thanks",
         "I twisted my ankle", "it hurts when I walk", "skip",
+    )),
+    ("F", "Paraphrases", (
+        "hello there", "how is it going?", "what are you able to do?",
+        "am I talking to a person or a computer?", "could you tell me a joke please",
+        "that was not funny", "thank you", "I just got promoted",
+        "can you explain what interest is on a loan?", "I am missing my husband",
+        "I have been taking tablets for my pressure", "I am so tired",
+        "please do not leave me", "you are not helpful at all",
+        "my stomach hurts a lot", "I have been feeling really down",
     )),
     ("E", "Closing", ("ok bye baymax", "yes")),
 )
@@ -70,6 +86,18 @@ class _FailedLLM:
 
     def generate(self, system, history, user_msg, schema):
         raise self.error
+
+
+class _TrackingLLM:
+    """Count model attempts without exposing adapter details to the transcript."""
+
+    def __init__(self, llm):
+        self.llm = llm
+        self.calls = 0
+
+    def generate(self, system, history, user_msg, schema):
+        self.calls += 1
+        return self.llm.generate(system, history, user_msg, schema)
 
 
 def flag_reply(user_text, reply, kind):
@@ -131,11 +159,28 @@ def _trace_warnings(trace):
     return warnings
 
 
+def _normalize_reply(reply):
+    lowered = str(reply or "").lower()
+    without_punctuation = "".join(
+        char for char in lowered if not unicodedata.category(char).startswith("P")
+    )
+    return " ".join(without_punctuation.split())
+
+
+def count_identical_example_replies(replies):
+    """Count exact persona-example matches after case/punctuation/space normalization."""
+    examples = {_normalize_reply(reply) for reply in EXAMPLE_REPLIES}
+    return sum(_normalize_reply(reply) in examples for reply in replies)
+
+
 def _summary(results):
     return {
         "total_messages": len(results),
         "question_replies": sum(item["reply"].rstrip().endswith("?") for item in results),
         "style_retries": sum("style retry" in item["warnings"] for item in results),
+        "identical_example_replies": count_identical_example_replies(
+            item["reply"] for item in results
+        ),
         "flagged": [item for item in results if item["flags"]],
     }
 
@@ -146,6 +191,7 @@ def _summary_text(summary):
         f"Total messages: {summary['total_messages']}",
         f"Replies ending with a question: {summary['question_replies']}",
         f"Replies with a style retry: {summary['style_retries']}",
+        f"Replies identical to a persona example: {summary['identical_example_replies']}",
         "Flagged replies:",
     ]
     if not summary["flagged"]:
@@ -167,8 +213,14 @@ def _warning_label(item):
     return "None recorded"
 
 
-def _render_markdown(results, summary):
-    lines = ["# Baymax persona check", ""]
+def _render_markdown(results, summary, model, fallback_model, delay, stop_reason=None):
+    lines = [
+        "# Baymax persona check", "",
+        f"Model: {model}",
+        f"Fallback model: {fallback_model or 'None'}",
+        f"Delay: {delay:g} seconds",
+        "",
+    ]
     for key, title, _messages in GROUPS:
         lines.extend((f"## Group {key} — {title}", ""))
         for item in (row for row in results if row["group"] == key):
@@ -179,7 +231,10 @@ def _render_markdown(results, summary):
                 f"**Warnings:** {_warning_label(item)}",
                 "",
             ))
-    lines.extend(("## Summary", "", _summary_text(summary), ""))
+    lines.extend(("## Summary", "", _summary_text(summary)))
+    if stop_reason:
+        lines.extend(("", f"Stopped early: {stop_reason}"))
+    lines.append("")
     return "\n".join(lines)
 
 
@@ -204,26 +259,29 @@ def parse_args(argv=None):
     return parser.parse_args(argv)
 
 
-def run_check(llm_name="gemini", output_path="persona_check_output.md", delay=6.0):
-    """Run the five groups in isolated users and a temporary database."""
-    cfg = Settings.from_env()
+def run_check(llm_name="gemini", output_path="persona_check_output.md", delay=6.0, settings=None):
+    """Run the transcript groups in isolated users and a temporary database."""
+    cfg = settings or Settings.from_env()
     cfg.llm = llm_name
     results = []
     total_calls = sum(len(messages) for _, _, messages in GROUPS)
     call_index = 0
+    consecutive_llm_failures = 0
+    stop_reason = None
 
     with tempfile.TemporaryDirectory(prefix="baymax-persona-check-") as temporary_data:
         cfg.data_dir = Path(temporary_data)
         cfg.data_dir.mkdir(parents=True, exist_ok=True)
         if llm_name == "fake":
-            llm = FakeLLM()
+            adapter = FakeLLM()
         else:
             from baymax.llm.gemini import GeminiAdapter
             try:
-                llm = GeminiAdapter(cfg.gemini_api_key, cfg.model, cfg.fallback_model or None)
+                adapter = GeminiAdapter(cfg.gemini_api_key, cfg.model, cfg.fallback_model or None)
             except Exception as exc:
                 # Defer setup failures into each model-backed turn; never expose exception text.
-                llm = _FailedLLM(exc)
+                adapter = _FailedLLM(exc)
+        llm = _TrackingLLM(adapter)
 
         store = Store(cfg.db_path)
         try:
@@ -231,10 +289,20 @@ def run_check(llm_name="gemini", output_path="persona_check_output.md", delay=6.
                 store, llm, DecisionConfig(emergency_hint=cfg.emergency_hint),
                 cfg.max_history, cfg.max_per_day,
             )
+            stop = False
             for group_key, _title, messages in GROUPS:
-                uid = f"persona-check-{group_key}"
-                svc.session(uid).debug = True
-                for user_text in messages:
+                for message_index, user_text in enumerate(messages, 1):
+                    call_index += 1
+                    print(
+                        f"[{call_index}/{total_calls}] Group {group_key}: {user_text}",
+                        file=sys.stderr, flush=True,
+                    )
+                    if group_key == "F":
+                        uid = f"persona-check-F-{message_index:02d}"
+                    else:
+                        uid = f"persona-check-{group_key}"
+                    svc.session(uid).debug = True
+                    calls_before = llm.calls
                     try:
                         response = svc.handle(uid, user_text)
                         reply = str(response.get("reply", ""))
@@ -248,6 +316,7 @@ def run_check(llm_name="gemini", output_path="persona_check_output.md", delay=6.
                         kind = "error"
                         warnings = []
                         trace_available = False
+                    model_called = llm.calls > calls_before
                     results.append({
                         "group": group_key,
                         "user": user_text,
@@ -257,25 +326,47 @@ def run_check(llm_name="gemini", output_path="persona_check_output.md", delay=6.
                         "trace_available": trace_available,
                         "flags": flag_reply(user_text, reply, kind),
                     })
-                    call_index += 1
-                    if call_index < total_calls and kind not in SKIP_KINDS and delay > 0:
+                    llm_failed = any(
+                        warning.lower().startswith("llm error:") for warning in warnings
+                    )
+                    consecutive_llm_failures = (
+                        consecutive_llm_failures + 1 if llm_failed else 0
+                    )
+                    if consecutive_llm_failures >= 3:
+                        stop_reason = "three consecutive messages ended in an LLM failure"
+                        stop = True
+                        break
+                    if model_called and delay > 0 and call_index < total_calls:
                         time.sleep(delay)
+                if stop:
+                    break
         finally:
             store.close()
 
     summary = _summary(results)
-    report = _render_markdown(results, summary)
+    report = _render_markdown(
+        results, summary, cfg.model, cfg.fallback_model, delay, stop_reason
+    )
     destination = Path(output_path).expanduser()
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(report, encoding="utf-8")
     print(_summary_text(summary))
+    if stop_reason:
+        print(f"Persona check stopped: {stop_reason}. Partial transcript written.", file=sys.stderr)
     return summary
 
 
 def main(argv=None, sleep_seconds=None):
     args = parse_args(argv)
+    cfg = Settings.from_env()
+    if args.llm == "gemini" and not cfg.gemini_api_key:
+        print(
+            "GEMINI_API_KEY is required for --llm gemini. Set it in .env or the environment.",
+            file=sys.stderr,
+        )
+        return 2
     delay = args.delay if sleep_seconds is None else sleep_seconds
-    run_check(args.llm, args.out, delay=delay)
+    run_check(args.llm, args.out, delay=delay, settings=cfg)
     return 0
 
 

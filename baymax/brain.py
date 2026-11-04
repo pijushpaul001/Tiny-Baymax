@@ -1,6 +1,7 @@
 """BaymaxBrain: decision layer -> LLM -> validation. Knows nothing about HTTP or storage."""
 import json
 import re
+import unicodedata
 from dataclasses import dataclass
 from typing import Optional
 
@@ -9,7 +10,7 @@ from .llm.base import classify_llm_error
 from .decision import Decision, DecisionConfig, DecisionLayer, DecisionState
 from .detection import rx
 from .emotion import EmotionState
-from .persona import PERSONA, RESPONSE_SCHEMA
+from .persona import EXAMPLE_REPLIES, PERSONA, RESPONSE_SCHEMA
 from .safety import memory_gate
 
 FILLER = rx(r"\bi am listening\b|\bi understand\b|how can i help|always here for you|would you like to tell me more")
@@ -20,6 +21,16 @@ CANNOT_JOKE = rx(r"\bunable to tell\b")
 END_OFFER = rx(r"\bstop talking\b")
 MEDICAL_LECTURE = rx(r"\bit is important to\b")
 FALLBACK = "Sorry, I lost my train of thought for a moment. Could you say that again?"
+
+def _normalize_example_reply(reply: str) -> str:
+    lowered = str(reply or "").lower()
+    without_punctuation = "".join(
+        char for char in lowered if not unicodedata.category(char).startswith("P")
+    )
+    return " ".join(without_punctuation.split())
+
+
+COPIED_EXAMPLE = frozenset(_normalize_example_reply(reply) for reply in EXAMPLE_REPLIES)
 
 
 def validate_output(raw: str):
@@ -103,6 +114,7 @@ class BaymaxBrain:
                         or INVENTED_BODY.search(data["reply"]) or CANNOT_JOKE.search(data["reply"])
                         or END_OFFER.search(data["reply"])
                         or (d.rating is not None and RATING_ECHO.search(data["reply"]))
+                        or _normalize_example_reply(data["reply"]) in COPIED_EXAMPLE
                     )
                     if data and attempt == 0 and violation:
                         system += (
@@ -113,7 +125,8 @@ class BaymaxBrain:
                             "Do not describe yourself as designed or functioning. Do not lecture about medicine or a condition "
                             "when the user has not reported a problem. Acknowledge it simply; do not say 'it is important to' "
                             "Do not say 'it is important to'. Do not assume a prescription, dose or regimen. "
-                            "Do not say you are unable to tell jokes. Do not offer to stop talking."
+                            "Do not say you are unable to tell jokes. Do not offer to stop talking. "
+                            "Write a fresh reply in the same manner. Do not reuse any sentence from the examples."
                         )
                         warnings.append("style retry")
                         continue
