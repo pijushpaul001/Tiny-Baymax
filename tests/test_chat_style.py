@@ -67,7 +67,7 @@ class StyleGuardRegressionTests(unittest.TestCase):
         self.assertEqual(result.reply, "Thank you for telling me. I will keep that in mind.")
         self.assertEqual(len(llm.calls), 2)
         self.assertIn("style retry", result.warnings)
-        self.assertIn("do not assume a prescription, dose or regimen", llm.calls[1]["system"].lower())
+        self.assertIn("do not assume a prescription, dose or regimen", llm.calls[1][0].lower())
 
 
 if __name__ == "__main__":

@@ -186,3 +186,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added persona guidance to acknowledge a medicine or condition simply when no problem is reported, without assuming a prescription, dose or regimen.
 - Added an "it is important to" style-guard pattern that triggers the existing single retry, with a FakeLLM violating-draft/clean-reply regression.
 - **Verification:** tests added; local execution and Actions have not yet been run for this branch.
+
+
+### Medical style-guard test assertion correction
+
+- Corrected the retry test to inspect the system prompt from FakeLLM's documented call tuple `(system, history, user_msg)`.
+- **Verification:** assertion corrected; test suite not run locally.
