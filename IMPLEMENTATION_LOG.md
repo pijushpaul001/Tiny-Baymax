@@ -287,3 +287,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Final source review found the optional readline import was present but the trace-print insertion had not matched the original line. Added the trace output immediately after the reply.
 - **Verification:** correction committed; local tests not run; Actions not yet run.
+
+
+### Task 3 debug-trace completion
+
+- Source review found that ChatService only attaches decision traces to chat/safety responses; the closing ritual responses in Group E had no trace field even with debug enabled. Updated the shared response builder to attach an explicit diagnostic note for deterministic paths that have no decision trace, without changing their reply or state behavior.
+- Added a service regression proving a debug-enabled ritual response carries the diagnostic trace note.
+- **Verification:** test added; local tests not run; Actions not yet run.
