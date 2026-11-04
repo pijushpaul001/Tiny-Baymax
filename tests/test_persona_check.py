@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from baymax.brain import FALLBACK
-from tools.persona_check import flag_reply, main
+from tools.persona_check import flag_reply, main, parse_args
 
 
 class FlagReplyTests(unittest.TestCase):
@@ -41,6 +41,21 @@ class FlagReplyTests(unittest.TestCase):
                     flag_reply("I miss my wife today", "I miss my wife today. You should go.", kind),
                     [],
                 )
+
+
+class PersonaCheckArgumentTests(unittest.TestCase):
+    def test_delay_defaults_to_six_seconds(self):
+        self.assertEqual(parse_args([]).delay, 6.0)
+
+    def test_delay_accepts_custom_non_negative_value(self):
+        self.assertEqual(parse_args(["--delay", "2.5"]).delay, 2.5)
+        self.assertEqual(parse_args(["--delay", "0"]).delay, 0.0)
+
+    def test_negative_delay_is_rejected(self):
+        with contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit) as raised:
+                parse_args(["--delay", "-0.1"])
+        self.assertEqual(raised.exception.code, 2)
 
 
 class PersonaCheckDryRunTests(unittest.TestCase):

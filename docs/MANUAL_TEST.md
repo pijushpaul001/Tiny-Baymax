@@ -62,3 +62,6 @@ HTTPS routing, or actual phone behaviour. Do not mark those checks as passed unt
 - To enter the key without echoing it, use `read -s GEMINI_API_KEY; echo; export GEMINI_API_KEY`. Do not put a key directly in a command.
 - **Never run this command with a key visible in shell history.**
 - Paste back **the output file only** (`persona_check_output.md`). Do not paste the key, environment, or shell history.
+
+- The default delay is 6 seconds after each model-backed reply. Override it with `--delay SECONDS`; for example, `python tools/persona_check.py --delay 2.5`. Use `--delay 0` to disable waiting. Negative values are rejected. Replies handled without the model (ritual, command and safety) do not trigger a delay.
+

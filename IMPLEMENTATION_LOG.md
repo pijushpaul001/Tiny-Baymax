@@ -294,7 +294,7 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Group E uses the existing shutdown ritual. ChatService does not provide a trace for ritual replies, even with debug enabled.
 - Adding trace metadata to those responses would modify the explicitly protected shutdown-ritual path. The attempted service-side metadata change and its test have been reverted; the final diff leaves shutdown-ritual behavior and service code unchanged.
 - The persona checker now states "Trace unavailable for this response kind" when the service does not supply a trace. It does not fabricate trace content.
-- **Unresolved owner decision:** should the prohibition on touching the shutdown ritual remain absolute (accepting no trace for Group E), or may a debug-only trace field be added to ritual responses? No change will be made without clarification.
+- **Trace behavior:** Group E has no trace by design because ritual replies never call the model. The checker reports trace unavailability for those replies; no ritual or service behavior is changed.
 - **Verification:** regression updated; local tests not run; Actions run `41790022320` green on final code commit `4327baf` (149 passed on Python 3.10, 3.11 and 3.12).
 
 
@@ -328,3 +328,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - GitHub Actions run [41790022320](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41790022320) completed successfully on code commit `4327baf333651cbf2bf091a63cc66c0914d06c2f`.
 - Result: **149 tests passed** on Python 3.10, **149 passed** on Python 3.11, and **149 passed** on Python 3.12. Compileall also passed in each job.
 - Local unittest: **not run**. Real Gemini and device checks: **not run**.
+
+
+## v0.6.7 — Task 6: configurable persona-check delay
+
+- Added `--delay` to `tools/persona_check.py`, defaulting to 6.0 seconds; finite non-negative values are accepted and negative values are rejected. A value of 0 disables waiting.
+- The delay is applied after model-backed replies only. Ritual, command and safety replies do not trigger a sleep.
+- Updated the manual instructions and added argument-parsing tests for the default, a custom value, zero, and negative-value rejection.
+- **Verification:** baseline Actions were green on `b88dccd` (149 passed on Python 3.10, 3.11 and 3.12). This delay change is verified only by the pull request's Actions run; local unittest not run; real Gemini and device checks not run.

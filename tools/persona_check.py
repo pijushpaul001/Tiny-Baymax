@@ -4,6 +4,7 @@ Usage:
     python tools/persona_check.py [--llm gemini|fake] [--out PATH]
 """
 import argparse
+import math
 import re
 import tempfile
 import time
@@ -182,7 +183,28 @@ def _render_markdown(results, summary):
     return "\n".join(lines)
 
 
-def run_check(llm_name="gemini", output_path="persona_check_output.md", sleep_seconds=1.0):
+def _non_negative_delay(value):
+    try:
+        delay = float(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("delay must be a number") from exc
+    if not math.isfinite(delay) or delay < 0:
+        raise argparse.ArgumentTypeError("delay must be a finite number greater than or equal to 0")
+    return delay
+
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description="Run Baymax's persona transcript check.")
+    parser.add_argument("--llm", choices=("gemini", "fake"), default="gemini")
+    parser.add_argument("--out", default="persona_check_output.md")
+    parser.add_argument(
+        "--delay", type=_non_negative_delay, default=6.0,
+        help="seconds to wait after model-backed replies (default: 6.0; minimum: 0)",
+    )
+    return parser.parse_args(argv)
+
+
+def run_check(llm_name="gemini", output_path="persona_check_output.md", delay=6.0):
     """Run the five groups in isolated users and a temporary database."""
     cfg = Settings.from_env()
     cfg.llm = llm_name
@@ -236,8 +258,8 @@ def run_check(llm_name="gemini", output_path="persona_check_output.md", sleep_se
                         "flags": flag_reply(user_text, reply, kind),
                     })
                     call_index += 1
-                    if call_index < total_calls and sleep_seconds:
-                        time.sleep(sleep_seconds)
+                    if call_index < total_calls and kind not in SKIP_KINDS and delay > 0:
+                        time.sleep(delay)
         finally:
             store.close()
 
@@ -250,12 +272,10 @@ def run_check(llm_name="gemini", output_path="persona_check_output.md", sleep_se
     return summary
 
 
-def main(argv=None, sleep_seconds=1.0):
-    parser = argparse.ArgumentParser(description="Run Baymax's persona transcript check.")
-    parser.add_argument("--llm", choices=("gemini", "fake"), default="gemini")
-    parser.add_argument("--out", default="persona_check_output.md")
-    args = parser.parse_args(argv)
-    run_check(args.llm, args.out, sleep_seconds=sleep_seconds)
+def main(argv=None, sleep_seconds=None):
+    args = parse_args(argv)
+    delay = args.delay if sleep_seconds is None else sleep_seconds
+    run_check(args.llm, args.out, delay=delay)
     return 0
 
 
