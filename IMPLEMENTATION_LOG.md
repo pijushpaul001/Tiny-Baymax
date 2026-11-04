@@ -423,3 +423,12 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Replaced the instruction immediately before the examples block with the exact owner-provided sentence.
 - Updated the generated-block assertion and added a regression asserting all seven removed user lines are absent from `PERSONA`.
 - **Verification:** source and test edits committed; local unittest and GitHub Actions not yet run.
+
+
+## v0.6.9 — Task 3: low-mood detection and dependency cue
+
+- Extended only `EMOTION` with the requested feel/feeling + optional-intensifier low-mood phrases and "feel like crying". The low-on negative lookahead excludes "feeling low on ..."; emotional labels are reduced to the single mood word for rating grammar.
+- Added the requested `down`, `low`, `blue` and `empty` adjective mappings. The generated question for "I have been feeling really down" is asserted exactly.
+- Added positive emotional/rating tests for all six required phrases and negative controls for all five non-emotional uses. Added "do not leave me" to `DEPENDENCY_CUE` and a regression for reassurance mode plus trusted-person instruction.
+- `URGENT`, `SELF_HARM`, both safety reply strings, and unrelated existing detection tests were not edited.
+- **Verification:** source and test edits committed; local unittest and GitHub Actions not yet run.

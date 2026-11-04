@@ -15,7 +15,7 @@ from .emotion import EmotionState
 
 
 DEPENDENCY_CUE = re.compile(
-    r"\bi need you\b|\byou are all i have\b|\bdon['’]t leave me\b", re.I
+    r"\bi need you\b|\byou are all i have\b|\bdon['’]t leave me\b|\bdo not leave me\b", re.I
 )
 
 

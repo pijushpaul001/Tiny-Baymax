@@ -10,7 +10,7 @@ def rx(p): return re.compile(p, re.I)
 PAIN = rx(r"\b(hurts?|hurting|pain(?:ful)?|aching|aches?|sore|cramps?|cramping|headache|migraine|stomach ?ache|toothache|throbbing|burning)\b")
 INJURY = rx(r"\b(injur(?:ed|y)|sprain(?:ed)?|broke(?:n)?|bruis(?:ed|e)|twisted|cut myself|burned|burnt)\b")
 SYMPTOM = rx(r"\b(fever|nausea|nauseous|dizzy|dizziness|vomit(?:ing)?|cough(?:ing)?|rash|short of breath|feel(?:ing)? sick)\b")
-EMOTION = rx(r"\b(sad|depressed|anxious|anxiety|stressed|stress|lonely|miserable|hopeless|panic(?:king|ked)?|upset|heartbroken|crying|devastated)\b")
+EMOTION = rx(r"\b(?:sad|depressed|anxious|anxiety|stressed|stress|lonely|miserable|hopeless|panic(?:king|ked)?|upset|heartbroken|crying|devastated|feel(?:ing)?\s+(?:(?:really|so|very|quite|pretty|a bit|kind of)\s+)?(?:down|low|blue|empty)(?!\s+on\b)|feel\s+like\s+crying)\b")
 UNWELL = rx(r"\b(not feel(?:ing)? (?:very |so |too )?(?:well|ok|okay|great|good|right|myself)|i(?:'m| am) not (?:very |so )?(?:well|ok|okay)|unwell|under the weather|feel(?:ing)? (?:terrible|awful|ill|off))\b")
 OTHER = rx(r"\b(exhausted|tired|drained|overwhelmed|confused|can'?t cope|struggling|burn(?:ed|t)? out)\b")
 URGENT = rx(
@@ -38,7 +38,8 @@ FIRST = rx(r"\b(i|i'm|im|i've|me)\b")
 INFO_Q = rx(r"^\s*(what|why|how|when|which|is|are|can(?!['’]?t)|does|do)\b")
 
 EMOTION_ADJ = {"anxiety": "anxious", "stress": "stressed", "panic": "panicked", "panicking": "panicked",
-               "panicked": "panicked", "crying": "upset", "depressed": "low", "devastated": "devastated"}
+               "panicked": "panicked", "crying": "upset", "depressed": "low", "devastated": "devastated",
+               "down": "down", "low": "low", "blue": "low", "empty": "empty"}
 
 CELEBRATE = rx(r"\b(i (?:finally )?passed|got the job|got promoted|promoted|i won|i made it|good news|it worked|i did it)\b")
 JOKE = rx(r"\b(joke|funny|make me laugh|riddle)\b")
@@ -140,7 +141,8 @@ def detect(msg: str) -> Detection:
             if _third_party(msg, m.start()):
                 d.third_party = True
                 continue
-            return Detection(typ, sub, m.group(0).lower())
+            label = m.group(0).lower().split()[-1] if typ == "emotional" and sub == "emotion" else m.group(0).lower()
+            return Detection(typ, sub, label)
     return d
 
 
