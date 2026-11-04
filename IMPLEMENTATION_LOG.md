@@ -9,7 +9,7 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 - **Package version:** remains `0.6.6`; no v0.6.7 version bump has been made.
 - **Implemented scope:** exact owner-supplied persona rewrite; style-guard additions and AI-companion non-match regression; isolated five-group persona check script and pure reply flagger; manual test instructions; CLI trace display; the persona checker records when ChatService supplies no trace. Every task has a corresponding test change and log entry.
 - **Local tests:** not run by the implementer. A local clone attempt failed because this environment could not resolve github.com; no local test result is claimed.
-- **GitHub Actions:** run [41789549445](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41789549445) passed on code commit `b84aabe`: **150 tests passed** on each of Python 3.10, 3.11 and 3.12, including compileall.
+- **GitHub Actions:** run [41790022320](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41790022320) passed on code commit `4327baf`: **149 tests passed** on each of Python 3.10, 3.11 and 3.12, including compileall.
 - **Real Gemini persona transcript and device checks:** not run. The new script is provided for the owner to run.
 - **Scope exclusions:** no changes to `web/`, `baymax/detection.py` detection patterns, emergency/safety reply text, shutdown ritual behavior, or `baymax/llm/gemini.py`. Branch `work/v0.7.0-session-memory` was not modified.
 
@@ -295,7 +295,7 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Adding trace metadata to those responses would modify the explicitly protected shutdown-ritual path. The attempted service-side metadata change and its test have been reverted; the final diff leaves shutdown-ritual behavior and service code unchanged.
 - The persona checker now states "Trace unavailable for this response kind" when the service does not supply a trace. It does not fabricate trace content.
 - **Unresolved owner decision:** should the prohibition on touching the shutdown ritual remain absolute (accepting no trace for Group E), or may a debug-only trace field be added to ritual responses? No change will be made without clarification.
-- **Verification:** regression updated; local tests not run; Actions pending on the resulting branch head.
+- **Verification:** regression updated; local tests not run; Actions run `41790022320` green on final code commit `4327baf` (149 passed on Python 3.10, 3.11 and 3.12).
 
 
 ### Task 3 Gemini initialization failure handling
@@ -309,7 +309,7 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Recorded each task, its test additions, and follow-up corrections in the entries above.
 - Confirmed the v0.6.7 branch is based on current main with no behind commits; the final compared file list contains only persona, brain, CLI, script, manual test, log and test files.
 - **Release gate:** do not bump `baymax.__version__` until the owner confirms Actions is green on the final branch head. Persona wording is not final until the persona-check script reports zero flags and the owner has read the transcript once. Further persona edits after that require evidence from the script.
-- **Verification:** local unittest **not run**; Actions run `41789549445` green on `b84aabe` (150 passed on each of Python 3.10, 3.11 and 3.12); real Gemini and device checks **not run**.
+- **Verification:** local unittest **not run**; Actions run `41790022320` green on `4327baf` (149 passed on each of Python 3.10, 3.11 and 3.12); real Gemini and device checks **not run**.
 
 
 ### Scope correction — keep shutdown ritual untouched
@@ -321,3 +321,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 ### Scope cleanup follow-up
 
 - Restored tests/test_service.py byte-for-byte to the main-branch version. The final change set contains no service.py or test_service.py changes; shutdown ritual code and its tests are untouched.
+
+
+### Final CI verification — 2026-11-04
+
+- GitHub Actions run [41790022320](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41790022320) completed successfully on code commit `4327baf333651cbf2bf091a63cc66c0914d06c2f`.
+- Result: **149 tests passed** on Python 3.10, **149 passed** on Python 3.11, and **149 passed** on Python 3.12. Compileall also passed in each job.
+- Local unittest: **not run**. Real Gemini and device checks: **not run**.
