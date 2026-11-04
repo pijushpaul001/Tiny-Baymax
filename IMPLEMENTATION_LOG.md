@@ -432,3 +432,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added positive emotional/rating tests for all six required phrases and negative controls for all five non-emotional uses. Added "do not leave me" to `DEPENDENCY_CUE` and a regression for reassurance mode plus trusted-person instruction.
 - `URGENT`, `SELF_HARM`, both safety reply strings, and unrelated existing detection tests were not edited.
 - **Verification:** source and test edits committed; local unittest and GitHub Actions not yet run.
+
+
+## v0.6.9 — Task 4: recommended Gemini setup documentation
+
+- Set the example configuration to `BAYMAX_MODEL=gemma-4-26b-a4b-it` and `BAYMAX_FALLBACK_MODEL=gemini-3.5-flash-lite`.
+- Documented the owner-provided timing, free daily quota and 16K tokens-per-minute information for the recommended model, and the approximately 27-second tiny-prompt measurement for `gemma-4-31b-it` as too slow for chat.
+- Preserved the warning that Google may use free-tier content to improve its products and the instruction to use the paid tier before sharing.
+- **Verification:** documentation and example configuration edits committed; no external model-performance measurements were run by the implementer.
