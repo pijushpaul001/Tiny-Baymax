@@ -366,3 +366,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added model-call tracking so delay occurs only after an actual model attempt. After three consecutive LLM failures, the script stops, writes the partial transcript, and reports the stop reason without exception text.
 - Added pure count tests and expanded the FakeLLM dry-run expectations for Group F and transcript headers.
 - **Verification:** tests added; local unittest and Actions not yet run for this branch.
+
+
+## v0.6.8 — Task 3: local environment and swap-file ignores
+
+- Added ignore rules for `.env.*` and `*.swp`, followed immediately by `!.env.example` so the example configuration remains trackable.
+- **Verification:** pending a `git check-ignore` check of the resulting rules; no unit test applies to this configuration-only change.
