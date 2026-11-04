@@ -408,3 +408,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - The last commit before the version bump (`699f997956f473132664e1c4234fd63f7e2a1db6`) passed GitHub Actions run [41812930363](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41812930363): 162 tests passed on Python 3.10, 3.11 and 3.12; compileall passed in all jobs.
 - PR #7 head `7a6c3c18a83de437f872c70119943999f05db1e3` passed GitHub Actions run [41813050593](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41813050593): 162 tests passed on Python 3.10, 3.11 and 3.12; compileall passed in all jobs.
 - Local unittest remains **not run**. Real Gemini and device checks remain **not run**.
+
+
+## v0.6.9 — Task 1: remove copied-example retry
+
+- Removed exact persona-example matching from the model style-violation decision. All other style guards and the existing maximum of one retry remain unchanged; `EXAMPLE_REPLIES` remains exported by `baymax.persona`, and the persona-check count remains informational.
+- Replaced the copied-example retry tests with a FakeLLM regression proving an example-identical reply is accepted after exactly one model call. Existing tests for all other style guards were retained.
+- **Verification:** source and test edits committed; local unittest and GitHub Actions not yet run.
