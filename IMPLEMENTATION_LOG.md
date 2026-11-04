@@ -466,3 +466,17 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - GitHub Actions run [41822622967](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41822622967) completed successfully on code/test head `1b6de5342dd9bf98d152d833d90b0225090a757e`.
 - Result: **165 tests passed** on Python 3.10, **165 passed** on Python 3.11, and **165 passed** on Python 3.12. Compile steps also passed in all three jobs.
 - Local unittest: **not run**. Real Gemini and device checks: **not run**.
+
+
+## v0.6.10 — test environment isolation
+
+- Audited all test files for `Settings.from_env()`, `load_dotenv()`, `GEMINI_API_KEY`, `BAYMAX_*` and persona-check key-validation usage. The unisolated path was `tests/test_persona_check.py::PersonaCheckDryRunTests.test_fake_main_writes_all_groups_and_prints_summary`: it calls `tools.persona_check.main()`, which calls `Settings.from_env()` and then `load_dotenv()`. The CLI test already patches `Settings.from_env()`. No test directly calls `load_dotenv()`; the persona-check fake-main test reaches it indirectly. Added explicit coverage for the Gemini missing-key check, which also calls `Settings.from_env()`.
+- Added a test helper that removes all `BAYMAX_*` and `GEMINI_API_KEY` shell variables for the duration of the test and changes into a temporary working directory with no developer `.env`. Applied it to the persona-check fake run and missing-key test. No application code or runtime configuration behavior changed.
+- Expanded the Actions matrix to run the entire suite in two separate modes: (1) a dummy-key `.env` with no Gemini/Baymax shell variables, and (2) no `.env` with dummy `GEMINI_API_KEY` and `BAYMAX_*` shell variables. This ensures each configuration source is exercised independently.
+- **Verification:** GitHub Actions run [41826707933](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41826707933) passed all six matrix jobs: Python 3.10, 3.11 and 3.12 with the dummy `.env`, and all three versions with no `.env` plus dummy shell variables. Each job ran **166 tests successfully** and passed compileall. Local unittest **not run**; a local clone attempt failed because this environment could not resolve `github.com`.
+
+
+## v0.6.10 — package version
+
+- Bumped `baymax.__version__` from `0.6.9` to `0.6.10` in the dedicated version-only commit `174e9bd38752bf4d4e98e40bc63f55440d50f934`.
+- **Verification before version bump:** Actions run [41826707933](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41826707933) passed 166 tests in each of six combinations (Python 3.10/3.11/3.12 × dummy `.env`/no `.env` with dummy shell variables); compileall passed in all jobs. Local unittest **not run**. The version-only commit and following log commit require their own Actions result; real Gemini and device checks **not run**.

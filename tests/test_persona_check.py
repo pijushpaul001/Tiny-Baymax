@@ -1,11 +1,30 @@
 import contextlib
 import io
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from baymax.brain import FALLBACK
 from tools.persona_check import count_identical_example_replies, flag_reply, main, parse_args
+
+
+
+@contextlib.contextmanager
+def isolated_settings_environment(directory):
+    """Keep Settings.from_env away from the developer's shell and working-directory .env."""
+    original_cwd = Path.cwd()
+    clean_env = {
+        key: value for key, value in os.environ.items()
+        if key != "GEMINI_API_KEY" and not key.startswith("BAYMAX_")
+    }
+    with patch.dict(os.environ, clean_env, clear=True):
+        os.chdir(directory)
+        try:
+            yield
+        finally:
+            os.chdir(original_cwd)
 
 
 class FlagReplyTests(unittest.TestCase):
@@ -69,11 +88,21 @@ class PersonaCheckArgumentTests(unittest.TestCase):
 
 
 class PersonaCheckDryRunTests(unittest.TestCase):
+    def test_gemini_key_check_ignores_developer_dotenv_and_shell_variables(self):
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / "should-not-be-created.md"
+            stderr = io.StringIO()
+            with isolated_settings_environment(temp), contextlib.redirect_stderr(stderr):
+                status = main(["--llm", "gemini", "--out", str(output)], sleep_seconds=0)
+            self.assertEqual(status, 2)
+            self.assertIn("GEMINI_API_KEY is required", stderr.getvalue())
+            self.assertFalse(output.exists())
+
     def test_fake_main_writes_all_groups_and_prints_summary(self):
         with tempfile.TemporaryDirectory() as temp:
             output = Path(temp) / "persona-check.md"
             terminal = io.StringIO()
-            with contextlib.redirect_stdout(terminal):
+            with isolated_settings_environment(temp), contextlib.redirect_stdout(terminal):
                 status = main(["--llm", "fake", "--out", str(output)], sleep_seconds=0)
             self.assertEqual(status, 0)
             report = output.read_text(encoding="utf-8")
