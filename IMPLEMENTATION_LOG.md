@@ -356,3 +356,13 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Strengthened the copied-example FakeLLM case to vary capitalization and punctuation while preserving the normalized sentence, and corrected the generated-block assertion to join lines with actual newline characters.
 - **Verification:** source/test correction committed; local unittest and Actions not run.
+
+
+## v0.6.8 — Task 2: persona-check coverage and failure handling
+
+- Added model, fallback-model and selected delay headers to the Markdown transcript; the API key is never included.
+- Added Group F paraphrases after Group D. Each Group F prompt receives a unique user id. Added informational counting of replies identical to persona examples after case/punctuation/whitespace normalization.
+- Added a missing-Gemini-key check before the script creates temporary data or starts model work, inserted the repository root into `sys.path`, and added one stderr progress line per message.
+- Added model-call tracking so delay occurs only after an actual model attempt. After three consecutive LLM failures, the script stops, writes the partial transcript, and reports the stop reason without exception text.
+- Added pure count tests and expanded the FakeLLM dry-run expectations for Group F and transcript headers.
+- **Verification:** tests added; local unittest and Actions not yet run for this branch.
