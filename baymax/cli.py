@@ -36,6 +36,8 @@ def main():
             continue
         out = svc.handle(uid, text)
         print("Baymax:", out["reply"], "\n")
+        if out.get("trace"):
+            print("Trace:", out["trace"], "\n")
         if out["ended"]:
             break
 

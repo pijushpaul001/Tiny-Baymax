@@ -281,3 +281,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - The CLI now prints a response's non-empty `trace` immediately after its reply.
 - Added a CLI test proving trace output follows the reply.
 - **Verification:** test added; local test execution and Actions have not yet been run on this branch.
+
+
+### Task 4 CLI trace insertion correction
+
+- Final source review found the optional readline import was present but the trace-print insertion had not matched the original line. Added the trace output immediately after the reply.
+- **Verification:** correction committed; local tests not run; Actions not yet run.
