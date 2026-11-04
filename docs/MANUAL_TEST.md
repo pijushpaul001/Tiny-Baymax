@@ -53,3 +53,15 @@ Use this checklist after automated tests pass. Do not put API keys, passcodes, o
 
 Automated fake-model tests cannot prove real Gemini availability, current model permissions, mobile installation, microphone/speech support,
 HTTPS routing, or actual phone behaviour. Do not mark those checks as passed until performed in the configured environment.
+
+
+## G. Persona transcript check
+
+- Run `python tools/persona_check.py` once with the real Gemini configuration to create `persona_check_output.md`. The script reads `GEMINI_API_KEY` and `BAYMAX_MODEL` through `Settings.from_env()`, uses a temporary database directory, and does not touch the app's real data.
+- For a dry run without an API call, use `python tools/persona_check.py --llm fake --out persona_check_fake.md`.
+- To enter the key without echoing it, use `read -s GEMINI_API_KEY; echo; export GEMINI_API_KEY`. Do not put a key directly in a command.
+- **Never run this command with a key visible in shell history.**
+- Paste back **the output file only** (`persona_check_output.md`). Do not paste the key, environment, or shell history.
+
+- The default delay is 6 seconds after each model-backed reply. Override it with `--delay SECONDS`; for example, `python tools/persona_check.py --delay 2.5`. Use `--delay 0` to disable waiting. Negative values are rejected. Replies handled without the model (ritual, command and safety) do not trigger a delay.
+

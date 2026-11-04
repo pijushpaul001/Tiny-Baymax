@@ -1,6 +1,11 @@
 """Terminal chat (handy for testing without the web app):  python -m baymax.cli"""
 import sys
 
+try:
+    import readline
+except ImportError:
+    pass
+
 from .config import Settings
 from .decision import DecisionConfig
 from .llm import FakeLLM
@@ -31,6 +36,8 @@ def main():
             continue
         out = svc.handle(uid, text)
         print("Baymax:", out["reply"], "\n")
+        if out.get("trace"):
+            print("Trace:", out["trace"], "\n")
         if out["ended"]:
             break
 

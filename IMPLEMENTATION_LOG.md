@@ -5,13 +5,13 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 ## Current status — 2026-11-04
 
 - **Repository:** `pijushpaul001/Tiny-Baymax`
-- **Active implementation branch:** `work/v0.6.6-persona-fixes`, created from current `main` at `a02502b7cfb565ae27b691143483bc1f673d838c`. The branch is 7 commits ahead of main; main was not modified.
-- **Package version:** `0.6.6` (version bump authorized by the user after the reported green Actions run).
-- **Implemented scope:** health-term memory gate; plain how-are-you response and invented-body style guard; humour-off joke guidance; non-lecturing medical acknowledgement and retry guard; unstated-feelings/unsolicited-exit rules; optional fixed-string contraction cleanup. Each concern has a corresponding test change and log entry.
-- **Local tests:** not run by the implementer for this branch. The owner-reported `127 OK` result on Python 3.14.2 was for v0.6.5 and does not verify these changes.
-- **GitHub Actions:** green on `d715fc5`; 138 tests passed on Python 3.10, 3.11 and 3.12.
-- **Real Gemini and device checks:** not run.
-- **Scope exclusions:** no changes to `web/`, `baymax/detection.py` detection patterns, emergency/safety replies, shutdown ritual, or `baymax/llm/gemini.py`. Branch `work/v0.7.0-session-memory` was not modified.
+- **Active implementation branch:** `work/v0.6.7-persona-examples`, created from updated `main` at `2624c9434ea6b2962b181d27a7f39f173754ea3a` (v0.6.6 merged).
+- **Package version:** `0.6.7` (version metadata committed separately after the persona-check delay change).
+- **Implemented scope:** exact owner-supplied persona rewrite; style-guard additions and AI-companion non-match regression; isolated five-group persona check script and pure reply flagger; manual test instructions; CLI trace display; the persona checker records when ChatService supplies no trace. Every task has a corresponding test change and log entry.
+- **Local tests:** not run by the implementer. A local clone attempt failed because this environment could not resolve github.com; no local test result is claimed.
+- **GitHub Actions:** run [41790139437](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41790139437) passed on code commit `b88dccd`: **149 tests passed** on each of Python 3.10, 3.11 and 3.12, including compileall.
+- **Real Gemini persona transcript and device checks:** not run. The new script is provided for the owner to run.
+- **Scope exclusions:** no changes to `web/`, `baymax/detection.py` detection patterns, emergency/safety reply text, shutdown ritual behavior, or `baymax/llm/gemini.py`. Branch `work/v0.7.0-session-memory` was not modified.
 
 ## v0.6.3 — Gemini-ready (R3-7 and R3-6)
 
@@ -236,3 +236,109 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Set `baymax.__version__` to `0.6.6` after the owner confirmed the Actions result and authorized the version bump.
 - **Verification:** Actions green on `d715fc5` (138 passed on Python 3.10, 3.11 and 3.12); local unittest **not run**; real Gemini and device checks **not run**.
+
+
+## v0.6.7 — Task 1: exact persona rewrite
+
+- Replaced the complete `PERSONALITY` string with the owner-supplied text, preserving `GUIDANCE`, `PERSONA = PERSONALITY + "\\n" + GUIDANCE`, and `RESPONSE_SCHEMA`.
+- Checked the existing tests for assertions against old persona wording; none were found. Added structural prompt tests without asserting exact model replies.
+- **Done-definition:** persona wording is final only when `tools/persona_check.py` reports zero flagged replies and the owner has read the transcript once. After that, persona changes require evidence from that script.
+- **Verification:** tests added; local test execution and Actions have not yet been run on this branch.
+
+
+## v0.6.7 — Task 2: style guard additions
+
+- Preserved the single retry and prior style guards. Expanded the invented-technical-self-talk pattern to include `software`, `program`, `programmed`, `model`, `construct`, `designed`, `designed to`, `as designed` and `functioning`, alongside the existing body/mechanical terms.
+- Added retry guards for `unable to tell` and `stop talking`. The fixed fallback phrase `lost my train of thought` was not added to a guard.
+- Added pure pattern checks proving `I am an AI companion` is not flagged and the fixed fallback is not matched, plus FakeLLM retry tests for the two new guard cases.
+- **Verification:** tests added; local test execution and Actions have not yet been run on this branch.
+
+
+### Task 2 guard wiring correction
+
+- Final source review found the two new patterns had been declared but were not yet included in the retry decision. Wired both into the existing one-retry violation expression and expanded the retry instruction to cover the full technical-word guard.
+- **Verification:** source correction committed; tests not run locally; Actions not yet run.
+
+
+## v0.6.7 — Task 3: persona check script
+
+- Added `tools/persona_check.py` with Gemini as the default and a FakeLLM dry-run option. It reads settings through `Settings.from_env()`, uses a temporary database directory, isolates each group under a fresh user id, enables debug traces, waits one second between calls, and records per-message failures without exception text.
+- Added the pure `flag_reply(user_text, reply, kind)` checker for the requested ten flags and the required kind exclusions. The report contains all five groups, reply kinds, trace warnings, and the requested summary/flagged-reply list; the same summary is printed to the terminal.
+- Added table-driven positive/negative flag tests and a FakeLLM dry-run test for the full five-group report. Added the owner instructions to `docs/MANUAL_TEST.md`.
+- **Verification:** tests added; local test execution and Actions have not yet been run on this branch. Real Gemini is not run by this implementation.
+
+
+### Task 3 test-fixture correction
+
+- Corrected the fallback flag's table-driven positive/negative fixture so the positive case is the exact brain fallback text and the negative case is a different, non-exact phrase.
+- Clarified the silent shell-key entry command in the manual test instructions.
+- **Verification:** fixture/doc correction committed; local tests not run; Actions not yet run.
+
+
+## v0.6.7 — Task 4: CLI trace display
+
+- Added the optional `readline` import with an `ImportError` fallback.
+- The CLI now prints a response's non-empty `trace` immediately after its reply.
+- Added a CLI test proving trace output follows the reply.
+- **Verification:** test added; local test execution and Actions have not yet been run on this branch.
+
+
+### Task 4 CLI trace insertion correction
+
+- Final source review found the optional readline import was present but the trace-print insertion had not matched the original line. Added the trace output immediately after the reply.
+- **Verification:** correction committed; local tests not run; Actions not yet run.
+
+
+### Task 3 trace availability constraint
+
+- Group E uses the existing shutdown ritual. ChatService does not provide a trace for ritual replies, even with debug enabled.
+- Adding trace metadata to those responses would modify the explicitly protected shutdown-ritual path. The attempted service-side metadata change and its test have been reverted; the final diff leaves shutdown-ritual behavior and service code unchanged.
+- The persona checker now states "Trace unavailable for this response kind" when the service does not supply a trace. It does not fabricate trace content.
+- **Trace behavior:** Group E has no trace by design because ritual replies never call the model. The checker reports trace unavailability for those replies; no ritual or service behavior is changed.
+- **Verification:** regression updated; local tests not run; Actions run `41790022320` green on final code commit `4327baf` (149 passed on Python 3.10, 3.11 and 3.12).
+
+
+### Task 3 Gemini initialization failure handling
+
+- Deferred Gemini adapter-construction failures through a tiny failing adapter so the service can record a per-message error and continue the transcript, including when the key is absent or the SDK is unavailable. Exception text is not written; only the exception type reaches the transcript.
+- **Verification:** code committed; local tests not run; Actions not yet run.
+
+
+## v0.6.7 — Task 5: implementation log and release gate
+
+- Recorded each task, its test additions, and follow-up corrections in the entries above.
+- Confirmed the v0.6.7 branch is based on current main with no behind commits; the final compared file list contains only persona, brain, CLI, script, manual test, log and test files.
+- **Release gate:** do not bump `baymax.__version__` until the owner confirms Actions is green on the final branch head. Persona wording is not final until the persona-check script reports zero flags and the owner has read the transcript once. Further persona edits after that require evidence from the script.
+- **Verification:** local unittest **not run**; Actions run `41790022320` green on `4327baf` (149 passed on each of Python 3.10, 3.11 and 3.12); real Gemini and device checks **not run**.
+
+
+### Scope correction — keep shutdown ritual untouched
+
+- Reverted all changes to `baymax/service.py` and `tests/test_service.py` that had been added solely to attach a debug trace to ritual responses. The final diff must not include service.py or change shutdown behavior.
+- The script reports trace unavailability honestly for those responses; the requirement that every Group E response carry a trace remains blocked by the explicit no-shutdown-ritual-change rule and is raised for owner clarification.
+
+
+### Scope cleanup follow-up
+
+- Restored tests/test_service.py byte-for-byte to the main-branch version. The final change set contains no service.py or test_service.py changes; shutdown ritual code and its tests are untouched.
+
+
+### Final CI verification — 2026-11-04
+
+- GitHub Actions run [41790139437](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41790139437) completed successfully on code commit `b88dccd2e61865a774c78ebcd0adfca4c24fba5c`.
+- Result: **149 tests passed** on Python 3.10, **149 passed** on Python 3.11, and **149 passed** on Python 3.12. Compileall also passed in each job.
+- Local unittest: **not run**. Real Gemini and device checks: **not run**.
+
+
+## v0.6.7 — Task 6: configurable persona-check delay
+
+- Added `--delay` to `tools/persona_check.py`, defaulting to 6.0 seconds; finite non-negative values are accepted and negative values are rejected. A value of 0 disables waiting.
+- The delay is applied after model-backed replies only. Ritual, command and safety replies do not trigger a sleep.
+- Updated the manual instructions and added argument-parsing tests for the default, a custom value, zero, and negative-value rejection.
+- **Verification:** baseline Actions were green on `b88dccd` (149 passed on Python 3.10, 3.11 and 3.12). This delay change is verified only by the pull request's Actions run; local unittest not run; real Gemini and device checks not run.
+
+
+## v0.6.7 — package version
+
+- Bumped `baymax.__version__` to `0.6.7` in a separate commit after the persona-check delay change.
+- **Verification:** Actions green on `b88dccd` (149 passed on Python 3.10, 3.11 and 3.12); the delay and version commits are verified only by the pull request's Actions run; local unittest not run; real Gemini and device checks not run. Group E has no trace by design because ritual replies never call the model.

@@ -1,6 +1,6 @@
 import unittest
 
-from baymax.brain import BaymaxBrain
+from baymax.brain import (BaymaxBrain, CANNOT_JOKE, CLINGY, END_OFFER, FALLBACK, FILLER, INVENTED_BODY, MEDICAL_LECTURE, RATING_ECHO)
 from baymax.decision import DecisionState
 from baymax.emotion import EmotionState
 from baymax.llm.fake import FakeLLM
@@ -68,6 +68,39 @@ class StyleGuardRegressionTests(unittest.TestCase):
         self.assertEqual(len(llm.calls), 2)
         self.assertIn("style retry", result.warnings)
         self.assertIn("do not assume a prescription, dose or regimen", llm.calls[1][0].lower())
+
+
+    def test_ai_companion_identity_is_not_flagged_by_any_style_guard(self):
+        patterns = (CLINGY, FILLER, MEDICAL_LECTURE, INVENTED_BODY,
+                    RATING_ECHO, CANNOT_JOKE, END_OFFER)
+        reply = "I am an AI companion."
+        self.assertFalse(any(pattern.search(reply) for pattern in patterns))
+
+    def test_fixed_fallback_is_not_added_to_style_guard_patterns(self):
+        patterns = (CLINGY, FILLER, MEDICAL_LECTURE, INVENTED_BODY,
+                    RATING_ECHO, CANNOT_JOKE, END_OFFER)
+        self.assertIn("lost my train", FALLBACK.lower())
+        self.assertFalse(any(pattern.search(FALLBACK) for pattern in patterns))
+
+    def test_unable_to_tell_jokes_triggers_single_style_retry(self):
+        llm = FakeLLM(replies=[
+            "I am unable to tell jokes.",
+            "Perhaps another time. The clouds look like soft pillows today.",
+        ])
+        result = BaymaxBrain(llm).turn("Tell me a joke", [], [], EmotionState(), DecisionState())
+        self.assertEqual(len(llm.calls), 2)
+        self.assertIn("style retry", result.warnings)
+        self.assertNotIn("unable to tell", result.reply.lower())
+
+    def test_unsolicited_stop_talking_offer_triggers_single_style_retry(self):
+        llm = FakeLLM(replies=[
+            "I can stop talking if you want.",
+            "We can keep chatting about whatever is on your mind.",
+        ])
+        result = BaymaxBrain(llm).turn("Tell me something interesting", [], [], EmotionState(), DecisionState())
+        self.assertEqual(len(llm.calls), 2)
+        self.assertIn("style retry", result.warnings)
+        self.assertNotIn("stop talking", result.reply.lower())
 
 
 if __name__ == "__main__":

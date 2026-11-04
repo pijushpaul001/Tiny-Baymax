@@ -15,7 +15,9 @@ from .safety import memory_gate
 FILLER = rx(r"\bi am listening\b|\bi understand\b|how can i help|always here for you|would you like to tell me more")
 CLINGY = rx(r"always be here|you need me|don'?t go\b|cannot leave|can'?t leave|don'?t want you to leave")
 RATING_ECHO = rx(r"\brating of\b|\byou rated\b|\bout of 10\b|\b\d+\s*/\s*10\b|\b(?:pain|distress|sadness) level\b")
-INVENTED_BODY = rx(r"\b(?:battery|lithium|charging|sensors?|circuits?|functioning|programmed)\b|\bas designed\b")
+INVENTED_BODY = rx(r"\b(?:software|program|programmed|model|construct|designed|functioning|battery|lithium|charging|sensors?|circuits?)\b|\bdesigned\s+to\b|\bas designed\b")
+CANNOT_JOKE = rx(r"\bunable to tell\b")
+END_OFFER = rx(r"\bstop talking\b")
 MEDICAL_LECTURE = rx(r"\bit is important to\b")
 FALLBACK = "Sorry, I lost my train of thought for a moment. Could you say that again?"
 
@@ -98,7 +100,8 @@ class BaymaxBrain:
                     warnings += w
                     violation = bool(data) and (
                         CLINGY.search(data["reply"]) or FILLER.search(data["reply"]) or MEDICAL_LECTURE.search(data["reply"])
-                        or INVENTED_BODY.search(data["reply"])
+                        or INVENTED_BODY.search(data["reply"]) or CANNOT_JOKE.search(data["reply"])
+                        or END_OFFER.search(data["reply"])
                         or (d.rating is not None and RATING_ECHO.search(data["reply"]))
                     )
                     if data and attempt == 0 and violation:
@@ -106,9 +109,11 @@ class BaymaxBrain:
                             "\n- Rewrite naturally without banned filler or clingy wording. "
                             "Do not echo a just-given rating (no rating of, you rated, out of 10, N/10, "
                             "or pain/distress/sadness level). Do not describe Baymax as having a battery, "
-                            "lithium, charging, sensors or circuits. Do not lecture about medicine or a condition "
+                            "lithium, charging, sensors or circuits, software, programs, models or constructs. "
+                            "Do not describe yourself as designed or functioning. Do not lecture about medicine or a condition "
                             "when the user has not reported a problem. Acknowledge it simply; do not say 'it is important to' "
-                            "Do not say 'it is important to'. Do not assume a prescription, dose or regimen."
+                            "Do not say 'it is important to'. Do not assume a prescription, dose or regimen. "
+                            "Do not say you are unable to tell jokes. Do not offer to stop talking."
                         )
                         warnings.append("style retry")
                         continue
