@@ -5,13 +5,13 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 ## Current status — 2026-11-04
 
 - **Repository:** `pijushpaul001/Tiny-Baymax`
-- **Active implementation branch:** `work/v0.6.7-persona-examples`, created from current `main` at `2624c9434ea6b2962b181d27a7f39f173754ea3a` (v0.6.6 merged).
-- **Package version:** `0.6.6` (version bump authorized by the user after the reported green Actions run).
-- **Implemented scope:** health-term memory gate; plain how-are-you response and invented-body style guard; humour-off joke guidance; non-lecturing medical acknowledgement and retry guard; unstated-feelings/unsolicited-exit rules; optional fixed-string contraction cleanup. Each concern has a corresponding test change and log entry.
-- **Local tests:** not run by the implementer for this branch. The owner-reported `127 OK` result on Python 3.14.2 was for v0.6.5 and does not verify these changes.
-- **GitHub Actions:** green on `d715fc5`; 138 tests passed on Python 3.10, 3.11 and 3.12.
-- **Real Gemini and device checks:** not run.
-- **Scope exclusions:** no changes to `web/`, `baymax/detection.py` detection patterns, emergency/safety replies, shutdown ritual, or `baymax/llm/gemini.py`. Branch `work/v0.7.0-session-memory` was not modified.
+- **Active implementation branch:** `work/v0.6.7-persona-examples`, created from updated `main` at `2624c9434ea6b2962b181d27a7f39f173754ea3a` (v0.6.6 merged).
+- **Package version:** remains `0.6.6`; no v0.6.7 version bump has been made.
+- **Implemented scope:** exact owner-supplied persona rewrite; style-guard additions and AI-companion non-match regression; isolated five-group persona check script and pure reply flagger; manual test instructions; CLI trace display and deterministic debug trace metadata. Every task has a corresponding test change and log entry.
+- **Local tests:** not run by the implementer. A local clone attempt failed because this environment could not resolve github.com; no local test result is claimed.
+- **GitHub Actions:** run `41789549445` was queued on code commit `b84aabe` when this status was written. Earlier run `41789464896` passed on `6356a42`, before the final per-message Gemini-initialization handling change.
+- **Real Gemini persona transcript and device checks:** not run. The new script is provided for the owner to run.
+- **Scope exclusions:** no changes to `web/`, `baymax/detection.py` detection patterns, emergency/safety reply text, shutdown ritual behavior, or `baymax/llm/gemini.py`. Branch `work/v0.7.0-session-memory` was not modified.
 
 ## v0.6.3 — Gemini-ready (R3-7 and R3-6)
 
@@ -300,3 +300,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Deferred Gemini adapter-construction failures through a tiny failing adapter so the service can record a per-message error and continue the transcript, including when the key is absent or the SDK is unavailable. Exception text is not written; only the exception type reaches the transcript.
 - **Verification:** code committed; local tests not run; Actions not yet run.
+
+
+## v0.6.7 — Task 5: implementation log and release gate
+
+- Recorded each task, its test additions, and follow-up corrections in the entries above.
+- Confirmed the v0.6.7 branch is nine commits ahead of current main with no behind commits; the compared file list contains only the requested persona, brain, CLI/service debug, script, manual test, log and test files.
+- **Release gate:** do not bump `baymax.__version__` until the owner confirms Actions is green on the final branch head. Persona wording is not final until the persona-check script reports zero flags and the owner has read the transcript once. Further persona edits after that require evidence from the script.
+- **Verification at log time:** local unittest **not run**; Actions run `41789549445` queued on `b84aabe`; real Gemini and device checks **not run**.
