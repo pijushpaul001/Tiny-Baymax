@@ -179,3 +179,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - When the selected mode is playful but the deterministic style disables humour, the decision brief now forbids claiming inability to tell jokes and requests a gentle, non-joking observation instead.
 - Added brief tests for humour-off and humour-allowed cases; humour-allowed behaviour remains unchanged.
 - **Verification:** tests added; local execution and Actions have not yet been run for this branch.
+
+
+## 2026-11-04 — v0.6.6 non-lecturing medical acknowledgement
+
+- Added persona guidance to acknowledge a medicine or condition simply when no problem is reported, without assuming a prescription, dose or regimen.
+- Added an "it is important to" style-guard pattern that triggers the existing single retry, with a FakeLLM violating-draft/clean-reply regression.
+- **Verification:** tests added; local execution and Actions have not yet been run for this branch.

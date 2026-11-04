@@ -55,5 +55,20 @@ class StyleGuardRegressionTests(unittest.TestCase):
         self.assertEqual(len(llm.calls), 2)
 
 
+    def test_medical_regimen_lecture_retries_once_and_uses_simple_acknowledgement(self):
+        llm = FakeLLM(replies=[
+            "It is important to follow your prescribed regimen.",
+            "Thank you for telling me. I will keep that in mind.",
+        ])
+        brain = BaymaxBrain(llm)
+        result = brain.turn(
+            "I take medicine for blood pressure", [], [], EmotionState(), DecisionState()
+        )
+        self.assertEqual(result.reply, "Thank you for telling me. I will keep that in mind.")
+        self.assertEqual(len(llm.calls), 2)
+        self.assertIn("style retry", result.warnings)
+        self.assertIn("do not assume a prescription, dose or regimen", llm.calls[1]["system"].lower())
+
+
 if __name__ == "__main__":
     unittest.main()
