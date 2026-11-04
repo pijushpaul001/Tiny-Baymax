@@ -266,3 +266,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added the pure `flag_reply(user_text, reply, kind)` checker for the requested ten flags and the required kind exclusions. The report contains all five groups, reply kinds, trace warnings, and the requested summary/flagged-reply list; the same summary is printed to the terminal.
 - Added table-driven positive/negative flag tests and a FakeLLM dry-run test for the full five-group report. Added the owner instructions to `docs/MANUAL_TEST.md`.
 - **Verification:** tests added; local test execution and Actions have not yet been run on this branch. Real Gemini is not run by this implementation.
+
+
+### Task 3 test-fixture correction
+
+- Corrected the fallback flag's table-driven positive/negative fixture so the positive case is the exact brain fallback text and the negative case is a different, non-exact phrase.
+- Clarified the silent shell-key entry command in the manual test instructions.
+- **Verification:** fixture/doc correction committed; local tests not run; Actions not yet run.

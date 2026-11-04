@@ -20,7 +20,7 @@ class FlagReplyTests(unittest.TestCase):
             ("cannot_joke", "I am unable to tell jokes.", "Maybe another time."),
             ("end_offer", "We can end the conversation now.", "We can keep chatting."),
             ("too_long", "One. Two. Three. Four. Five.", "One. Two. Three. Four."),
-            ("fallback", FALLBACK, "I lost my train of thought.", "Could you say that again?"),
+            ("fallback", "hello", FALLBACK, "I lost my train of thought."),
         )
         for case in cases:
             flag, user, positive, negative = (
