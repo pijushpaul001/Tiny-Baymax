@@ -2,18 +2,16 @@
 
 This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or commit API keys, passcodes, private health conversations, or other identifying/sensitive data.
 
-## Current status — 2026-11-03
+## Current status — 2026-11-04
 
 - **Repository:** `pijushpaul001/Tiny-Baymax`
-- **Active branch:** `work/v0.6.5-cleanup`, created from the current `main` head (`a379b5dd040caa11f1ebab576e75f161d17a36d6`). The branch contains the cleanup commits listed below; `main` was not modified.
-- **Latest implemented version on this branch:** v0.6.5. This commit advances `baymax.__version__` from `0.6.4` to `0.6.5` after the export correction and verification gate.
-- **v0.6.4 scope:** S1 exit/farewell recognition, S2 fixed LLM failure text, S3 style retry guard, S4 decision brief/dependency cue, and S5 Gemini generation-config cleanup. These are recorded in the v0.6.4 entries below. The package metadata sync also adds a health-version assertion.
-- **Automated tests:** local `python -m unittest discover -s tests -t . -q` — **127 OK** (Python 3.14.2, Codespaces; owner-reported).
-- **CI:** GitHub Actions **green** on pre-version-bump commit `d6846aa` (Python tests workflow, conclusion `success`). This is not a CI result for the new v0.6.5 commit.
-- **Main/base verification:** the branch was created from main at `a379b5dd040caa11f1ebab576e75f161d17a36d6`. The current main head's combined status query returned no status entries. This is not evidence of a green CI run.
-- **Real Gemini and device checks:** not run for this v0.6.5 verification.
-- **Device/PWA, HTTPS/Tailscale, and visual/end-to-end checks:** not verified.
-- **Release scope:** version metadata and implementation-log update only; no runtime behavior changed in this commit.
+- **Active implementation branch:** `work/v0.6.6-persona-fixes`, created from current `main` at `a02502b7cfb565ae27b691143483bc1f673d838c`. The branch is 7 commits ahead of main; main was not modified.
+- **Package version:** remains `0.6.5`. No version bump has been made; wait for the user's confirmation after tests and Actions are green.
+- **Implemented scope:** health-term memory gate; plain how-are-you response and invented-body style guard; humour-off joke guidance; non-lecturing medical acknowledgement and retry guard; unstated-feelings/unsolicited-exit rules; optional fixed-string contraction cleanup. Each concern has a corresponding test change and log entry.
+- **Local tests:** not run by the implementer for this branch. The owner-reported `127 OK` result on Python 3.14.2 was for v0.6.5 and does not verify these changes.
+- **GitHub Actions:** the Python tests workflow for branch HEAD `a9b2b2324c58b2d96cf2828b5e21a222946dd1b1` was queued when this status was written; no conclusion is claimed. The earlier green result on `d6846aa` is not verification of this branch.
+- **Real Gemini and device checks:** not run.
+- **Scope exclusions:** no changes to `web/`, `baymax/detection.py` detection patterns, emergency/safety replies, shutdown ritual, or `baymax/llm/gemini.py`. Branch `work/v0.7.0-session-memory` was not modified.
 
 ## v0.6.3 — Gemini-ready (R3-7 and R3-6)
 
@@ -206,3 +204,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Rewrote contractions in the emotional rating question, secret-redaction note and daily message-limit reply without changing the rating question's 0–10/skip shape or the greeting and shutdown question.
 - Updated the existing secret-note exclusion assertion and added focused wording checks for the rating question and secret note.
 - **Verification:** tests added/updated; local execution and Actions have not yet been run for this branch.
+
+
+## 2026-11-04 — v0.6.6 verification status
+
+- Consolidated current branch, version, scope and verification status. The package version remains 0.6.5 pending the user's confirmation.
+- **Verification:** no local test run by the implementer; Actions was queued on the branch head at the time of this entry.
