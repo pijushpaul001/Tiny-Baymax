@@ -5,13 +5,14 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 ## Current status — 2026-11-04
 
 - **Repository:** `pijushpaul001/Tiny-Baymax`
-- **Active implementation branch:** `work/v0.6.7-persona-examples`, created from updated `main` at `2624c9434ea6b2962b181d27a7f39f173754ea3a` (v0.6.6 merged).
-- **Package version:** `0.6.7` (version metadata committed separately after the persona-check delay change).
-- **Implemented scope:** exact owner-supplied persona rewrite; style-guard additions and AI-companion non-match regression; isolated five-group persona check script and pure reply flagger; manual test instructions; CLI trace display; the persona checker records when ChatService supplies no trace. Every task has a corresponding test change and log entry.
-- **Local tests:** not run by the implementer. A local clone attempt failed because this environment could not resolve github.com; no local test result is claimed.
-- **GitHub Actions:** run [41790139437](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41790139437) passed on code commit `b88dccd`: **149 tests passed** on each of Python 3.10, 3.11 and 3.12, including compileall.
-- **Real Gemini persona transcript and device checks:** not run. The new script is provided for the owner to run.
-- **Scope exclusions:** no changes to `web/`, `baymax/detection.py` detection patterns, emergency/safety reply text, shutdown ritual behavior, or `baymax/llm/gemini.py`. Branch `work/v0.7.0-session-memory` was not modified.
+- **Active implementation branch:** `work/v0.6.8-persona-variation`, created from current `main` at `b26e16d0e4a2cc99416294c8a053edf2f1c1e490` (v0.6.7 merged).
+- **Package version:** `0.6.8` (bumped in its own commit after Tasks 1–6).
+- **Implemented scope:** structured persona examples and copied-example retry; expanded persona-check transcript, Group F and failure handling; local environment/swap-file ignore rules; daily-quota fallback handling; Gemini free-tier/privacy comments; requested status wording. Tests were added with code changes.
+- **Local unittest:** **not run**. A local clone attempt failed because this environment could not resolve github.com; no local test result is claimed.
+- **GitHub Actions on the last pre-bump commit:** no workflow run was visible for `699f997956f473132664e1c4234fd63f7e2a1db6`.
+- **PR Actions:** pending after PR creation.
+- **Real Gemini and device checks:** **not run**.
+- **Scope exclusions:** no changes to `work/v0.7.0-session-memory`, `web/`, detection patterns, emergency/safety replies, shutdown ritual, or any files outside the requested scope. `baymax/llm/gemini.py` was changed only for Task 4.
 
 ## v0.6.3 — Gemini-ready (R3-7 and R3-6)
 
@@ -394,3 +395,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added the requested sentence immediately after the technical-terms sentence in `WHAT BAYMAX IS`.
 - Added a prompt-content assertion. Existing style-guard patterns and the one-retry limit were not changed for this item.
 - **Verification:** test added and source diff reviewed; local unittest and Actions not yet run for this branch.
+
+
+## v0.6.8 — package version
+
+- Bumped `baymax.__version__` from `0.6.7` to `0.6.8` in this version-only code commit after Tasks 1–6 were committed.
+- **Verification:** no Actions run was visible for the last commit before this bump (`699f997956f473132664e1c4234fd63f7e2a1db6)); PR Actions pending after PR creation; local unittest **not run** (clone failed because github.com could not be resolved); real Gemini and device checks **not run**.
