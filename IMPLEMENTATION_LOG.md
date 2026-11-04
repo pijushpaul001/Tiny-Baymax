@@ -415,3 +415,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Removed exact persona-example matching from the model style-violation decision. All other style guards and the existing maximum of one retry remain unchanged; `EXAMPLE_REPLIES` remains exported by `baymax.persona`, and the persona-check count remains informational.
 - Replaced the copied-example retry tests with a FakeLLM regression proving an example-identical reply is accepted after exactly one model call. Existing tests for all other style guards were retained.
 - **Verification:** source and test edits committed; local unittest and GitHub Actions not yet run.
+
+
+## v0.6.9 — Task 2: trim general-situation persona examples
+
+- Removed only the seven requested user/reply examples from `EXAMPLES`; retained all other examples and the exported reply tuple.
+- Replaced the instruction immediately before the examples block with the exact owner-provided sentence.
+- Updated the generated-block assertion and added a regression asserting all seven removed user lines are absent from `PERSONA`.
+- **Verification:** source and test edits committed; local unittest and GitHub Actions not yet run.
