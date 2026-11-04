@@ -8,11 +8,6 @@ on:
 jobs:
   unittest:
     runs-on: ubuntu-latest
-    env:
-      GEMINI_API_KEY: dummy-shell-key
-      BAYMAX_MODEL: shell-test-model
-      BAYMAX_FALLBACK_MODEL: shell-test-fallback
-      BAYMAX_DATA_DIR: /tmp/baymax-shell-data
     strategy:
       fail-fast: false
       matrix:
@@ -25,13 +20,19 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
-      - name: Prepare dotenv test fixture
+      - name: Prepare dotenv and shell environment fixture
         shell: bash
         run: |
           if [ "${{ matrix.dotenv }}" = "present" ]; then
-            printf 'GEMINI_API_KEY=dummy-dotenv-key\\nBAYMAX_MODEL=dotenv-test-model\\nBAYMAX_FALLBACK_MODEL=dotenv-test-fallback\\n' > .env
+            printf 'GEMINI_API_KEY=dummy-dotenv-key\nBAYMAX_MODEL=dotenv-test-model\nBAYMAX_FALLBACK_MODEL=dotenv-test-fallback\n' > .env
           else
             rm -f .env
+            {
+              echo "GEMINI_API_KEY=dummy-shell-key"
+              echo "BAYMAX_MODEL=shell-test-model"
+              echo "BAYMAX_FALLBACK_MODEL=shell-test-fallback"
+              echo "BAYMAX_DATA_DIR=/tmp/baymax-shell-data"
+            } >> "$GITHUB_ENV"
           fi
       - name: Compile Python sources
         run: python -m compileall -q baymax server tests
