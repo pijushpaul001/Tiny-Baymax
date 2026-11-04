@@ -8,4 +8,4 @@ Layers (each only talks to the one below it):
     baymax/llm/         swappable language models (Gemini, fake for tests)
     baymax/storage.py   SQLite persistence
 """
-__version__ = "0.6.6"
+__version__ = "0.6.7"

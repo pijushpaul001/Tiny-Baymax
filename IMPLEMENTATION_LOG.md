@@ -6,10 +6,10 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 
 - **Repository:** `pijushpaul001/Tiny-Baymax`
 - **Active implementation branch:** `work/v0.6.7-persona-examples`, created from updated `main` at `2624c9434ea6b2962b181d27a7f39f173754ea3a` (v0.6.6 merged).
-- **Package version:** remains `0.6.6`; no v0.6.7 version bump has been made.
+- **Package version:** `0.6.7` (version metadata committed separately after the persona-check delay change).
 - **Implemented scope:** exact owner-supplied persona rewrite; style-guard additions and AI-companion non-match regression; isolated five-group persona check script and pure reply flagger; manual test instructions; CLI trace display; the persona checker records when ChatService supplies no trace. Every task has a corresponding test change and log entry.
 - **Local tests:** not run by the implementer. A local clone attempt failed because this environment could not resolve github.com; no local test result is claimed.
-- **GitHub Actions:** run [41790022320](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41790022320) passed on code commit `4327baf`: **149 tests passed** on each of Python 3.10, 3.11 and 3.12, including compileall.
+- **GitHub Actions:** run [41790139437](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41790139437) passed on code commit `b88dccd`: **149 tests passed** on each of Python 3.10, 3.11 and 3.12, including compileall.
 - **Real Gemini persona transcript and device checks:** not run. The new script is provided for the owner to run.
 - **Scope exclusions:** no changes to `web/`, `baymax/detection.py` detection patterns, emergency/safety reply text, shutdown ritual behavior, or `baymax/llm/gemini.py`. Branch `work/v0.7.0-session-memory` was not modified.
 
@@ -325,7 +325,7 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 ### Final CI verification — 2026-11-04
 
-- GitHub Actions run [41790022320](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41790022320) completed successfully on code commit `4327baf333651cbf2bf091a63cc66c0914d06c2f`.
+- GitHub Actions run [41790139437](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41790139437) completed successfully on code commit `b88dccd2e61865a774c78ebcd0adfca4c24fba5c`.
 - Result: **149 tests passed** on Python 3.10, **149 passed** on Python 3.11, and **149 passed** on Python 3.12. Compileall also passed in each job.
 - Local unittest: **not run**. Real Gemini and device checks: **not run**.
 
@@ -336,3 +336,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - The delay is applied after model-backed replies only. Ritual, command and safety replies do not trigger a sleep.
 - Updated the manual instructions and added argument-parsing tests for the default, a custom value, zero, and negative-value rejection.
 - **Verification:** baseline Actions were green on `b88dccd` (149 passed on Python 3.10, 3.11 and 3.12). This delay change is verified only by the pull request's Actions run; local unittest not run; real Gemini and device checks not run.
+
+
+## v0.6.7 — package version
+
+- Bumped `baymax.__version__` to `0.6.7` in a separate commit after the persona-check delay change.
+- **Verification:** Actions green on `b88dccd` (149 passed on Python 3.10, 3.11 and 3.12); the delay and version commits are verified only by the pull request's Actions run; local unittest not run; real Gemini and device checks not run. Group E has no trace by design because ritual replies never call the model.
