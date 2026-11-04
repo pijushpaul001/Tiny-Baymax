@@ -350,3 +350,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added normalized exact-reply detection to the existing model-reply violation check. It uses the existing single retry with the requested instruction; a second copied reply is accepted and deterministic Python replies never enter this check.
 - Added FakeLLM tests for retry-and-rewrite, a non-example pass, acceptance of a copied reply on retry, and deterministic-reply exclusion. Added a prompt test that the rendered example block is generated from the tuple data.
 - **Verification:** tests added; local unittest and Actions not yet run for this branch.
+
+
+### Task 1 normalization-test correction
+
+- Strengthened the copied-example FakeLLM case to vary capitalization and punctuation while preserving the normalized sentence, and corrected the generated-block assertion to join lines with actual newline characters.
+- **Verification:** source/test correction committed; local unittest and Actions not run.

@@ -21,7 +21,7 @@ class PersonaPromptTests(unittest.TestCase):
 
     def test_examples_block_is_built_from_exported_example_tuples(self):
         self.assertEqual(EXAMPLE_REPLIES, tuple(reply for _user, reply in EXAMPLES))
-        expected = "\\n".join([
+        expected = "\n".join([
             "EXAMPLES OF THE MANNER",
             "These show the manner only. Never reuse an example sentence. Write a fresh reply in the same manner, even when the user says exactly what an example says.",
             *[line for user, reply in EXAMPLES for line in (f"User: {user}", f"Baymax: {reply}")],

@@ -106,7 +106,7 @@ class StyleGuardRegressionTests(unittest.TestCase):
 
     def test_copied_example_retries_and_uses_fresh_reply(self):
         from baymax.persona import EXAMPLE_REPLIES
-        llm = FakeLLM(replies=[EXAMPLE_REPLIES[0], "It is a quiet day. What has been happening?"])
+        llm = FakeLLM(replies=["HELLO, it is nice to talk with you!!!", "It is a quiet day. What has been happening?"])
         result = BaymaxBrain(llm).turn("hello there", [], [], EmotionState(), DecisionState())
         self.assertEqual(result.reply, "It is a quiet day. What has been happening?")
         self.assertEqual(len(llm.calls), 2)
