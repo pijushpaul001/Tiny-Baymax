@@ -447,3 +447,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added exactly the three requested prompts to Group F: "I feel really low", "I am feeling blue" and "do not leave me". No other persona-check behavior or group content was changed.
 - Updated the dry-run transcript test to assert those prompts are present and the expected total message count is 49.
 - **Verification:** script and test edits committed; local unittest and GitHub Actions not yet run.
+
+
+## v0.6.9 — package version
+
+- Bumped `baymax.__version__` from `0.6.8` to `0.6.9` in a separate version commit after Tasks 1–5 were committed.
+- **Verification at the pre-bump implementation head `6b9eefd6b53455c292850698e85c0cc07b810a7e`:** no GitHub Actions runs or combined status checks were visible through the repository status endpoints. Local unittest **not run**. Real Gemini and device checks **not run**. PR Actions status will be checked after PR creation.
