@@ -9,7 +9,7 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 - **Package version:** remains `0.6.5`. No version bump has been made; wait for the user's confirmation after tests and Actions are green.
 - **Implemented scope:** health-term memory gate; plain how-are-you response and invented-body style guard; humour-off joke guidance; non-lecturing medical acknowledgement and retry guard; unstated-feelings/unsolicited-exit rules; optional fixed-string contraction cleanup. Each concern has a corresponding test change and log entry.
 - **Local tests:** not run by the implementer for this branch. The owner-reported `127 OK` result on Python 3.14.2 was for v0.6.5 and does not verify these changes.
-- **GitHub Actions:** the Python tests workflow for branch HEAD `a9b2b2324c58b2d96cf2828b5e21a222946dd1b1` was queued when this status was written; no conclusion is claimed. The earlier green result on `d6846aa` is not verification of this branch.
+- **GitHub Actions:** green on implementation commit `7704b627def11b4829cf7d7f60311b28f8bde532`: 138 tests passed on each of Python 3.10, 3.11 and 3.12. The log-only status commit below triggers a fresh workflow run.
 - **Real Gemini and device checks:** not run.
 - **Scope exclusions:** no changes to `web/`, `baymax/detection.py` detection patterns, emergency/safety replies, shutdown ritual, or `baymax/llm/gemini.py`. Branch `work/v0.7.0-session-memory` was not modified.
 
@@ -221,4 +221,12 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 ### Medical retry instruction refinement after Actions feedback
 
 - The first Actions run reached 137 tests but failed only because the regression expected the exact wording "do not assume", while the retry prompt said "or assume". Made the retry instruction explicit ("Do not assume...") to align with the persona rule and test.
-- **Verification:** prior Actions result: 1 assertion failure in the medical style-guard test on Python 3.10, 3.11 and 3.12; rerun pending.
+- **Verification:** the prior run had 1 assertion failure in the medical style-guard test on Python 3.10, 3.11 and 3.12. After making the retry instruction explicit, Actions passed on `7704b627def11b4829cf7d7f60311b28f8bde532`: 138 tests passed on each of Python 3.10, 3.11 and 3.12.
+
+
+### Final implementation verification — 2026-11-04
+
+- GitHub Actions run [41784781916](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41784781916) completed successfully on implementation commit `7704b627def11b4829cf7d7f60311b28f8bde532`.
+- Test result: **138 passed** on Python 3.10, **138 passed** on Python 3.11, and **138 passed** on Python 3.12.
+- Local unittest execution by the implementer: **not run**.
+- This is not a real-Gemini or device verification. Package version remains 0.6.5 pending user confirmation.
