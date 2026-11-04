@@ -108,7 +108,7 @@ class BaymaxBrain:
                             "or pain/distress/sadness level). Do not describe Baymax as having a battery, "
                             "lithium, charging, sensors or circuits. Do not lecture about medicine or a condition "
                             "when the user has not reported a problem. Acknowledge it simply; do not say 'it is important to' "
-                            "or assume a prescription, dose or regimen."
+                            "Do not say 'it is important to'. Do not assume a prescription, dose or regimen."
                         )
                         warnings.append("style retry")
                         continue

@@ -216,3 +216,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Added a service-level assertion for the rewritten daily-limit reply so the fixed-string contraction cleanup is covered end to end.
 - **Verification:** test added; not run locally.
+
+
+### Medical retry instruction refinement after Actions feedback
+
+- The first Actions run reached 137 tests but failed only because the regression expected the exact wording "do not assume", while the retry prompt said "or assume". Made the retry instruction explicit ("Do not assume...") to align with the persona rule and test.
+- **Verification:** prior Actions result: 1 assertion failure in the medical style-guard test on Python 3.10, 3.11 and 3.12; rerun pending.
