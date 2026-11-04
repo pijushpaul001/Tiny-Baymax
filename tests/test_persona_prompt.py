@@ -14,6 +14,12 @@ class PersonaPromptTests(unittest.TestCase):
             with self.subTest(heading=heading):
                 self.assertIn(heading, PERSONALITY)
 
+    def test_persona_contains_requested_status_wording(self):
+        self.assertIn(
+            "Never say you are functioning, working, running or operating. If asked how you are, say you are well.",
+            PERSONA,
+        )
+
     def test_persona_composition_and_response_schema_remain_separate(self):
         self.assertEqual(PERSONA, PERSONALITY + "\n" + GUIDANCE)
         self.assertIn("reply", RESPONSE_SCHEMA["properties"])

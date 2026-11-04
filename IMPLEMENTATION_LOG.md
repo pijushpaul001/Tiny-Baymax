@@ -387,3 +387,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added owner-specified comments to `.env.example` covering the stated per-model free-tier daily request limits, Gemma token-per-minute cap, and the free-tier content-use warning. The comments explicitly say quotas are small, model-specific and can change.
 - Added the instruction to use the paid tier before sharing the app. No credentials or values were added.
 - **Verification:** documentation-only change reviewed in the resulting file; local unittest not applicable and Actions not yet run.
+
+
+## v0.6.8 — Task 6: explicit status wording in persona
+
+- Added the requested sentence immediately after the technical-terms sentence in `WHAT BAYMAX IS`.
+- Added a prompt-content assertion. Existing style-guard patterns and the one-retry limit were not changed for this item.
+- **Verification:** test added and source diff reviewed; local unittest and Actions not yet run for this branch.
