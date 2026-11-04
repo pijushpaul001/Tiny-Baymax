@@ -21,5 +21,22 @@ class DecisionBriefRegressionTests(unittest.TestCase):
         )
 
 
+    def test_playful_mode_with_humor_off_gets_gentle_alternative_instruction(self):
+        emotion = EmotionState(concern=0.6)
+        decision = DecisionLayer().decide("Tell me a joke", emotion, [], DecisionState())
+        self.assertEqual(decision.mode, "playful")
+        self.assertFalse(decision.style["humor"])
+        self.assertIn("Do not say you are unable to tell jokes.", decision.brief)
+        self.assertIn("one light, non-joking observation instead", decision.brief)
+
+    def test_playful_mode_with_humor_allowed_keeps_existing_instruction(self):
+        emotion = EmotionState(concern=0.1, happiness=0.8)
+        decision = DecisionLayer().decide("Tell me a joke", emotion, [], DecisionState())
+        self.assertEqual(decision.mode, "playful")
+        self.assertTrue(decision.style["humor"])
+        self.assertIn("- Humor: light humor is fine.", decision.brief)
+        self.assertNotIn("Do not say you are unable to tell jokes.", decision.brief)
+
+
 if __name__ == "__main__":
     unittest.main()

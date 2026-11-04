@@ -243,6 +243,8 @@ class DecisionLayer:
              "- Questions: " + ("you may ask at most ONE useful question." if qb else "do NOT end with a question."),
              "- Use recent conversation to resolve short follow-ups. Never invent implications or facts about the user.",
              "- Talk only about the problem the user is reporting now. Do not mention an earlier, different problem unless they do."]
+        if mode == "playful" and not style["humor"]:
+            L.append("- Do not say you are unable to tell jokes. Gently note that a joke may suit a lighter moment, and offer one light, non-joking observation instead.")
         if ctx: L.append(f"- Context: {ctx}")
         if DEPENDENCY_CUE.search(msg):
             L.append("- Respond warmly and calmly. Do not imply you are their only support. Gently mention a trusted person.")

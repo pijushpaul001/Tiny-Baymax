@@ -172,3 +172,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Replaced the vague instruction to answer simply with the plain, warm example: "I am well. Thank you for asking." The persona explicitly avoids programming/body-mechanics explanations and claims of real feelings.
 - Extended the existing invented-body style guard to catch "functioning", "programmed" and "as designed"; added FakeLLM single-retry regressions.
 - **Verification:** tests added; local execution and Actions have not yet been run for this branch.
+
+
+## 2026-11-04 — v0.6.6 humour-off joke handling
+
+- When the selected mode is playful but the deterministic style disables humour, the decision brief now forbids claiming inability to tell jokes and requests a gentle, non-joking observation instead.
+- Added brief tests for humour-off and humour-allowed cases; humour-allowed behaviour remains unchanged.
+- **Verification:** tests added; local execution and Actions have not yet been run for this branch.
