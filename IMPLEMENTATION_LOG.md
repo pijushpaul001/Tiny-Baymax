@@ -408,3 +408,61 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - The last commit before the version bump (`699f997956f473132664e1c4234fd63f7e2a1db6`) passed GitHub Actions run [41812930363](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41812930363): 162 tests passed on Python 3.10, 3.11 and 3.12; compileall passed in all jobs.
 - PR #7 head `7a6c3c18a83de437f872c70119943999f05db1e3` passed GitHub Actions run [41813050593](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41813050593): 162 tests passed on Python 3.10, 3.11 and 3.12; compileall passed in all jobs.
 - Local unittest remains **not run**. Real Gemini and device checks remain **not run**.
+
+
+## v0.6.9 — Task 1: remove copied-example retry
+
+- Removed exact persona-example matching from the model style-violation decision. All other style guards and the existing maximum of one retry remain unchanged; `EXAMPLE_REPLIES` remains exported by `baymax.persona`, and the persona-check count remains informational.
+- Replaced the copied-example retry tests with a FakeLLM regression proving an example-identical reply is accepted after exactly one model call. Existing tests for all other style guards were retained.
+- **Verification:** source and test edits committed; local unittest and GitHub Actions not yet run.
+
+
+## v0.6.9 — Task 2: trim general-situation persona examples
+
+- Removed only the seven requested user/reply examples from `EXAMPLES`; retained all other examples and the exported reply tuple.
+- Replaced the instruction immediately before the examples block with the exact owner-provided sentence.
+- Updated the generated-block assertion and added a regression asserting all seven removed user lines are absent from `PERSONA`.
+- **Verification:** source and test edits committed; local unittest and GitHub Actions not yet run.
+
+
+## v0.6.9 — Task 3: low-mood detection and dependency cue
+
+- Extended only `EMOTION` with the requested feel/feeling + optional-intensifier low-mood phrases and "feel like crying". The low-on negative lookahead excludes "feeling low on ..."; emotional labels are reduced to the single mood word for rating grammar.
+- Added the requested `down`, `low`, `blue` and `empty` adjective mappings. The generated question for "I have been feeling really down" is asserted exactly.
+- Added positive emotional/rating tests for all six required phrases and negative controls for all five non-emotional uses. Added "do not leave me" to `DEPENDENCY_CUE` and a regression for reassurance mode plus trusted-person instruction.
+- `URGENT`, `SELF_HARM`, both safety reply strings, and unrelated existing detection tests were not edited.
+- **Verification:** source and test edits committed; local unittest and GitHub Actions not yet run.
+
+
+## v0.6.9 — Task 4: recommended Gemini setup documentation
+
+- Set the example configuration to `BAYMAX_MODEL=gemma-4-26b-a4b-it` and `BAYMAX_FALLBACK_MODEL=gemini-3.5-flash-lite`.
+- Documented the owner-provided timing, free daily quota and 16K tokens-per-minute information for the recommended model, and the approximately 27-second tiny-prompt measurement for `gemma-4-31b-it` as too slow for chat.
+- Preserved the warning that Google may use free-tier content to improve its products and the instruction to use the paid tier before sharing.
+- **Verification:** documentation and example configuration edits committed; no external model-performance measurements were run by the implementer.
+
+
+## v0.6.9 — Task 5: extend persona-check Group F
+
+- Added exactly the three requested prompts to Group F: "I feel really low", "I am feeling blue" and "do not leave me". No other persona-check behavior or group content was changed.
+- Updated the dry-run transcript test to assert those prompts are present and the expected total message count is 49.
+- **Verification:** script and test edits committed; local unittest and GitHub Actions not yet run.
+
+
+## v0.6.9 — package version
+
+- Bumped `baymax.__version__` from `0.6.8` to `0.6.9` in a separate version commit after Tasks 1–5 were committed.
+- **Verification at the pre-bump implementation head `6b9eefd6b53455c292850698e85c0cc07b810a7e`:** no GitHub Actions runs or combined status checks were visible through the repository status endpoints. Local unittest **not run**. Real Gemini and device checks **not run**. PR Actions status will be checked after PR creation.
+
+
+### v0.6.9 Actions correction — persona example count fixture
+
+- The first PR Actions run found one stale test fixture: the informational example-count test hard-coded the greeting reply that Task 2 intentionally removed from `EXAMPLES`. Updated the fixture to derive its case/punctuation/whitespace variant from the current first `EXAMPLE_REPLIES` entry. No production behavior changed.
+- **Verification:** GitHub Actions run [41822457289](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41822457289) showed this single assertion failure (165 tests ran) on Python 3.12 and 3.11; Python 3.10 was still in progress when inspected. The correction is committed; rerun status pending. Local unittest **not run**.
+
+
+### v0.6.9 Actions verification after fixture correction
+
+- GitHub Actions run [41822622967](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41822622967) completed successfully on code/test head `1b6de5342dd9bf98d152d833d90b0225090a757e`.
+- Result: **165 tests passed** on Python 3.10, **165 passed** on Python 3.11, and **165 passed** on Python 3.12. Compile steps also passed in all three jobs.
+- Local unittest: **not run**. Real Gemini and device checks: **not run**.

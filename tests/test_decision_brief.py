@@ -13,6 +13,13 @@ class DecisionBriefRegressionTests(unittest.TestCase):
             decision.brief,
         )
 
+    def test_do_not_leave_me_selects_reassure_and_mentions_trusted_person(self):
+        decision = DecisionLayer().decide(
+            "please do not leave me", EmotionState(), [], DecisionState()
+        )
+        self.assertEqual(decision.mode, "reassure")
+        self.assertIn("Gently mention a trusted person.", decision.brief)
+
     def test_brief_limits_references_to_the_current_problem(self):
         decision = DecisionLayer().decide("my head hurts", EmotionState(), [], DecisionState())
         self.assertIn(
@@ -52,13 +59,31 @@ class DecisionBriefRegressionTests(unittest.TestCase):
                 )
 
 
-    def test_emotional_rating_question_keeps_scale_and_skip_shape_without_contraction(self):
+    def test_down_rating_question_uses_single_mood_word_and_exact_grammar(self):
         from baymax.detection import detect
 
-        question = DecisionLayer()._rating_question(detect("I feel sad"), 1)
-        self.assertIn("you are feeling right now, from 0 to 10?", question)
-        self.assertIn("You can also say skip.", question)
-        self.assertNotIn("you're", question.lower())
+        question = DecisionLayer()._rating_question(
+            detect("I have been feeling really down"), 1
+        )
+        self.assertEqual(
+            question,
+            "How would you rate how down you are feeling right now, from 0 to 10? You can also say skip.",
+        )
+
+    def test_low_mood_labels_use_the_requested_rating_adjectives(self):
+        from baymax.detection import detect
+
+        for phrase, adjective in (
+            ("I feel down", "down"),
+            ("feeling low today", "low"),
+            ("I feel so blue", "low"),
+            ("I feel empty", "empty"),
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertEqual(
+                    DecisionLayer()._rating_question(detect(phrase), 1),
+                    f"How would you rate how {adjective} you are feeling right now, from 0 to 10? You can also say skip.",
+                )
 
 
 if __name__ == "__main__":

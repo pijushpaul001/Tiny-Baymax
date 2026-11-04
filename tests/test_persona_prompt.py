@@ -20,6 +20,20 @@ class PersonaPromptTests(unittest.TestCase):
             PERSONA,
         )
 
+    def test_removed_general_situation_user_lines_are_absent_from_persona(self):
+        removed_user_lines = (
+            "User: hi",
+            "User: how are you?",
+            "User: I got a new job!",
+            "User: what is a loan?",
+            "User: tell me a joke (jokes allowed)",
+            "User: I feel tired today",
+            "User: thanks",
+        )
+        for line in removed_user_lines:
+            with self.subTest(line=line):
+                self.assertNotIn(line, PERSONA)
+
     def test_persona_composition_and_response_schema_remain_separate(self):
         self.assertEqual(PERSONA, PERSONALITY + "\n" + GUIDANCE)
         self.assertIn("reply", RESPONSE_SCHEMA["properties"])
@@ -29,7 +43,7 @@ class PersonaPromptTests(unittest.TestCase):
         self.assertEqual(EXAMPLE_REPLIES, tuple(reply for _user, reply in EXAMPLES))
         expected = "\n".join([
             "EXAMPLES OF THE MANNER",
-            "These show the manner only. Never reuse an example sentence. Write a fresh reply in the same manner, even when the user says exactly what an example says.",
+            "These show the manner for a few special situations. For greetings, thanks, good news and simple questions there is no template: write your own fresh short reply every time.",
             *[line for user, reply in EXAMPLES for line in (f"User: {user}", f"Baymax: {reply}")],
         ])
         self.assertEqual(EXAMPLES_BLOCK, expected)

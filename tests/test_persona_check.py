@@ -59,9 +59,10 @@ class PersonaCheckArgumentTests(unittest.TestCase):
 
     def test_identical_example_reply_count_normalizes_case_punctuation_and_spaces(self):
         from baymax.persona import EXAMPLE_REPLIES
+        example = EXAMPLE_REPLIES[0]
         replies = [
-            EXAMPLE_REPLIES[0],
-            "  HELLO,   it is nice to talk with you!!! ",
+            example,
+            "  " + example.upper().replace(".", "!!!") + "   ",
             "That is a different reply.",
         ]
         self.assertEqual(count_identical_example_replies(replies), 2)
@@ -88,13 +89,16 @@ class PersonaCheckDryRunTests(unittest.TestCase):
                 "Fallback model: None",
                 "Delay: 0 seconds",
                 "Replies identical to a persona example: 0",
-                "Total messages: 46",
+                "Total messages: 49",
                 "Trace unavailable for this response kind",
             ):
                 with self.subTest(heading=heading):
                     self.assertIn(heading, report)
+            for prompt in ("I feel really low", "I am feeling blue", "do not leave me"):
+                with self.subTest(group_f_prompt=prompt):
+                    self.assertIn(prompt, report)
             self.assertIn("Persona check summary", terminal.getvalue())
-            self.assertIn("Total messages: 46", terminal.getvalue())
+            self.assertIn("Total messages: 49", terminal.getvalue())
 
 
 if __name__ == "__main__":

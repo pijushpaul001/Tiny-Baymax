@@ -33,6 +33,19 @@ it is not exposed through HTTP. `BAYMAX_USER_CONTROLS=1` restores the old manage
 
 For a no-cost local smoke test, set `BAYMAX_LLM=fake`.
 
+## Recommended Gemini setup
+
+Use these model settings in `.env`:
+
+```
+BAYMAX_MODEL=gemma-4-26b-a4b-it
+BAYMAX_FALLBACK_MODEL=gemini-3.5-flash-lite
+```
+
+The recommended `gemma-4-26b-a4b-it` setup measured about 1.6 seconds for a tiny prompt, has a large free daily quota, and has a 16K tokens-per-minute cap. The larger `gemma-4-31b-it` measured about 27 seconds for a tiny prompt and is too slow for chat.
+
+Free-tier content may be used by Google to improve its products. Use the paid tier before sharing this app with others.
+
 ## Phone hosting
 
 Use the project hosting path:

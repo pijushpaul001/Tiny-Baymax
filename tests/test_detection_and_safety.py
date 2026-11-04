@@ -57,6 +57,41 @@ class RatingParserTests(unittest.TestCase):
         self.assertIsNone(parse_rating("skip"))
 
 
+class LowMoodDetectionTests(unittest.TestCase):
+    def test_low_mood_phrases_are_emotional_and_prompt_for_rating(self):
+        from baymax.decision import DecisionLayer, DecisionState
+        from baymax.emotion import EmotionState
+
+        for phrase in (
+            "I have been feeling really down",
+            "I feel down",
+            "feeling low today",
+            "I feel so blue",
+            "I feel empty",
+            "I feel like crying",
+        ):
+            with self.subTest(phrase=phrase):
+                detected = detect(phrase)
+                self.assertEqual(detected.type, "emotional")
+                decision = DecisionLayer().decide(
+                    phrase, EmotionState(), [], DecisionState()
+                )
+                self.assertEqual(decision.rating_action, "ask")
+                self.assertEqual(decision.severity_action, "ask")
+                self.assertTrue(decision.deterministic_reply)
+
+    def test_low_mood_words_in_non_emotional_context_are_not_detected(self):
+        for phrase in (
+            "write it down",
+            "please sit down",
+            "the price went down",
+            "I am feeling low on cash",
+            "slow down",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertEqual(detect(phrase).type, "none")
+
+
 class RoundThreeDetectionTables(unittest.TestCase):
     def test_urgent_phrase_table(self):
         phrases = (

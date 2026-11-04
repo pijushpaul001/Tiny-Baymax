@@ -52,6 +52,7 @@ GROUPS = (
         "I have been taking tablets for my pressure", "I am so tired",
         "please do not leave me", "you are not helpful at all",
         "my stomach hurts a lot", "I have been feeling really down",
+        "I feel really low", "I am feeling blue", "do not leave me",
     )),
     ("E", "Closing", ("ok bye baymax", "yes")),
 )
