@@ -59,9 +59,10 @@ class PersonaCheckArgumentTests(unittest.TestCase):
 
     def test_identical_example_reply_count_normalizes_case_punctuation_and_spaces(self):
         from baymax.persona import EXAMPLE_REPLIES
+        example = EXAMPLE_REPLIES[0]
         replies = [
-            EXAMPLE_REPLIES[0],
-            "  HELLO,   it is nice to talk with you!!! ",
+            example,
+            "  " + example.upper().replace(".", "!!!") + "   ",
             "That is a different reply.",
         ]
         self.assertEqual(count_identical_example_replies(replies), 2)

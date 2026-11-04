@@ -453,3 +453,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Bumped `baymax.__version__` from `0.6.8` to `0.6.9` in a separate version commit after Tasks 1–5 were committed.
 - **Verification at the pre-bump implementation head `6b9eefd6b53455c292850698e85c0cc07b810a7e`:** no GitHub Actions runs or combined status checks were visible through the repository status endpoints. Local unittest **not run**. Real Gemini and device checks **not run**. PR Actions status will be checked after PR creation.
+
+
+### v0.6.9 Actions correction — persona example count fixture
+
+- The first PR Actions run found one stale test fixture: the informational example-count test hard-coded the greeting reply that Task 2 intentionally removed from `EXAMPLES`. Updated the fixture to derive its case/punctuation/whitespace variant from the current first `EXAMPLE_REPLIES` entry. No production behavior changed.
+- **Verification:** GitHub Actions run [41822457289](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41822457289) showed this single assertion failure (165 tests ran) on Python 3.12 and 3.11; Python 3.10 was still in progress when inspected. The correction is committed; rerun status pending. Local unittest **not run**.
