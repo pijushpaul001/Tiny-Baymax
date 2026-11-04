@@ -62,6 +62,7 @@ BLOCK = rx("|".join([
     r"\b(street|road|apartment|flat no|house no|pincode|zip ?code)\b|\blives? at\b",
     r"diagnos|medication|medicine|prescri|\bmg\b|tablet|surgery|symptom|allerg|injur|\bpain\b|infection|diabet|cancer|asthma",
     r"depress|anxiety|anxious|stressed|\bsad\b|lonely|suicid|self[- ]harm|kill myself|want to die",
+    r"blood pressure|hypertens|\bpills?\b|thyroid|cholesterol|epilep|arthritis|pregnan|therapy|therapist|psychiatr",
     r"politic|\bvote\b|election|\bparty\b|divorce|affair|cheat|breakup|break up",
     r"\b(relationship|wife|husband|partner|girlfriend|boyfriend)\b|phone number|precise location",
 ]))

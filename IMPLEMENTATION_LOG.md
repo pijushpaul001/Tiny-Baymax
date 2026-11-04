@@ -158,3 +158,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Bumped `baymax.__version__` to `0.6.5` after the retained-message export correction and its verification gate.
 - **Verification:** local unittest **127 OK** (Python 3.14.2, Codespaces); GitHub Actions **green** on `d6846aa` (pre-version-bump commit); real Gemini and device checks **not run**.
+
+
+## 2026-11-04 — v0.6.6 memory health gate
+
+- Extended the memory keyword blocklist with the requested specific health terms; the blocklist is a keyword list and cannot be exhaustive.
+- Added automatic and explicit-save rejection tests for the four requested examples, plus allowed stable-fact controls for dosa, guitar and wanting to be a doctor.
+- **Verification:** tests added; local execution and Actions have not yet been run for this branch.

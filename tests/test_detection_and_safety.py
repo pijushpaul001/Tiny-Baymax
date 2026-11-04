@@ -269,5 +269,24 @@ class SecretRedactionTests(unittest.TestCase):
         self.assertTrue(reason)
 
 
+class MemoryHealthGateTests(unittest.TestCase):
+    def test_specific_health_terms_are_blocked_for_automatic_and_explicit_saves(self):
+        for fact in (
+            "Has high blood pressure",
+            "Takes blood pressure pills",
+            "Is pregnant",
+            "Sees a therapist",
+        ):
+            for explicit in (False, True):
+                with self.subTest(fact=fact, explicit=explicit):
+                    allowed, _ = memory_gate(fact, [], enabled=True, explicit=explicit)
+                    self.assertFalse(allowed)
+
+    def test_non_sensitive_stable_facts_remain_allowed(self):
+        for fact in ("Likes dosa", "Plays guitar", "Wants to be a doctor"):
+            with self.subTest(fact=fact):
+                self.assertEqual(memory_gate(fact, [], enabled=True), (True, "ok"))
+
+
 if __name__ == "__main__":
     unittest.main()
