@@ -440,3 +440,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Documented the owner-provided timing, free daily quota and 16K tokens-per-minute information for the recommended model, and the approximately 27-second tiny-prompt measurement for `gemma-4-31b-it` as too slow for chat.
 - Preserved the warning that Google may use free-tier content to improve its products and the instruction to use the paid tier before sharing.
 - **Verification:** documentation and example configuration edits committed; no external model-performance measurements were run by the implementer.
+
+
+## v0.6.9 — Task 5: extend persona-check Group F
+
+- Added exactly the three requested prompts to Group F: "I feel really low", "I am feeling blue" and "do not leave me". No other persona-check behavior or group content was changed.
+- Updated the dry-run transcript test to assert those prompts are present and the expected total message count is 49.
+- **Verification:** script and test edits committed; local unittest and GitHub Actions not yet run.
