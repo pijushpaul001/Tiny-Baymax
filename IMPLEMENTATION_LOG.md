@@ -474,3 +474,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added a test helper that removes all `BAYMAX_*` and `GEMINI_API_KEY` shell variables for the duration of the test and changes into a temporary working directory with no developer `.env`. Applied it to the persona-check fake run and missing-key test. No application code or runtime configuration behavior changed.
 - Expanded the Actions matrix to run the entire suite in two separate modes: (1) a dummy-key `.env` with no Gemini/Baymax shell variables, and (2) no `.env` with dummy `GEMINI_API_KEY` and `BAYMAX_*` shell variables. This ensures each configuration source is exercised independently.
 - **Verification:** GitHub Actions run [41826707933](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41826707933) passed all six matrix jobs: Python 3.10, 3.11 and 3.12 with the dummy `.env`, and all three versions with no `.env` plus dummy shell variables. Each job ran **166 tests successfully** and passed compileall. Local unittest **not run**; a local clone attempt failed because this environment could not resolve `github.com`.
+
+
+## v0.6.10 — package version
+
+- Bumped `baymax.__version__` from `0.6.9` to `0.6.10` in the dedicated version-only commit `174e9bd38752bf4d4e98e40bc63f55440d50f934`.
+- **Verification before version bump:** Actions run [41826707933](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41826707933) passed 166 tests in each of six combinations (Python 3.10/3.11/3.12 × dummy `.env`/no `.env` with dummy shell variables); compileall passed in all jobs. Local unittest **not run**. The version-only commit and following log commit require their own Actions result; real Gemini and device checks **not run**.
