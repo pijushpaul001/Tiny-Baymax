@@ -44,6 +44,15 @@ class GeminiAdapter:
         code = getattr(e, "code", None) or getattr(e, "status_code", None)
         return code in (429, 500, 502, 503, 504) or type(e).__name__ == "ServerError"
 
+    @staticmethod
+    def _per_day_quota(e) -> bool:
+        """Identify only explicit daily-quota 429s; do not retain or expose provider text."""
+        code = getattr(e, "code", None) or getattr(e, "status_code", None)
+        if code != 429:
+            return False
+        message = str(e).casefold()
+        return "perday" in message or "requests per day" in message
+
     def _call(self, contents, config):
         """Retry transient errors (5xx / 429) with backoff, then try the optional fallback model."""
         models = [self.model] + ([self.fallback_model] if self.fallback_model else [])
@@ -52,6 +61,10 @@ class GeminiAdapter:
                 try:
                     return self.client.models.generate_content(model=model, contents=contents, config=config)
                 except Exception as e:
+                    if self._per_day_quota(e):
+                        if mi == len(models) - 1:
+                            raise
+                        break
                     if not self._transient(e) or (mi == len(models) - 1 and attempt == 2):
                         raise
                     if attempt < 2:

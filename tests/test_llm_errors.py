@@ -1,5 +1,6 @@
 import logging
 import unittest
+from unittest import mock
 
 from baymax.llm.base import LLMError, classify_llm_error
 from baymax.llm.fake import FakeLLM
@@ -21,6 +22,75 @@ class BlockedError(Exception):
 
 class EmptyResponseError(Exception):
     empty_response = True
+
+
+class FakeQuotaError(Exception):
+    code = 429
+
+
+class FakeModels:
+    def __init__(self, outcomes):
+        self.outcomes = {name: list(values) for name, values in outcomes.items()}
+        self.calls = []
+
+    def generate_content(self, model, contents, config):
+        self.calls.append(model)
+        outcome = self.outcomes[model].pop(0)
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+
+class GeminiQuotaFallbackTests(unittest.TestCase):
+    def make_adapter(self, outcomes, fallback="fallback"):
+        from types import SimpleNamespace
+        adapter = object.__new__(GeminiAdapter)
+        adapter.model = "primary"
+        adapter.fallback_model = fallback
+        adapter.client = SimpleNamespace(models=FakeModels(outcomes))
+        return adapter
+
+    def test_per_day_quota_skips_primary_retries_and_uses_fallback(self):
+        response = object()
+        models = {
+            "primary": [FakeQuotaError("Quota exceeded: requests PerDay limit")],
+            "fallback": [response],
+        }
+        adapter = self.make_adapter(models)
+        adapter.client.models = FakeModels(models)
+        with mock.patch("baymax.llm.gemini.time.sleep") as sleep:
+            result = adapter._call([], {})
+        self.assertIs(result, response)
+        self.assertEqual(adapter.client.models.calls, ["primary", "fallback"])
+        sleep.assert_not_called()
+
+    def test_per_day_quota_without_fallback_raises_without_retry(self):
+        error = FakeQuotaError("Quota exceeded for PerDay")
+        adapter = self.make_adapter({"primary": [error]}, fallback=None)
+        with unittest.mock.patch("baymax.llm.gemini.time.sleep") as sleep:
+            with self.assertRaises(FakeQuotaError) as raised:
+                adapter._call([], {})
+        self.assertIs(raised.exception, error)
+        self.assertEqual(adapter.client.models.calls, ["primary"])
+        sleep.assert_not_called()
+
+    def test_per_minute_429_keeps_three_attempt_retry_then_fallback(self):
+        response = object()
+        models = {
+            "primary": [
+                FakeQuotaError("Quota exceeded: requests per minute"),
+                FakeQuotaError("Quota exceeded: requests per minute"),
+                FakeQuotaError("Quota exceeded: requests per minute"),
+            ],
+            "fallback": [response],
+        }
+        adapter = self.make_adapter(models)
+        adapter.client.models = FakeModels(models)
+        with unittest.mock.patch("baymax.llm.gemini.time.sleep") as sleep:
+            result = adapter._call([], {})
+        self.assertIs(result, response)
+        self.assertEqual(adapter.client.models.calls, ["primary", "primary", "primary", "fallback"])
+        self.assertEqual(sleep.call_count, 2)
 
 
 class LLMErrorClassificationTests(unittest.TestCase):

@@ -371,4 +371,12 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 ## v0.6.8 — Task 3: local environment and swap-file ignores
 
 - Added ignore rules for `.env.*` and `*.swp`, followed immediately by `!.env.example` so the example configuration remains trackable.
-- **Verification:** pending a `git check-ignore` check of the resulting rules; no unit test applies to this configuration-only change.
+- **Verification:** `git check-ignore -v` confirmed `.env`, `.env.local` and `editor.swp` are ignored; `git check-ignore .env.example` returned exit status 1 (not ignored). Check was run in a temporary local Git repository using the committed ignore rules. No unit test applies to this configuration-only change.
+
+
+## v0.6.8 — Task 4: bypass retries for daily Gemini quota
+
+- Added a narrow 429 check for provider exception text containing `PerDay` or `requests per day`, case-insensitively. A daily-quota response immediately advances to the configured fallback model, or raises when no fallback exists.
+- Per-minute 429 handling retains the existing three-attempt backoff and fallback sequence. Provider exception text is used only for the daily-quota decision and is not logged or returned.
+- Added fake-exception tests for daily quota with fallback, daily quota without fallback, and per-minute retry preservation.
+- **Verification:** tests added; local unittest and Actions not yet run for this branch.
