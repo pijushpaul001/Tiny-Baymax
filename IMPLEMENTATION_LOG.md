@@ -6,10 +6,10 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 
 - **Repository:** `pijushpaul001/Tiny-Baymax`
 - **Active implementation branch:** `work/v0.6.6-persona-fixes`, created from current `main` at `a02502b7cfb565ae27b691143483bc1f673d838c`. The branch is 7 commits ahead of main; main was not modified.
-- **Package version:** remains `0.6.5`. No version bump has been made; wait for the user's confirmation after tests and Actions are green.
+- **Package version:** `0.6.6` (version bump authorized by the user after the reported green Actions run).
 - **Implemented scope:** health-term memory gate; plain how-are-you response and invented-body style guard; humour-off joke guidance; non-lecturing medical acknowledgement and retry guard; unstated-feelings/unsolicited-exit rules; optional fixed-string contraction cleanup. Each concern has a corresponding test change and log entry.
 - **Local tests:** not run by the implementer for this branch. The owner-reported `127 OK` result on Python 3.14.2 was for v0.6.5 and does not verify these changes.
-- **GitHub Actions:** green on implementation commit `7704b627def11b4829cf7d7f60311b28f8bde532`: 138 tests passed on each of Python 3.10, 3.11 and 3.12. The log-only status commit below triggers a fresh workflow run.
+- **GitHub Actions:** green on `d715fc5`; 138 tests passed on Python 3.10, 3.11 and 3.12.
 - **Real Gemini and device checks:** not run.
 - **Scope exclusions:** no changes to `web/`, `baymax/detection.py` detection patterns, emergency/safety replies, shutdown ritual, or `baymax/llm/gemini.py`. Branch `work/v0.7.0-session-memory` was not modified.
 
@@ -229,4 +229,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - GitHub Actions run [41784781916](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41784781916) completed successfully on implementation commit `7704b627def11b4829cf7d7f60311b28f8bde532`.
 - Test result: **138 passed** on Python 3.10, **138 passed** on Python 3.11, and **138 passed** on Python 3.12.
 - Local unittest execution by the implementer: **not run**.
-- This is not a real-Gemini or device verification. Package version remains 0.6.5 pending user confirmation.
+- Real Gemini and device checks: **not run**. Package version is now 0.6.6.
+
+
+## v0.6.6 — persona and memory-gate fixes
+
+- Set `baymax.__version__` to `0.6.6` after the owner confirmed the Actions result and authorized the version bump.
+- **Verification:** Actions green on `d715fc5` (138 passed on Python 3.10, 3.11 and 3.12); local unittest **not run**; real Gemini and device checks **not run**.
