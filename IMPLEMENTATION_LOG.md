@@ -244,3 +244,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Checked the existing tests for assertions against old persona wording; none were found. Added structural prompt tests without asserting exact model replies.
 - **Done-definition:** persona wording is final only when `tools/persona_check.py` reports zero flagged replies and the owner has read the transcript once. After that, persona changes require evidence from that script.
 - **Verification:** tests added; local test execution and Actions have not yet been run on this branch.
+
+
+## v0.6.7 — Task 2: style guard additions
+
+- Preserved the single retry and prior style guards. Expanded the invented-technical-self-talk pattern to include `software`, `program`, `programmed`, `model`, `construct`, `designed`, `designed to`, `as designed` and `functioning`, alongside the existing body/mechanical terms.
+- Added retry guards for `unable to tell` and `stop talking`. The fixed fallback phrase `lost my train of thought` was not added to a guard.
+- Added pure pattern checks proving `I am an AI companion` is not flagged and the fixed fallback is not matched, plus FakeLLM retry tests for the two new guard cases.
+- **Verification:** tests added; local test execution and Actions have not yet been run on this branch.
