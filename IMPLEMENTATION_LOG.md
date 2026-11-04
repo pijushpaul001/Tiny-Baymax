@@ -5,7 +5,7 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 ## Current status — 2026-11-04
 
 - **Repository:** `pijushpaul001/Tiny-Baymax`
-- **Active implementation branch:** `work/v0.6.6-persona-fixes`, created from current `main` at `a02502b7cfb565ae27b691143483bc1f673d838c`. The branch is 7 commits ahead of main; main was not modified.
+- **Active implementation branch:** `work/v0.6.7-persona-examples`, created from current `main` at `2624c9434ea6b2962b181d27a7f39f173754ea3a` (v0.6.6 merged).
 - **Package version:** `0.6.6` (version bump authorized by the user after the reported green Actions run).
 - **Implemented scope:** health-term memory gate; plain how-are-you response and invented-body style guard; humour-off joke guidance; non-lecturing medical acknowledgement and retry guard; unstated-feelings/unsolicited-exit rules; optional fixed-string contraction cleanup. Each concern has a corresponding test change and log entry.
 - **Local tests:** not run by the implementer for this branch. The owner-reported `127 OK` result on Python 3.14.2 was for v0.6.5 and does not verify these changes.
@@ -236,3 +236,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Set `baymax.__version__` to `0.6.6` after the owner confirmed the Actions result and authorized the version bump.
 - **Verification:** Actions green on `d715fc5` (138 passed on Python 3.10, 3.11 and 3.12); local unittest **not run**; real Gemini and device checks **not run**.
+
+
+## v0.6.7 — Task 1: exact persona rewrite
+
+- Replaced the complete `PERSONALITY` string with the owner-supplied text, preserving `GUIDANCE`, `PERSONA = PERSONALITY + "\\n" + GUIDANCE`, and `RESPONSE_SCHEMA`.
+- Checked the existing tests for assertions against old persona wording; none were found. Added structural prompt tests without asserting exact model replies.
+- **Done-definition:** persona wording is final only when `tools/persona_check.py` reports zero flagged replies and the owner has read the transcript once. After that, persona changes require evidence from that script.
+- **Verification:** tests added; local test execution and Actions have not yet been run on this branch.
