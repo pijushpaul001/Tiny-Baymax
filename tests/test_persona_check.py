@@ -60,6 +60,7 @@ class PersonaCheckDryRunTests(unittest.TestCase):
                 "## Group E — Closing",
                 "## Summary",
                 "Total messages: 30",
+                "Trace unavailable for this response kind",
             ):
                 with self.subTest(heading=heading):
                     self.assertIn(heading, report)

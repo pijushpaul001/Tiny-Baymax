@@ -7,7 +7,7 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 - **Repository:** `pijushpaul001/Tiny-Baymax`
 - **Active implementation branch:** `work/v0.6.7-persona-examples`, created from updated `main` at `2624c9434ea6b2962b181d27a7f39f173754ea3a` (v0.6.6 merged).
 - **Package version:** remains `0.6.6`; no v0.6.7 version bump has been made.
-- **Implemented scope:** exact owner-supplied persona rewrite; style-guard additions and AI-companion non-match regression; isolated five-group persona check script and pure reply flagger; manual test instructions; CLI trace display and deterministic debug trace metadata. Every task has a corresponding test change and log entry.
+- **Implemented scope:** exact owner-supplied persona rewrite; style-guard additions and AI-companion non-match regression; isolated five-group persona check script and pure reply flagger; manual test instructions; CLI trace display; the persona checker records when ChatService supplies no trace. Every task has a corresponding test change and log entry.
 - **Local tests:** not run by the implementer. A local clone attempt failed because this environment could not resolve github.com; no local test result is claimed.
 - **GitHub Actions:** run [41789549445](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41789549445) passed on code commit `b84aabe`: **150 tests passed** on each of Python 3.10, 3.11 and 3.12, including compileall.
 - **Real Gemini persona transcript and device checks:** not run. The new script is provided for the owner to run.
@@ -289,11 +289,13 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - **Verification:** correction committed; local tests not run; Actions not yet run.
 
 
-### Task 3 debug-trace completion
+### Task 3 trace availability constraint
 
-- Source review found that ChatService only attaches decision traces to chat/safety responses; the closing ritual responses in Group E had no trace field even with debug enabled. Updated the shared response builder to attach an explicit diagnostic note for deterministic paths that have no decision trace, without changing their reply or state behavior.
-- Added a service regression proving a debug-enabled ritual response carries the diagnostic trace note.
-- **Verification:** test added; local tests not run; Actions not yet run.
+- Group E uses the existing shutdown ritual. ChatService does not provide a trace for ritual replies, even with debug enabled.
+- Adding trace metadata to those responses would modify the explicitly protected shutdown-ritual path. The attempted service-side metadata change and its test have been reverted; the final diff leaves shutdown-ritual behavior and service code unchanged.
+- The persona checker now states "Trace unavailable for this response kind" when the service does not supply a trace. It does not fabricate trace content.
+- **Unresolved owner decision:** should the prohibition on touching the shutdown ritual remain absolute (accepting no trace for Group E), or may a debug-only trace field be added to ritual responses? No change will be made without clarification.
+- **Verification:** regression updated; local tests not run; Actions pending on the resulting branch head.
 
 
 ### Task 3 Gemini initialization failure handling
@@ -308,3 +310,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Confirmed the v0.6.7 branch is nine commits ahead of current main with no behind commits; the compared file list contains only the requested persona, brain, CLI/service debug, script, manual test, log and test files.
 - **Release gate:** do not bump `baymax.__version__` until the owner confirms Actions is green on the final branch head. Persona wording is not final until the persona-check script reports zero flags and the owner has read the transcript once. Further persona edits after that require evidence from the script.
 - **Verification:** local unittest **not run**; Actions run `41789549445` green on `b84aabe` (150 passed on each of Python 3.10, 3.11 and 3.12); real Gemini and device checks **not run**.
+
+
+### Scope correction — keep shutdown ritual untouched
+
+- Reverted all changes to `baymax/service.py` and `tests/test_service.py` that had been added solely to attach a debug trace to ritual responses. The final diff must not include service.py or change shutdown behavior.
+- The script reports trace unavailability honestly for those responses; the requirement that every Group E response carry a trace remains blocked by the explicit no-shutdown-ritual-change rule and is raised for owner clarification.

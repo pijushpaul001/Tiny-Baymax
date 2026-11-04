@@ -391,14 +391,6 @@ class ServiceTests(unittest.TestCase):
         )
 
 
-    def test_debug_mode_adds_trace_to_deterministic_ritual_response(self):
-        svc = self.build()
-        svc.session("u1").debug = True
-        response = svc.handle("u1", "/quit")
-        self.assertEqual(response["kind"], "ritual")
-        self.assertTrue(response["trace"])
-        self.assertIn("no decision trace", response["trace"][0])
-
 
 if __name__ == "__main__":
     unittest.main()

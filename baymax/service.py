@@ -166,8 +166,6 @@ class ChatService:
         out = {"reply": reply, "kind": kind, "mode": mode, "ended": ended,
                "closing": s.closing if s else None, "emotion": self._emotion(uid).to_dict()}
         out.update(extra)
-        if s and s.debug and out.get("trace") is None:
-            out["trace"] = [f"debug: response kind={kind} (no decision trace for this deterministic path)"]
         return out
 
     def _safety_resp(self, uid, s, decision):

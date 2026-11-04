@@ -158,6 +158,14 @@ def _summary_text(summary):
     return "\n".join(lines)
 
 
+def _warning_label(item):
+    if item["warnings"]:
+        return ", ".join(item["warnings"])
+    if not item["trace_available"]:
+        return "Trace unavailable for this response kind"
+    return "None recorded"
+
+
 def _render_markdown(results, summary):
     lines = ["# Baymax persona check", ""]
     for key, title, _messages in GROUPS:
@@ -167,7 +175,7 @@ def _render_markdown(results, summary):
                 f"**User:** {item['user']}",
                 f"**Baymax:** {item['reply']}",
                 f"**Kind:** {item['kind']}",
-                f"**Warnings:** {', '.join(item['warnings']) if item['warnings'] else 'None recorded'}",
+                f"**Warnings:** {_warning_label(item)}",
                 "",
             ))
     lines.extend(("## Summary", "", _summary_text(summary), ""))
@@ -209,19 +217,22 @@ def run_check(llm_name="gemini", output_path="persona_check_output.md", sleep_se
                         response = svc.handle(uid, user_text)
                         reply = str(response.get("reply", ""))
                         kind = str(response.get("kind", "unknown"))
-                        trace = response.get("trace") or []
+                        trace = response.get("trace")
+                        trace_available = bool(trace)
                         warnings = _trace_warnings(trace)
                     except Exception as exc:
                         # Exception text is intentionally omitted to avoid leaking configuration secrets.
                         reply = f"[Call failed: {type(exc).__name__}]"
                         kind = "error"
                         warnings = []
+                        trace_available = False
                     results.append({
                         "group": group_key,
                         "user": user_text,
                         "reply": reply,
                         "kind": kind,
                         "warnings": warnings,
+                        "trace_available": trace_available,
                         "flags": flag_reply(user_text, reply, kind),
                     })
                     call_index += 1
