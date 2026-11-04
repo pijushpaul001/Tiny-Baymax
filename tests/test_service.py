@@ -380,5 +380,16 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(svc.session("u1").closing, "asked")
 
 
+    def test_daily_message_limit_reply_uses_plain_non_contracted_wording(self):
+        svc = self.build()
+        svc.max_per_day = 0
+        response = svc.handle("u1", "Hello")
+        self.assertEqual(response["kind"], "limit")
+        self.assertEqual(
+            response["reply"],
+            "We have reached the message limit for today. Let us talk again tomorrow.",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

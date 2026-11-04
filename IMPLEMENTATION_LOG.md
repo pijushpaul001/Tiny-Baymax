@@ -210,3 +210,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Consolidated current branch, version, scope and verification status. The package version remains 0.6.5 pending the user's confirmation.
 - **Verification:** no local test run by the implementer; Actions was queued on the branch head at the time of this entry.
+
+
+### Daily message-limit wording regression
+
+- Added a service-level assertion for the rewritten daily-limit reply so the fixed-string contraction cleanup is covered end to end.
+- **Verification:** test added; not run locally.
