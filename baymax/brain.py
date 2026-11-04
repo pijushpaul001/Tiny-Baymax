@@ -100,7 +100,8 @@ class BaymaxBrain:
                     warnings += w
                     violation = bool(data) and (
                         CLINGY.search(data["reply"]) or FILLER.search(data["reply"]) or MEDICAL_LECTURE.search(data["reply"])
-                        or INVENTED_BODY.search(data["reply"])
+                        or INVENTED_BODY.search(data["reply"]) or CANNOT_JOKE.search(data["reply"])
+                        or END_OFFER.search(data["reply"])
                         or (d.rating is not None and RATING_ECHO.search(data["reply"]))
                     )
                     if data and attempt == 0 and violation:
@@ -108,7 +109,8 @@ class BaymaxBrain:
                             "\n- Rewrite naturally without banned filler or clingy wording. "
                             "Do not echo a just-given rating (no rating of, you rated, out of 10, N/10, "
                             "or pain/distress/sadness level). Do not describe Baymax as having a battery, "
-                            "lithium, charging, sensors or circuits. Do not lecture about medicine or a condition "
+                            "lithium, charging, sensors or circuits, software, programs, models or constructs. "
+                            "Do not describe yourself as designed or functioning. Do not lecture about medicine or a condition "
                             "when the user has not reported a problem. Acknowledge it simply; do not say 'it is important to' "
                             "Do not say 'it is important to'. Do not assume a prescription, dose or regimen. "
                             "Do not say you are unable to tell jokes. Do not offer to stop talking."

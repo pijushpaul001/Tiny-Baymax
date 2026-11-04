@@ -252,3 +252,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added retry guards for `unable to tell` and `stop talking`. The fixed fallback phrase `lost my train of thought` was not added to a guard.
 - Added pure pattern checks proving `I am an AI companion` is not flagged and the fixed fallback is not matched, plus FakeLLM retry tests for the two new guard cases.
 - **Verification:** tests added; local test execution and Actions have not yet been run on this branch.
+
+
+### Task 2 guard wiring correction
+
+- Final source review found the two new patterns had been declared but were not yet included in the retry decision. Wired both into the existing one-retry violation expression and expanded the retry instruction to cover the full technical-word guard.
+- **Verification:** source correction committed; tests not run locally; Actions not yet run.
