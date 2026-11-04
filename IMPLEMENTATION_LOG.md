@@ -165,3 +165,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Extended the memory keyword blocklist with the requested specific health terms; the blocklist is a keyword list and cannot be exhaustive.
 - Added automatic and explicit-save rejection tests for the four requested examples, plus allowed stable-fact controls for dosa, guitar and wanting to be a doctor.
 - **Verification:** tests added; local execution and Actions have not yet been run for this branch.
+
+
+## 2026-11-04 — v0.6.6 how-are-you manner
+
+- Replaced the vague instruction to answer simply with the plain, warm example: "I am well. Thank you for asking." The persona explicitly avoids programming/body-mechanics explanations and claims of real feelings.
+- Extended the existing invented-body style guard to catch "functioning", "programmed" and "as designed"; added FakeLLM single-retry regressions.
+- **Verification:** tests added; local execution and Actions have not yet been run for this branch.

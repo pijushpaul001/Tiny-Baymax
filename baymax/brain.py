@@ -15,7 +15,7 @@ from .safety import memory_gate
 FILLER = rx(r"\bi am listening\b|\bi understand\b|how can i help|always here for you|would you like to tell me more")
 CLINGY = rx(r"always be here|you need me|don'?t go\b|cannot leave|can'?t leave|don'?t want you to leave")
 RATING_ECHO = rx(r"\brating of\b|\byou rated\b|\bout of 10\b|\b\d+\s*/\s*10\b|\b(?:pain|distress|sadness) level\b")
-INVENTED_BODY = rx(r"\b(?:battery|lithium|charging|sensors?|circuits?)\b")
+INVENTED_BODY = rx(r"\b(?:battery|lithium|charging|sensors?|circuits?|functioning|programmed)\b|\bas designed\b")
 FALLBACK = "Sorry, I lost my train of thought for a moment. Could you say that again?"
 
 
