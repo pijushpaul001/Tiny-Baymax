@@ -466,3 +466,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - GitHub Actions run [41822622967](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41822622967) completed successfully on code/test head `1b6de5342dd9bf98d152d833d90b0225090a757e`.
 - Result: **165 tests passed** on Python 3.10, **165 passed** on Python 3.11, and **165 passed** on Python 3.12. Compile steps also passed in all three jobs.
 - Local unittest: **not run**. Real Gemini and device checks: **not run**.
+
+
+## v0.6.10 — test environment isolation
+
+- Audited all test files for `Settings.from_env()`, `load_dotenv()`, `GEMINI_API_KEY`, `BAYMAX_*` and persona-check key-validation usage. The unisolated path was `tests/test_persona_check.py::PersonaCheckDryRunTests.test_fake_main_writes_all_groups_and_prints_summary`: it calls `tools.persona_check.main()`, which calls `Settings.from_env()` and then `load_dotenv()`. The CLI test already patches `Settings.from_env()`. No test directly calls `load_dotenv()`; the persona-check fake-main test reaches it indirectly. Added explicit coverage for the Gemini missing-key check, which also calls `Settings.from_env()`.
+- Added a test helper that removes all `BAYMAX_*` and `GEMINI_API_KEY` shell variables for the duration of the test and changes into a temporary working directory with no developer `.env`. Applied it to the persona-check fake run and missing-key test. No application code or runtime configuration behavior changed.
+- Expanded the Actions matrix to run the entire suite with both a dummy-key `.env` and no `.env`, while setting dummy `GEMINI_API_KEY` and `BAYMAX_*` shell variables in both cases.
+- **Verification:** tests and workflow updated; local unittest **not run**. Awaiting Actions results for both dotenv modes and all supported Python versions.
