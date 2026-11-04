@@ -76,6 +76,17 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(store.memories("u1"), [])
         self.assertEqual([x["fact"] for x in store.memories("u2")], ["likes noodles"])
 
+    def test_export_includes_all_messages_beyond_legacy_cap(self):
+        store = Store(":memory:")
+        self.addCleanup(store.close)
+        store.add_messages("u1", [("user", f"message {i}") for i in range(305)])
+
+        exported = store.export("u1")
+
+        self.assertEqual(len(exported["messages"]), 305)
+        self.assertEqual(exported["messages"][0]["content"], "message 0")
+        self.assertEqual(exported["messages"][-1]["content"], "message 304")
+
     def test_export_includes_all_ratings_and_usage(self):
         store = Store(":memory:")
         self.addCleanup(store.close)

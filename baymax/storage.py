@@ -25,8 +25,6 @@ CREATE INDEX IF NOT EXISTS idx_rat_user ON ratings(user_id, id);
 """
 
 DEFAULT_SETTINGS = {"auto_memory": True, "speak": True, "consented_version": ""}
-MAX_MEMORIES = 100
-MAX_MESSAGES = 300
 SCHEMA_VERSION = 1
 
 
@@ -269,7 +267,7 @@ class Store:
                   "ON CONFLICT(user_id, day) DO UPDATE SET count=count+1", (uid, date.today().isoformat()))
 
     def export(self, uid) -> dict:
-        return {"memories": self.memories(uid), "messages": self.history_with_time(uid, MAX_MESSAGES),
+        return {"memories": self.memories(uid), "messages": self._all("SELECT role, content, ts FROM messages WHERE user_id=? ORDER BY id", (uid,)),
                 "emotion": self.get_emotion(uid), "settings": self.get_settings(uid),
                 "ratings": self.ratings(uid, None),
                 "feedback": self._all("SELECT ts, text FROM feedback WHERE user_id=? ORDER BY id", (uid,)),

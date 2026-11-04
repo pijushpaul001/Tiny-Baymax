@@ -2,15 +2,18 @@
 
 This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or commit API keys, passcodes, private health conversations, or other identifying/sensitive data.
 
-## Current status — 2026-10-28
+## Current status — 2026-11-03
 
 - **Repository:** `pijushpaul001/Tiny-Baymax`
-- **Implementation snapshot:** v0.6.3 Gemini-ready (R3-6 and R3-7 implemented on a fresh branch from `main`).
-- **Active branch:** `work/v0.6.3-gemini-ready`, created from the updated `main`, not the old work branch.
-- **Previous PR:** PR #1 was squash-merged into `main`; the prior status above was stale.
-- **Automated verification:** not run locally for v0.6.3. No test count is claimed.
-- **CI:** not verified for the v0.6.3 branch head.
-- **Real Gemini / device verification:** not run.
+- **Active branch:** `work/v0.6.5-cleanup`, created from the current `main` head (`a379b5dd040caa11f1ebab576e75f161d17a36d6`). The branch contains the cleanup commits listed below; `main` was not modified.
+- **Latest implemented version on this branch:** v0.6.5. This commit advances `baymax.__version__` from `0.6.4` to `0.6.5` after the export correction and verification gate.
+- **v0.6.4 scope:** S1 exit/farewell recognition, S2 fixed LLM failure text, S3 style retry guard, S4 decision brief/dependency cue, and S5 Gemini generation-config cleanup. These are recorded in the v0.6.4 entries below. The package metadata sync also adds a health-version assertion.
+- **Automated tests:** local `python -m unittest discover -s tests -t . -q` — **127 OK** (Python 3.14.2, Codespaces; owner-reported).
+- **CI:** GitHub Actions **green** on pre-version-bump commit `d6846aa` (Python tests workflow, conclusion `success`). This is not a CI result for the new v0.6.5 commit.
+- **Main/base verification:** the branch was created from main at `a379b5dd040caa11f1ebab576e75f161d17a36d6`. The current main head's combined status query returned no status entries. This is not evidence of a green CI run.
+- **Real Gemini and device checks:** not run for this v0.6.5 verification.
+- **Device/PWA, HTTPS/Tailscale, and visual/end-to-end checks:** not verified.
+- **Release scope:** version metadata and implementation-log update only; no runtime behavior changed in this commit.
 
 ## v0.6.3 — Gemini-ready (R3-7 and R3-6)
 
@@ -128,3 +131,30 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Removed the `temperature` argument from the Gemini generation configuration.
 - Added the README note that Google AI Studio keys beginning with `AQ.` are normal API keys and are about 53 characters long.
 - **Local verification:** tests and compilation were not run locally; no test count is claimed. Gemini request compatibility was not tested against the live API.
+
+## v0.6.4 version metadata sync
+
+- Deliberately synchronized `baymax.__version__` from `0.6.1` to `0.6.4`. The main-branch implementation log and source already contain the v0.6.4 S1–S5 chat-fix work; the package metadata had not been advanced with those changes. This is a metadata sync, not a silent version change or a new behaviour change.
+- Added an API regression assertion that public `GET /api/health` returns the value of `baymax.__version__`.
+- **Verification:** no local test execution has been performed in this environment. CI status for the new commit is pending.
+
+## v0.6.4 export retention correction
+
+- Changed `Store.export()` to query every message for the user directly, ordered by message ID. It no longer calls the bounded `history_with_time()` helper, which remains appropriate for conversation history windows.
+- Repository grep/review found `MAX_MEMORIES` only at its declaration (automatic memory pruning had already been removed); `MAX_MESSAGES` was only declared and used by export. Removed both obsolete constants.
+- Added a regression test that stores 305 messages and asserts export returns all 305 in insertion order.
+- **Verification:** test code added; local tests have not been run in this environment. CI status for this commit is pending.
+
+
+## v0.6.4 Gemini check findings
+
+- **Owner-provided result:** the first real Gemini call worked in Codespaces using `gemini-3.5-flash-lite`; the response-quality check remains in progress.
+- **Paste-in findings:** none supplied. The task's paste-in field contains only its placeholder, with no prompts, model replies, or specific problems.
+- **Diagnosis / proposed fixes:** not applicable until concrete examples are provided. No Gemini behavior, prompt, detection pattern, safety logic, or shutdown behavior was changed for this check.
+- **Verification:** the live call is owner-reported and not independently verified by this implementation. No quality conclusion is claimed.
+
+
+## v0.6.5 — cleanup verification
+
+- Bumped `baymax.__version__` to `0.6.5` after the retained-message export correction and its verification gate.
+- **Verification:** local unittest **127 OK** (Python 3.14.2, Codespaces); GitHub Actions **green** on `d6846aa` (pre-version-bump commit); real Gemini and device checks **not run**.
