@@ -32,5 +32,43 @@ class StyleGuardRegressionTests(unittest.TestCase):
         self.assertIn("style retry", result.warnings)
 
 
+    def test_programming_status_wording_retries_once_and_uses_warm_answer(self):
+        llm = FakeLLM(replies=[
+            "I am functioning as programmed.",
+            "I am well. Thank you for asking.",
+        ])
+        brain = BaymaxBrain(llm)
+        result = brain.turn("How are you?", [], [], EmotionState(), DecisionState())
+        self.assertEqual(result.reply, "I am well. Thank you for asking.")
+        self.assertEqual(len(llm.calls), 2)
+        self.assertIn("style retry", result.warnings)
+
+    def test_as_designed_wording_is_rejected_by_style_guard(self):
+        llm = FakeLLM(replies=[
+            "I am operating as designed.",
+            "I am well. Thank you for asking.",
+        ])
+        result = BaymaxBrain(llm).turn(
+            "How are you?", [], [], EmotionState(), DecisionState()
+        )
+        self.assertEqual(result.reply, "I am well. Thank you for asking.")
+        self.assertEqual(len(llm.calls), 2)
+
+
+    def test_medical_regimen_lecture_retries_once_and_uses_simple_acknowledgement(self):
+        llm = FakeLLM(replies=[
+            "It is important to follow your prescribed regimen.",
+            "Thank you for telling me. I will keep that in mind.",
+        ])
+        brain = BaymaxBrain(llm)
+        result = brain.turn(
+            "I take medicine for blood pressure", [], [], EmotionState(), DecisionState()
+        )
+        self.assertEqual(result.reply, "Thank you for telling me. I will keep that in mind.")
+        self.assertEqual(len(llm.calls), 2)
+        self.assertIn("style retry", result.warnings)
+        self.assertIn("do not assume a prescription, dose or regimen", llm.calls[1][0].lower())
+
+
 if __name__ == "__main__":
     unittest.main()

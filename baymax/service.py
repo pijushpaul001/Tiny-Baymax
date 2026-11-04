@@ -396,7 +396,7 @@ class ChatService:
     def _chat(self, uid, text, s):
         st = self.store
         if st.usage_today(uid) >= self.max_per_day:
-            return self._resp(uid, "We have reached today's message limit. Let's talk again tomorrow.",
+            return self._resp(uid, "We have reached the message limit for today. Let us talk again tomorrow.",
                               kind="limit", s=s)
 
         safe, had_secret = redact_secrets(text)

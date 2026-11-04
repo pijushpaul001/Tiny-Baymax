@@ -211,7 +211,7 @@ class DecisionLayer:
     def _rating_question(self, det: Detection, turn: int) -> str:
         if det.type == "emotional":
             adj = EMOTION_ADJ.get(det.label, det.label)
-            return f"How would you rate how {adj} you're feeling right now, from 0 to 10? You can also say skip."
+            return f"How would you rate how {adj} you are feeling right now, from 0 to 10? You can also say skip."
         return ("I am sorry. How would you rate the pain from 0 to 10? You can also say skip." if turn % 2
                 else "How would you rate the pain from 0 to 10? You can also say skip.")
 
@@ -242,7 +242,10 @@ class DecisionLayer:
              f"- Humor: {'light humor is fine' if style['humor'] else 'no jokes'}.",
              "- Questions: " + ("you may ask at most ONE useful question." if qb else "do NOT end with a question."),
              "- Use recent conversation to resolve short follow-ups. Never invent implications or facts about the user.",
-             "- Talk only about the problem the user is reporting now. Do not mention an earlier, different problem unless they do."]
+             "- Talk only about the problem the user is reporting now. Do not mention an earlier, different problem unless they do.",
+             "- Do not attribute pain or feelings to the user that their latest message does not state. Do not offer to end the conversation unless the user asks."]
+        if mode == "playful" and not style["humor"]:
+            L.append("- Do not say you are unable to tell jokes. Gently note that a joke may suit a lighter moment, and offer one light, non-joking observation instead.")
         if ctx: L.append(f"- Context: {ctx}")
         if DEPENDENCY_CUE.search(msg):
             L.append("- Respond warmly and calmly. Do not imply you are their only support. Gently mention a trusted person.")

@@ -64,7 +64,7 @@ class ServiceTests(unittest.TestCase):
         svc = self.build()
         response = svc.handle("u1", "my password is Hunter2! My head hurts")
         self.assertIn("from 0 to 10", response["reply"])
-        self.assertNotIn("can't accept or store keys", response["reply"].lower())
+        self.assertNotIn("cannot accept or store keys", response["reply"].lower())
         self.assertNotIn("Hunter2", str(self.store.history("u1", 10)))
 
     def test_raw_secret_never_reaches_llm_input(self):
@@ -378,6 +378,17 @@ class ServiceTests(unittest.TestCase):
         response = svc.handle("u1", "I cannot breathe")
         self.assertEqual(response["kind"], "safety")
         self.assertEqual(svc.session("u1").closing, "asked")
+
+
+    def test_daily_message_limit_reply_uses_plain_non_contracted_wording(self):
+        svc = self.build()
+        svc.max_per_day = 0
+        response = svc.handle("u1", "Hello")
+        self.assertEqual(response["kind"], "limit")
+        self.assertEqual(
+            response["reply"],
+            "We have reached the message limit for today. Let us talk again tomorrow.",
+        )
 
 
 if __name__ == "__main__":

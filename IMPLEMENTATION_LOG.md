@@ -2,18 +2,16 @@
 
 This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or commit API keys, passcodes, private health conversations, or other identifying/sensitive data.
 
-## Current status — 2026-11-03
+## Current status — 2026-11-04
 
 - **Repository:** `pijushpaul001/Tiny-Baymax`
-- **Active branch:** `work/v0.6.5-cleanup`, created from the current `main` head (`a379b5dd040caa11f1ebab576e75f161d17a36d6`). The branch contains the cleanup commits listed below; `main` was not modified.
-- **Latest implemented version on this branch:** v0.6.5. This commit advances `baymax.__version__` from `0.6.4` to `0.6.5` after the export correction and verification gate.
-- **v0.6.4 scope:** S1 exit/farewell recognition, S2 fixed LLM failure text, S3 style retry guard, S4 decision brief/dependency cue, and S5 Gemini generation-config cleanup. These are recorded in the v0.6.4 entries below. The package metadata sync also adds a health-version assertion.
-- **Automated tests:** local `python -m unittest discover -s tests -t . -q` — **127 OK** (Python 3.14.2, Codespaces; owner-reported).
-- **CI:** GitHub Actions **green** on pre-version-bump commit `d6846aa` (Python tests workflow, conclusion `success`). This is not a CI result for the new v0.6.5 commit.
-- **Main/base verification:** the branch was created from main at `a379b5dd040caa11f1ebab576e75f161d17a36d6`. The current main head's combined status query returned no status entries. This is not evidence of a green CI run.
-- **Real Gemini and device checks:** not run for this v0.6.5 verification.
-- **Device/PWA, HTTPS/Tailscale, and visual/end-to-end checks:** not verified.
-- **Release scope:** version metadata and implementation-log update only; no runtime behavior changed in this commit.
+- **Active implementation branch:** `work/v0.6.6-persona-fixes`, created from current `main` at `a02502b7cfb565ae27b691143483bc1f673d838c`. The branch is 7 commits ahead of main; main was not modified.
+- **Package version:** `0.6.6` (version bump authorized by the user after the reported green Actions run).
+- **Implemented scope:** health-term memory gate; plain how-are-you response and invented-body style guard; humour-off joke guidance; non-lecturing medical acknowledgement and retry guard; unstated-feelings/unsolicited-exit rules; optional fixed-string contraction cleanup. Each concern has a corresponding test change and log entry.
+- **Local tests:** not run by the implementer for this branch. The owner-reported `127 OK` result on Python 3.14.2 was for v0.6.5 and does not verify these changes.
+- **GitHub Actions:** green on `d715fc5`; 138 tests passed on Python 3.10, 3.11 and 3.12.
+- **Real Gemini and device checks:** not run.
+- **Scope exclusions:** no changes to `web/`, `baymax/detection.py` detection patterns, emergency/safety replies, shutdown ritual, or `baymax/llm/gemini.py`. Branch `work/v0.7.0-session-memory` was not modified.
 
 ## v0.6.3 — Gemini-ready (R3-7 and R3-6)
 
@@ -158,3 +156,83 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Bumped `baymax.__version__` to `0.6.5` after the retained-message export correction and its verification gate.
 - **Verification:** local unittest **127 OK** (Python 3.14.2, Codespaces); GitHub Actions **green** on `d6846aa` (pre-version-bump commit); real Gemini and device checks **not run**.
+
+
+## 2026-11-04 — v0.6.6 memory health gate
+
+- Extended the memory keyword blocklist with the requested specific health terms; the blocklist is a keyword list and cannot be exhaustive.
+- Added automatic and explicit-save rejection tests for the four requested examples, plus allowed stable-fact controls for dosa, guitar and wanting to be a doctor.
+- **Verification:** tests added; local execution and Actions have not yet been run for this branch.
+
+
+## 2026-11-04 — v0.6.6 how-are-you manner
+
+- Replaced the vague instruction to answer simply with the plain, warm example: "I am well. Thank you for asking." The persona explicitly avoids programming/body-mechanics explanations and claims of real feelings.
+- Extended the existing invented-body style guard to catch "functioning", "programmed" and "as designed"; added FakeLLM single-retry regressions.
+- **Verification:** tests added; local execution and Actions have not yet been run for this branch.
+
+
+## 2026-11-04 — v0.6.6 humour-off joke handling
+
+- When the selected mode is playful but the deterministic style disables humour, the decision brief now forbids claiming inability to tell jokes and requests a gentle, non-joking observation instead.
+- Added brief tests for humour-off and humour-allowed cases; humour-allowed behaviour remains unchanged.
+- **Verification:** tests added; local execution and Actions have not yet been run for this branch.
+
+
+## 2026-11-04 — v0.6.6 non-lecturing medical acknowledgement
+
+- Added persona guidance to acknowledge a medicine or condition simply when no problem is reported, without assuming a prescription, dose or regimen.
+- Added an "it is important to" style-guard pattern that triggers the existing single retry, with a FakeLLM violating-draft/clean-reply regression.
+- **Verification:** tests added; local execution and Actions have not yet been run for this branch.
+
+
+### Medical style-guard test assertion correction
+
+- Corrected the retry test to inspect the system prompt from FakeLLM's documented call tuple `(system, history, user_msg)`.
+- **Verification:** assertion corrected; test suite not run locally.
+
+
+## 2026-11-04 — v0.6.6 assumption and exit wording
+
+- Added persona and decision-brief rules not to attribute unstated pain or feelings to the user and not to offer ending the conversation unless the user asks.
+- Added decision-brief regressions for "i need you" and "you are useless".
+- **Verification:** tests added; local execution and Actions have not yet been run for this branch.
+
+
+## 2026-11-04 — v0.6.6 fixed-string contraction cleanup
+
+- Rewrote contractions in the emotional rating question, secret-redaction note and daily message-limit reply without changing the rating question's 0–10/skip shape or the greeting and shutdown question.
+- Updated the existing secret-note exclusion assertion and added focused wording checks for the rating question and secret note.
+- **Verification:** tests added/updated; local execution and Actions have not yet been run for this branch.
+
+
+## 2026-11-04 — v0.6.6 verification status
+
+- Consolidated current branch, version, scope and verification status. The package version remains 0.6.5 pending the user's confirmation.
+- **Verification:** no local test run by the implementer; Actions was queued on the branch head at the time of this entry.
+
+
+### Daily message-limit wording regression
+
+- Added a service-level assertion for the rewritten daily-limit reply so the fixed-string contraction cleanup is covered end to end.
+- **Verification:** test added; not run locally.
+
+
+### Medical retry instruction refinement after Actions feedback
+
+- The first Actions run reached 137 tests but failed only because the regression expected the exact wording "do not assume", while the retry prompt said "or assume". Made the retry instruction explicit ("Do not assume...") to align with the persona rule and test.
+- **Verification:** the prior run had 1 assertion failure in the medical style-guard test on Python 3.10, 3.11 and 3.12. After making the retry instruction explicit, Actions passed on `7704b627def11b4829cf7d7f60311b28f8bde532`: 138 tests passed on each of Python 3.10, 3.11 and 3.12.
+
+
+### Final implementation verification — 2026-11-04
+
+- GitHub Actions run [41784781916](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41784781916) completed successfully on implementation commit `7704b627def11b4829cf7d7f60311b28f8bde532`.
+- Test result: **138 passed** on Python 3.10, **138 passed** on Python 3.11, and **138 passed** on Python 3.12.
+- Local unittest execution by the implementer: **not run**.
+- Real Gemini and device checks: **not run**. Package version is now 0.6.6.
+
+
+## v0.6.6 — persona and memory-gate fixes
+
+- Set `baymax.__version__` to `0.6.6` after the owner confirmed the Actions result and authorized the version bump.
+- **Verification:** Actions green on `d715fc5` (138 passed on Python 3.10, 3.11 and 3.12); local unittest **not run**; real Gemini and device checks **not run**.
