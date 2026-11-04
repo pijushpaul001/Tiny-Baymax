@@ -6,14 +6,14 @@ This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or comm
 
 - **Repository:** `pijushpaul001/Tiny-Baymax`
 - **Active branch:** `work/v0.6.5-cleanup`, created from the current `main` head (`a379b5dd040caa11f1ebab576e75f161d17a36d6`). The branch contains the cleanup commits listed below; `main` was not modified.
-- **Latest implemented version on this branch:** v0.6.4. The package version was deliberately synchronized to 0.6.4 in commit `39bf48fdacb0e8ead56b2356b56fe5021ecc7415`; it is not yet v0.6.5.
+- **Latest implemented version on this branch:** v0.6.5. This commit advances `baymax.__version__` from `0.6.4` to `0.6.5` after the export correction and verification gate.
 - **v0.6.4 scope:** S1 exit/farewell recognition, S2 fixed LLM failure text, S3 style retry guard, S4 decision brief/dependency cue, and S5 Gemini generation-config cleanup. These are recorded in the v0.6.4 entries below. The package metadata sync also adds a health-version assertion.
-- **Automated tests:** not run in this implementation environment. The new API version assertion and 305-message export regression are added but not locally executed. Therefore these changes are **not verified green**.
-- **CI:** not verified for the current branch head. The repository status endpoint returned no status checks and no workflow runs were returned for the v0.6.4 base commit; no green CI result is claimed for this branch or its cleanup commits.
+- **Automated tests:** local `python -m unittest discover -s tests -t . -q` — **127 OK** (Python 3.14.2, Codespaces; owner-reported).
+- **CI:** GitHub Actions **green** on pre-version-bump commit `d6846aa` (Python tests workflow, conclusion `success`). This is not a CI result for the new v0.6.5 commit.
 - **Main/base verification:** the branch was created from main at `a379b5dd040caa11f1ebab576e75f161d17a36d6`. The current main head's combined status query returned no status entries. This is not evidence of a green CI run.
-- **Real Gemini:** owner-reported: the first real call worked in Codespaces with `gemini-3.5-flash-lite`; the quality check is in progress. This report has not been independently reproduced or verified here.
+- **Real Gemini and device checks:** not run for this v0.6.5 verification.
 - **Device/PWA, HTTPS/Tailscale, and visual/end-to-end checks:** not verified.
-- **Next gate:** run the required unittest suite and verify CI on this branch head. The v0.6.5 version bump is intentionally deferred until tasks 2 and 3 are verified green.
+- **Release scope:** version metadata and implementation-log update only; no runtime behavior changed in this commit.
 
 ## v0.6.3 — Gemini-ready (R3-7 and R3-6)
 
@@ -152,3 +152,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - **Paste-in findings:** none supplied. The task's paste-in field contains only its placeholder, with no prompts, model replies, or specific problems.
 - **Diagnosis / proposed fixes:** not applicable until concrete examples are provided. No Gemini behavior, prompt, detection pattern, safety logic, or shutdown behavior was changed for this check.
 - **Verification:** the live call is owner-reported and not independently verified by this implementation. No quality conclusion is claimed.
+
+
+## v0.6.5 — cleanup verification
+
+- Bumped `baymax.__version__` to `0.6.5` after the retained-message export correction and its verification gate.
+- **Verification:** local unittest **127 OK** (Python 3.14.2, Codespaces); GitHub Actions **green** on `d6846aa` (pre-version-bump commit); real Gemini and device checks **not run**.
