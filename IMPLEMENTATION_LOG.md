@@ -380,3 +380,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Per-minute 429 handling retains the existing three-attempt backoff and fallback sequence. Provider exception text is used only for the daily-quota decision and is not logged or returned.
 - Added fake-exception tests for daily quota with fallback, daily quota without fallback, and per-minute retry preservation.
 - **Verification:** tests added; local unittest and Actions not yet run for this branch.
+
+
+## v0.6.8 — Task 5: Gemini free-tier and privacy notes
+
+- Added owner-specified comments to `.env.example` covering the stated per-model free-tier daily request limits, Gemma token-per-minute cap, and the free-tier content-use warning. The comments explicitly say quotas are small, model-specific and can change.
+- Added the instruction to use the paid tier before sharing the app. No credentials or values were added.
+- **Verification:** documentation-only change reviewed in the resulting file; local unittest not applicable and Actions not yet run.
