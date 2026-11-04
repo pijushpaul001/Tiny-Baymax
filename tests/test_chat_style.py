@@ -103,5 +103,36 @@ class StyleGuardRegressionTests(unittest.TestCase):
         self.assertNotIn("stop talking", result.reply.lower())
 
 
+
+    def test_copied_example_retries_and_uses_fresh_reply(self):
+        from baymax.persona import EXAMPLE_REPLIES
+        llm = FakeLLM(replies=[EXAMPLE_REPLIES[0], "It is a quiet day. What has been happening?"])
+        result = BaymaxBrain(llm).turn("hello there", [], [], EmotionState(), DecisionState())
+        self.assertEqual(result.reply, "It is a quiet day. What has been happening?")
+        self.assertEqual(len(llm.calls), 2)
+        self.assertIn("style retry", result.warnings)
+        self.assertIn("Write a fresh reply in the same manner. Do not reuse any sentence from the examples.", llm.calls[1][0])
+
+    def test_non_example_reply_passes_without_retry(self):
+        llm = FakeLLM(replies=["Hello. It is a pleasant afternoon."])
+        result = BaymaxBrain(llm).turn("hello there", [], [], EmotionState(), DecisionState())
+        self.assertEqual(result.reply, "Hello. It is a pleasant afternoon.")
+        self.assertEqual(len(llm.calls), 1)
+        self.assertNotIn("style retry", result.warnings)
+
+    def test_second_copied_example_after_retry_is_accepted(self):
+        from baymax.persona import EXAMPLE_REPLIES
+        llm = FakeLLM(replies=[EXAMPLE_REPLIES[0], EXAMPLE_REPLIES[1]])
+        result = BaymaxBrain(llm).turn("hello there", [], [], EmotionState(), DecisionState())
+        self.assertEqual(result.reply, EXAMPLE_REPLIES[1])
+        self.assertEqual(len(llm.calls), 2)
+        self.assertEqual(result.warnings.count("style retry"), 1)
+
+    def test_copied_example_check_does_not_apply_to_deterministic_replies(self):
+        llm = FakeLLM(replies=["unused"])
+        result = BaymaxBrain(llm).turn("my head hurts", [], [], EmotionState(), DecisionState())
+        self.assertEqual(len(llm.calls), 0)
+        self.assertNotIn("style retry", result.warnings)
+
 if __name__ == "__main__":
     unittest.main()

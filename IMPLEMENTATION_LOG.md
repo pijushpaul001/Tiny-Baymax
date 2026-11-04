@@ -342,3 +342,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Bumped `baymax.__version__` to `0.6.7` in a separate commit after the persona-check delay change.
 - **Verification:** Actions green on `b88dccd` (149 passed on Python 3.10, 3.11 and 3.12); the delay and version commits are verified only by the pull request's Actions run; local unittest not run; real Gemini and device checks not run. Group E has no trace by design because ritual replies never call the model.
+
+
+## v0.6.8 — Task 1: structured persona examples and copied-example retry
+
+- Moved the existing example exchanges into `EXAMPLES` tuples and generated the existing manner-example block from them. Exported `EXAMPLE_REPLIES`; changed only the instruction sentence before the examples as requested.
+- Added normalized exact-reply detection to the existing model-reply violation check. It uses the existing single retry with the requested instruction; a second copied reply is accepted and deterministic Python replies never enter this check.
+- Added FakeLLM tests for retry-and-rewrite, a non-example pass, acceptance of a copied reply on retry, and deterministic-reply exclusion. Added a prompt test that the rendered example block is generated from the tuple data.
+- **Verification:** tests added; local unittest and Actions not yet run for this branch.
