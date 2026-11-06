@@ -4,7 +4,7 @@ A private personal AI companion: a Baymax-style healthcare companion you talk to
 Python server + installable web app. Gemini is the language brain; Python enforces everything that must be reliable
 (greeting, shutdown ritual, 0-10 ratings, memory rules, secret redaction, safety replies).
 
-## v0.6.2 — closed-friends mode
+## Closed-friends mode (since v0.6.2; current release v0.6.10)
 
 Tiny Baymax is intended for two users: the owner and one friend. The default `BAYMAX_USER_CONTROLS=0` removes in-app
 memory, rating, settings, history, export and delete controls and enforces the same restriction on the server. The app
