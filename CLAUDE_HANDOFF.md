@@ -32,10 +32,29 @@ Project-level rules from the user (also binding): Gemini is the language brain o
 
 ## Architecture status
 
-**Status: Draft, scope is "simple first" (section H). Phase 1 and 2 ready; Phase 3 (Android) unblocked.** User decisions of 2026-10-17 are recorded in section F. PR #1 review findings F1-F12 are tracked in `REVIEW_PR1.md` and must be fixed before merge.
-- **Ready for implementation now:** Phase 1 (hardening, v0.6.1) and Phase 2 (real-world verification). They need no user decisions.
-- **Phase 3 (Android shell):** unblocked by decisions F-1 and F-2. Phase 4 (reminders) still waits on F-5.
-- **Source not yet reviewed:** `tests/` and `web/` were not in the bundle. Statements about them are assumptions.
+**Status as of 2026-11-06: v0.6.10 merged to main. Phase 1 is complete. The source was last reviewed in full at the v0.6.10 bundle (`tests/` and `web/` are now included).**
+
+**Done**
+- Phase 0 (repo hygiene, CI) and Phase 1 hardening. G1 to G15 and G17 are fixed. Round 2 and Round 3 review items (R2-1 to R2-8, R3-1 to R3-8) are implemented with tests. G16 (contractions) is mostly done in v0.6.6.
+- Gemini readiness (v0.6.3): stable error codes, same-role message merging.
+- Closed-friends mode (v0.6.2): a deliberate change to the user-data-access rule. Users no longer inspect, edit, export or delete data in the app. The owner uses the read-only `tools/export_all.py`. Management routes return 403 `not_available`. This supersedes AC-9, AC-13 and AC-14 as written in section E.3.
+- Persona rewrite, style guards, memory health gate, low-mood detection, persona-check tool (v0.6.6 to v0.6.10). Test environment isolation (v0.6.10).
+
+**Open**
+- F10 / Phase 3a: Baymax face and voice in `web/` (v0.6.11).
+- Cloud VM + Tailscale hosting (E.2), then a real phone/PWA pass, then UI polish (PNG icons, layout).
+- Real Gemini quality review: first call worked (owner-reported); transcript review pending.
+- AC-12 (key never exposed) has no end-to-end check. AC-16 (original 48 tests) cannot be assessed.
+- G18 (session state in memory) is unchanged and documented.
+- Optional Android shell (Phase 3b) only if the installed web app is not enough.
+
+**Decisions**
+- F-1 Android, F-2 free cloud host, F-3 silent auto-memory, F-7 numbering: as recorded in section F.
+- F-4: explicit saves stay blocked for sensitive categories (enforced by tests). Secrets stay blocked in every case.
+- F-5: reminders deferred (scope freeze, H-1).
+- F-6: users are the owner and one friend (v0.6.2). Use the paid Gemini tier before the friend uses it.
+- Version numbering: 0.6.x continues. v0.6.11 is face and voice. 0.7.0 is not yet assigned.
+
 
 ---
 
@@ -421,3 +440,4 @@ The user wants no fancy facilities yet: a simple companion that feels like Bayma
 - 2026-10-17: Added F-8 (emergency exchange retention) and refined the F3 fix in `REVIEW_PR1.md`: store the reply and a placeholder, not the user's words.
 - 2026-10-23: Round 2 review R2-4: the proxy client-id rule I gave for review finding F4 (in `REVIEW_PR1.md`) was wrong; use the last `X-Forwarded-For` entry, not the first. Round 2 review of commit 87c3694 in `REVIEW_PR1.md`: F1, F2, F3, F5, F7, F8, F9 verified fixed; new findings R2-1 to R2-8; not ready to merge.
 - 2026-10-23: Round 3 review of commit 68f1653 in `REVIEW_PR1.md`: R2-1 to R2-7 verified fixed (84 tests pass here); new findings R3-1 to R3-9. Spec additions: exit during a safety hold (B.3, C13, AC-18), emergency phrase coverage (AC-19), `ui` and web checks (B.6, AC-20), Gemini error codes and role merging (B.4). Real Gemini moves back to Phase 2 as E.1 says; it is no longer listed as a merge gate. Not ready to merge until R3-1 to R3-5 are fixed and CI is green on HEAD.
+- 2026-11-06: Status section rewritten for v0.6.10. Phase 1 complete; closed-friends mode recorded as superseding AC-9, AC-13, AC-14; open items and decisions refreshed. Earlier sections kept as history.
