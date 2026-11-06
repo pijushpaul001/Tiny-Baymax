@@ -83,6 +83,27 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertLess(response_start, response_guard_at)
         self.assertLess(response_guard_at, update_at)
 
+    def test_face_svg_has_two_highlighted_eyes_and_no_mouth(self):
+        _, _, html_bytes = self.request("/")
+        html = html_bytes.decode()
+        svg_start = html.index('<svg id="baymax-face"')
+        svg_end = html.index("</svg>", svg_start) + len("</svg>")
+        svg = html[svg_start:svg_end]
+        eyes = svg.count('class="face-eye"')
+        highlights = svg.count('class="face-highlight"')
+        blink_groups = svg.count('class="face-eye-blink"')
+        self.assertEqual(eyes, 2)
+        self.assertEqual(highlights, 2)
+        self.assertEqual(blink_groups, 2)
+        self.assertEqual(svg.count("<ellipse "), 2)
+        self.assertEqual(svg.count("<circle "), 2)
+        self.assertNotRegex(svg, r"(?i)(mouth|<path\\b|<text\\b)")
+        for fragment in (
+            '<g class="face-eye-blink">\\n                <g class="face-eye">\\n                  <ellipse',
+            '<circle class="face-highlight"',
+        ):
+            self.assertIn(fragment, svg)
+
     def test_face_stays_outside_the_scrolling_message_list(self):
         _, _, html_bytes = self.request("/")
         html = html_bytes.decode()
@@ -99,9 +120,12 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertIn(".conversation-heading, .interaction-tools, .composer, .speech-error { flex: 0 0 auto; }", css)
         self.assertIn("transform-box: fill-box", css)
         self.assertIn("transform-origin: center", css)
-        self.assertIn("transform: scale(var(--eye-scale, 1))", css)
+        self.assertIn("transform: scale(var(--eye-scale-x, 1), var(--eye-scale-y, 1))", css)
         self.assertIn("transition: transform 900ms ease", css)
-        self.assertIn("transform: scale(var(--eye-scale, 1)) scaleY(.06)", css)
+        self.assertIn(".face-eye-blink.is-blinking { transform: scaleY(.06);", css)
+        self.assertIn("transform-box: fill-box", css)
+        self.assertIn("transform-origin: center", css)
+        self.assertIn(".face-highlight { fill: #fff; }", css)
 
     def test_voice_controls_only_speak_live_replies_and_cancel_on_send(self):
         _, _, html_bytes = self.request("/")

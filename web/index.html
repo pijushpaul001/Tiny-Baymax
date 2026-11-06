@@ -50,10 +50,20 @@
           </div>
           <div class="baymax-face-area">
             <svg id="baymax-face" class="baymax-face" viewBox="0 0 120 96" role="img" aria-label="Baymax face" xmlns="http://www.w3.org/2000/svg">
-              <rect class="face-body" x="12" y="8" width="96" height="80" rx="38" />
+              <rect class="face-body" x="12" y="8" width="96" height="80" rx="40" />
               <line class="face-bridge" x1="43" y1="43" x2="77" y2="43" />
-              <ellipse class="face-eye" cx="43" cy="43" rx="4.2" ry="5.2" />
-              <ellipse class="face-eye" cx="77" cy="43" rx="4.2" ry="5.2" />
+              <g class="face-eye-blink">
+                <g class="face-eye">
+                  <ellipse cx="43" cy="43" rx="6.3" ry="7.8" />
+                  <circle class="face-highlight" cx="41.1" cy="40.2" r="1.45" />
+                </g>
+              </g>
+              <g class="face-eye-blink">
+                <g class="face-eye">
+                  <ellipse cx="77" cy="43" rx="6.3" ry="7.8" />
+                  <circle class="face-highlight" cx="75.1" cy="40.2" r="1.45" />
+                </g>
+              </g>
             </svg>
           </div>
           <div id="messages" class="messages" aria-live="polite" aria-relevant="additions text"></div>

@@ -16,7 +16,8 @@
     const concernExcess = clamp((concern - 0.10) / 0.50, 0, 1);
     const happyExcess = clamp((happiness - 0.50) / 0.30, 0, 1);
     return {
-      eyeScale: clamp(1 + 0.25 * concernExcess - 0.15 * happyExcess, 0.80, 1.30),
+      eyeScaleX: clamp(1 + 0.15 * concernExcess + 0.10 * happyExcess, 0.90, 1.15),
+      eyeScaleY: clamp(1 + 0.40 * concernExcess - 0.35 * happyExcess, 0.60, 1.40),
       blinkIntervalMs: clamp(5000 + 4000 * concernExcess - 1500 * happyExcess, 3000, 9000),
       blinkDurationMs: 160 + 60 * happyExcess,
       blinkEnabled: !reducedMotion
@@ -33,12 +34,20 @@
     let stopped = false;
     let current = faceParams(emotion, Boolean(motionQuery && motionQuery.matches));
 
+    const blinkGroups = Array.from(svg.querySelectorAll(".face-eye-blink"));
+
+    function setBlinking(active) {
+      blinkGroups.forEach(function (group) {
+        group.classList.toggle("is-blinking", active);
+      });
+    }
+
     function clearTimers() {
       if (timer !== null) root.clearTimeout(timer);
       if (blinkTimer !== null) root.clearTimeout(blinkTimer);
       timer = null;
       blinkTimer = null;
-      svg.classList.remove("is-blinking");
+      setBlinking(false);
     }
 
     function schedule() {
@@ -50,9 +59,9 @@
     function blink() {
       timer = null;
       if (stopped || !current.blinkEnabled || root.document?.hidden) return schedule();
-      svg.classList.add("is-blinking");
+      setBlinking(true);
       blinkTimer = root.setTimeout(function () {
-        svg.classList.remove("is-blinking");
+        setBlinking(false);
         blinkTimer = null;
         schedule();
       }, current.blinkDurationMs);
@@ -60,7 +69,8 @@
 
     function apply() {
       current = faceParams(emotion, Boolean(motionQuery && motionQuery.matches));
-      svg.style.setProperty("--eye-scale", String(current.eyeScale));
+      svg.style.setProperty("--eye-scale-x", String(current.eyeScaleX));
+      svg.style.setProperty("--eye-scale-y", String(current.eyeScaleY));
       svg.style.setProperty("--blink-duration", `${current.blinkDurationMs}ms`);
       clearTimers();
       schedule();
