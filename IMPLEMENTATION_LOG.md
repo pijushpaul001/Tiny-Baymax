@@ -531,3 +531,12 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added Section H with the requested face, emotion reaction, Voice toggle, speech quality, microphone, reduced-motion and cancel-on-send checks.
 - All checks remain unchecked; no phone/device behaviour is claimed as verified.
 - **Verification:** documentation reviewed; no manual phone checks were performed.
+
+
+### v0.6.11 local validation — current branch implementation
+
+- Ran `python -m unittest discover -s tests -t . -v`: **172 tests passed**.
+- Ran `node --check` for every `web/*.js` file: passed (Node.js v22.16.0).
+- Ran `python -m compileall -q baymax server tests`: passed.
+- GitHub Actions has **not** been reported green by the owner; no CI success is claimed here. Phone checks in Section H remain unchecked.
+- No files under `baymax/` or `server/` were changed. Package version remains 0.6.10. No PR was opened.
