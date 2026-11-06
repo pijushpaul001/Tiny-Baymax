@@ -481,3 +481,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Bumped `baymax.__version__` from `0.6.9` to `0.6.10` in the dedicated version-only commit `174e9bd38752bf4d4e98e40bc63f55440d50f934`.
 - **Verification before version bump:** Actions run [41826707933](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41826707933) passed 166 tests in each of six combinations (Python 3.10/3.11/3.12 × dummy `.env`/no `.env` with dummy shell variables); compileall passed in all jobs. Local unittest **not run**. The version-only commit and following log commit require their own Actions result; real Gemini and device checks **not run**.
+
+
+## v0.6.11 — face logic
+
+- Added the pure `faceParams(emotion, reducedMotion)` calculation with baseline defaults, finite-number handling, the specified scaling/interval formulas and clamps.
+- Added a small browser controller for emotion-driven eye scaling, jittered blinking, hidden-tab pause and reduced-motion support. CSS custom properties are applied with `style.setProperty`.
+- Added Node-backed tests for baseline values, concern, happiness, clamps, malformed input and reduced motion.
+- **Verification:** `python -m unittest tests.test_face_logic -v` passed locally (1 test; Node.js v22.16.0). Browser rendering and phone behaviour not tested. This commit contains face logic only; chat-panel integration follows separately.
