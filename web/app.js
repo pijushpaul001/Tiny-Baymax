@@ -2,6 +2,13 @@
   "use strict";
   const byId = (id) => document.getElementById(id);
   const state = { token: null, busy: false, closing: null };
+  let faceController = null;
+
+  function updateFace(emotion) {
+    if (!window.BaymaxFace) return;
+    if (!faceController) faceController = window.BaymaxFace.mountFace(byId("baymax-face"), emotion);
+    else faceController.update(emotion);
+  }
 
   function setStatus(text, connected = false) {
     const el = byId("connection-status");
@@ -116,6 +123,7 @@
     try {
       const result = await api("/api/chat", { method: "POST", body: JSON.stringify({ message: text }) });
       message("assistant", result.reply, result.kind === "safety");
+      if (Object.prototype.hasOwnProperty.call(result, "emotion")) updateFace(result.emotion);
       state.closing = result.closing;
       updateInteraction(result);
       if (result.ended) {
@@ -162,6 +170,7 @@
         `If you may be experiencing a medical emergency, contact ${emergencyHint} now. Messages are not queued for later delivery.`;
       byId("offline-card").classList.add("hidden");
       renderHistory(session.history);
+      updateFace(session.emotion);
       byId("connect-screen").classList.add("hidden");
       byId("chat-screen").classList.remove("hidden");
       byId("end-session").disabled = false;
@@ -181,6 +190,7 @@
     try {
       const result = await api("/api/session/end", { method: "POST", body: JSON.stringify({}) });
       message("assistant", result.reply);
+      if (Object.prototype.hasOwnProperty.call(result, "emotion")) updateFace(result.emotion);
       updateInteraction(result);
     } catch (error) {
       message("assistant", error.message, true);

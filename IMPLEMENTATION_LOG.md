@@ -489,3 +489,12 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added a small browser controller for emotion-driven eye scaling, jittered blinking, hidden-tab pause and reduced-motion support. CSS custom properties are applied with `style.setProperty`.
 - Added Node-backed tests for baseline values, concern, happiness, clamps, malformed input and reduced motion.
 - **Verification:** `python -m unittest tests.test_face_logic -v` passed locally (1 test; Node.js v22.16.0). Browser rendering and phone behaviour not tested. This commit contains face logic only; chat-panel integration follows separately.
+
+
+## v0.6.11 — face panel integration
+
+- Added the inline SVG face above the conversation heading, with a white body, pale grey outline, two black ellipse eyes and a thin joining line. No mouth or extra features were added; `baymax.svg` is unchanged.
+- Added CSP-compatible CSS for smooth eye-size changes and blink styling. The controller applies CSS custom properties through `style.setProperty`.
+- Connected the face to `session.emotion` on connect and to `result.emotion` when present after chat and ritual responses. Missing emotion keys are guarded.
+- Added integration checks for the face element, script reference, emotion updates, and the no-inline-script/no-style-attribute rules.
+- **Verification:** locally ran `python -m unittest tests.test_face_logic tests.test_web_integration -v` in the face-only working copy: 9 tests passed. Node.js v22.16.0 was available. Phone rendering and real reduced-motion behaviour remain unverified.

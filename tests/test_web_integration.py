@@ -52,12 +52,30 @@ class WebIntegrationTests(unittest.TestCase):
 
     def test_web_assets_are_served_with_expected_types(self):
         for path, expected in (("/", "text/html"), ("/app.js", "javascript"),
-                               ("/styles.css", "text/css"), ("/manifest.webmanifest", "application/manifest+json")):
+                               ("/face.js", "javascript"), ("/styles.css", "text/css"), ("/manifest.webmanifest", "application/manifest+json")):
             with self.subTest(path=path):
                 status, ctype, body = self.request(path)
                 self.assertEqual(status, 200)
                 self.assertIn(expected, ctype)
                 self.assertTrue(body)
+
+
+    def test_face_is_in_chat_and_updates_from_live_emotion_only(self):
+        _, _, html_bytes = self.request("/")
+        _, _, app_bytes = self.request("/app.js")
+        html = html_bytes.decode()
+        script = app_bytes.decode()
+        self.assertIn('id="baymax-face"', html)
+        self.assertIn('src="/face.js"', html)
+        self.assertIn("session.emotion", script)
+        self.assertIn('hasOwnProperty.call(result, "emotion")', script)
+        self.assertIn("result.emotion", script)
+
+    def test_index_has_no_inline_scripts_or_style_attributes(self):
+        _, _, html_bytes = self.request("/")
+        html = html_bytes.decode()
+        self.assertNotRegex(html, r"(?i)\sstyle\s*=")
+        self.assertNotRegex(html, r"(?is)<script(?![^>]*\bsrc=)[^>]*>")
 
     def test_default_closed_friends_web_has_no_user_controls_or_consent_ui(self):
         _, _, html_bytes = self.request("/")
