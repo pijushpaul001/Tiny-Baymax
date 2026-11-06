@@ -561,3 +561,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Tightened the web integration test to assert that the only two localStorage calls are the read and write of `SPEAK_PREFERENCE_KEY`, which resolves to `tiny-baymax-speak`. The existing explicit token/passcode write checks remain.
 - **Verification:** focused closed-friends web integration test passed locally. Full suite rerun follows this test-only correction.
+
+
+### v0.6.11 final local verification after storage-test strengthening
+
+- Ran `python -m unittest discover -s tests -t . -v`: **172 tests passed**.
+- Ran `node --check` for every `web/*.js` file: passed (Node.js v22.16.0).
+- Ran `python -m compileall -q baymax server tests`: passed.
+- Actions remains pending owner confirmation; phone checks remain unchecked.
