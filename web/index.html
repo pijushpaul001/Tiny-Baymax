@@ -45,6 +45,9 @@
 
       <section id="chat-screen" class="chat-layout hidden" aria-label="Baymax conversation">
         <section class="panel conversation-panel">
+          <div class="conversation-heading">
+            <div><p class="eyebrow">Your conversation</p><h2>How are you feeling today?</h2></div>
+          </div>
           <div class="baymax-face-area">
             <svg id="baymax-face" class="baymax-face" viewBox="0 0 120 96" role="img" aria-label="Baymax face" xmlns="http://www.w3.org/2000/svg">
               <rect class="face-body" x="12" y="8" width="96" height="80" rx="38" />
@@ -52,9 +55,6 @@
               <ellipse class="face-eye" cx="43" cy="43" rx="4.2" ry="5.2" />
               <ellipse class="face-eye" cx="77" cy="43" rx="4.2" ry="5.2" />
             </svg>
-          </div>
-          <div class="conversation-heading">
-            <div><p class="eyebrow">Your conversation</p><h2>How are you feeling today?</h2></div>
           </div>
           <div id="messages" class="messages" aria-live="polite" aria-relevant="additions text"></div>
           <div id="interaction-tools" class="interaction-tools hidden"></div>

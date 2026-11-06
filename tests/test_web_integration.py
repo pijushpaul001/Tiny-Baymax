@@ -72,6 +72,17 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertIn("result.emotion", script)
 
 
+
+    def test_face_stays_outside_the_scrolling_message_list(self):
+        _, _, html_bytes = self.request("/")
+        html = html_bytes.decode()
+        face_at = html.index('id="baymax-face"')
+        messages_at = html.index('<div id="messages"')
+        messages_content_at = html.index(">", messages_at) + 1
+        messages_end_at = html.index("</div>", messages_content_at)
+        self.assertLess(face_at, messages_at)
+        self.assertNotIn("baymax-face", html[messages_content_at:messages_end_at])
+
     def test_voice_controls_only_speak_live_replies_and_cancel_on_send(self):
         _, _, html_bytes = self.request("/")
         _, _, script_bytes = self.request("/app.js")

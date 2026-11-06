@@ -50,9 +50,9 @@ input:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px r
 .privacy-note span { color: var(--teal); font-size: 1.15rem; }
 .privacy-note p { margin: 0; }
 .chat-layout { display: grid; grid-template-columns: 1fr; gap: 18px; align-items: start; }
-.conversation-panel { display: flex; flex-direction: column; min-height: min(78vh, 880px); overflow: hidden; }
-.baymax-face-area { display: flex; justify-content: center; padding: 16px 12px 0; }
-.baymax-face { display: block; width: 112px; height: 90px; overflow: visible; }
+.conversation-panel { display: flex; flex-direction: column; height: min(78vh, 880px); min-height: 0; overflow: hidden; }
+.baymax-face-area { display: flex; flex: 0 0 auto; justify-content: center; padding: 8px 12px 0; }
+.baymax-face { display: block; width: 84px; height: 67px; overflow: visible; }
 .face-body { fill: #fff; stroke: #e1e7e8; stroke-width: 1.5; }
 .face-bridge { stroke: #111; stroke-width: 1.5; stroke-linecap: round; }
 .face-eye { fill: #000; transform-box: fill-box; transform-origin: center; transform: scale(var(--eye-scale, 1)); transition: transform 480ms ease; }
@@ -60,7 +60,7 @@ input:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px r
 .conversation-heading { display: flex; align-items: center; justify-content: space-between; padding: 23px 24px 18px; border-bottom: 1px solid #edf2f2; }
 .conversation-heading h2 { font-size: 1.12rem; margin: 0; letter-spacing: -.02em; }
 .icon-button { border: 1px solid var(--line); border-radius: 12px; width: 38px; height: 38px; font-size: 1.3rem; color: var(--teal); background: #f7fbfb; }
-.messages { display: flex; flex: 1; flex-direction: column; gap: 12px; padding: 22px 24px; overflow: auto; max-height: 59vh; min-height: 260px; }
+.messages { display: flex; flex: 1 1 0; flex-direction: column; gap: 12px; padding: 22px 24px; min-height: 0; max-height: none; overflow-y: auto; overscroll-behavior: contain; }
 .message-row { display: flex; gap: 9px; align-items: flex-end; max-width: 92%; }
 .message-row.user { align-self: flex-end; flex-direction: row-reverse; }
 .message-avatar { flex: 0 0 28px; width: 28px; height: 28px; border-radius: 10px; display: grid; place-items: center; color: var(--teal); background: var(--teal-light); font-size: .68rem; font-weight: 800; }
@@ -85,5 +85,5 @@ input:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px r
 .footer { display: flex; justify-content: space-between; gap: 14px; margin-top: 20px; color: #829395; font-size: .72rem; }
 .hidden { display: none !important; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-@media (max-width: 900px) { .conversation-panel { min-height: 68vh; } .messages { max-height: 52vh; } }
-@media (max-width: 560px) { .app-shell { padding: 12px 10px; } .topbar { align-items: flex-start; } .brand-mark { width: 41px; height: 41px; } .brand p { font-size: .72rem; } .topbar-actions { flex-direction: column; align-items: flex-end; gap: 6px; } .topbar-actions .button { padding: 8px 10px; font-size: .75rem; } .conversation-heading { padding: 18px 15px 14px; } .messages { padding: 18px 13px; max-height: 52vh; } .message-row { max-width: 98%; } .interaction-tools { padding: 0 14px 14px; } .composer { padding: 12px; } .footer { flex-direction: column; gap: 4px; } .connect-panel { margin: 3vh auto; padding: 25px 22px; } }
+@media (max-width: 900px) { .conversation-panel { height: min(70vh, 760px); } }
+@media (max-width: 560px) { .app-shell { padding: 12px 10px; } .topbar { align-items: flex-start; } .brand-mark { width: 41px; height: 41px; } .brand p { font-size: .72rem; } .topbar-actions { flex-direction: column; align-items: flex-end; gap: 6px; } .topbar-actions .button { padding: 8px 10px; font-size: .75rem; } .conversation-heading { padding: 18px 15px 14px; }  .messages { padding: 18px 13px; } .message-row { max-width: 98%; } .interaction-tools { padding: 0 14px 14px; } .composer { padding: 12px; } .footer { flex-direction: column; gap: 4px; } .connect-panel { margin: 3vh auto; padding: 25px 22px; } }

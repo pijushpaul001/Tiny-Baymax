@@ -569,3 +569,12 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Ran `node --check` for every `web/*.js` file: passed (Node.js v22.16.0).
 - Ran `python -m compileall -q baymax server tests`: passed.
 - Actions remains pending owner confirmation; phone checks remain unchecked.
+
+
+## v0.6.11 follow-up — keep the face visible during message scrolling
+
+- **Cause:** the conversation panel used a minimum height rather than a constrained height, while the messages list also had a viewport-based maximum height and a 260px minimum. The combined content could exceed the panel, so the page/panel scrolled instead of keeping the face and composer in a fixed conversation frame.
+- Moved the face to immediately after the conversation heading and directly before `#messages`; it remains outside the message list.
+- Constrained the conversation panel height at desktop and narrow widths. The messages list now owns the flexible remaining height and is the only scrolling conversation region. The face is non-shrinking and 84px wide; composer and interaction tools remain outside the scrolling list.
+- Added a structural integration test proving the face precedes `#messages` and is not inside its contents.
+- **Verification:** tests added; not run locally in this GitHub-only editing session. GitHub Actions is ready to validate this commit. No phone/browser visual test is claimed.
