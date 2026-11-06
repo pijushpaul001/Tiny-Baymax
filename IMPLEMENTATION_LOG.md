@@ -2,17 +2,18 @@
 
 This log tracks implementation against `CLAUDE_HANDOFF.md`. Never record or commit API keys, passcodes, private health conversations, or other identifying/sensitive data.
 
-## Current status — 2026-11-04
+## Current status — 2026-11-06
 
-- **Repository:** `pijushpaul001/Tiny-Baymax`
-- **Active implementation branch:** `work/v0.6.8-persona-variation`, created from current `main` at `b26e16d0e4a2cc99416294c8a053edf2f1c1e490` (v0.6.7 merged).
-- **Package version:** `0.6.8` (bumped in its own commit after Tasks 1–6).
-- **Implemented scope:** structured persona examples and copied-example retry; expanded persona-check transcript, Group F and failure handling; local environment/swap-file ignore rules; daily-quota fallback handling; Gemini free-tier/privacy comments; requested status wording. Tests were added with code changes.
-- **Local unittest:** **not run**. A local clone attempt failed because this environment could not resolve github.com; no local test result is claimed.
-- **GitHub Actions on the last pre-bump commit:** run [41812930363](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41812930363) passed: **162 tests passed** on Python 3.10, 3.11 and 3.12; compileall passed in all three jobs.
-- **PR Actions:** run [41813050593](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41813050593) passed: **162 tests passed** on Python 3.10, 3.11 and 3.12; compileall passed in all three jobs.
-- **Real Gemini and device checks:** **not run**.
-- **Scope exclusions:** no changes to `work/v0.7.0-session-memory`, `web/`, detection patterns, emergency/safety replies, shutdown ritual, or any files outside the requested scope. `baymax/llm/gemini.py` was changed only for Task 4.
+- **Repository:** `pijushpaul001/Tiny-Baymax`, branch `main`.
+- **Package version:** `0.6.10`.
+- **Tests:** GitHub Actions run 41826707933 passed 166 tests in each of six jobs (Python 3.10, 3.11, 3.12, each with a dummy `.env` and with no `.env` plus dummy shell variables); compileall passed. That run was before the version-only commit. Local unittest not run by the implementer.
+- **Mode:** closed-friends mode (`BAYMAX_USER_CONTROLS=0`) is the intended deployment. Owner reads data with `tools/export_all.py`.
+- **Models:** `BAYMAX_MODEL=gemma-4-26b-a4b-it`, `BAYMAX_FALLBACK_MODEL=gemini-3.5-flash-lite` (v0.6.9 example config).
+- **Persona:** final unless `tools/persona_check.py` shows a problem.
+- **Verified by the owner only, not by the implementer:** a first real Gemini call worked in Codespaces.
+- **Not run:** phone/PWA check, HTTPS/Tailscale, microphone and speech, the full persona-check transcript review.
+- **Next:** v0.6.11 face and voice in `web/`; docs-only cleanup PR; cloud VM with Tailscale; phone verification; UI polish.
+- **Deferred (scope freeze):** reminders, tools, summaries, semantic memory, native push, iOS.
 
 ## v0.6.3 — Gemini-ready (R3-7 and R3-6)
 
