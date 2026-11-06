@@ -146,8 +146,8 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertNotIn('localStorage.setItem("passcode"', script)
         self.assertNotIn('localStorage.setItem("X-Baymax-Token"', script)
         self.assertIn('id="offline-card"', html)
-        self.assertIn("In an emergency, contact your local emergency number.", html)
-        self.assertIn("Baymax is an AI companion, not a doctor or emergency service.", html)
+        self.assertNotIn("In an emergency, contact your local emergency number.", html)
+        self.assertNotIn("Baymax is an AI companion, not a doctor or emergency service.", html)
 
     def test_default_server_locks_management_routes_and_commands(self):
         for method, path, payload in (
@@ -202,21 +202,25 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(ratings)["ratings"][-1]["rating"], 8)
 
-    def test_emergency_card_and_line_remain_available_for_failed_sends(self):
+    def test_offline_emergency_card_remains_available_for_failed_sends(self):
         _, _, html_bytes = self.request("/")
         _, _, script_bytes = self.request("/app.js")
         html = html_bytes.decode()
         script = script_bytes.decode()
         self.assertIn('id="offline-card"', html)
         self.assertIn("contact local emergency services now", html)
-        self.assertIn("In an emergency, contact your local emergency number.", html)
+        self.assertNotIn("In an emergency, contact your local emergency number.", html)
+        self.assertNotIn("Baymax is an AI companion, not a doctor or emergency service.", html)
         self.assertLess(html.index('id="offline-card"'), html.index('id="connect-screen"'))
         send_start = script.index('async function sendMessage')
         catch_start = script.index('    } catch (error) {', send_start)
         catch_end = script.index('    } finally {', catch_start)
         catch_block = script[catch_start:catch_end]
-        self.assertIn('byId("offline-card").classList.remove("hidden")', catch_block)
-        self.assertIn('error.status === 401 || error.status === 429', catch_block)
+        card_show = catch_block.index('byId("offline-card").classList.remove("hidden")')
+        status_split = catch_block.index("error.status === 401 || error.status === 429")
+        self.assertLess(card_show, status_split)
+        self.assertIn("error.status === 401 || error.status === 429", catch_block)
+        self.assertIn('message("assistant", "I cannot reach the server right now.', catch_block)
         self.assertNotIn('byId("offline-card").classList.add("hidden")', catch_block)
 
 

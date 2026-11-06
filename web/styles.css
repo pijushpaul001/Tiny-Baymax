@@ -79,7 +79,6 @@ input:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px r
 .mic-button[aria-pressed="true"] { background: var(--teal-light); border-color: var(--teal); }
 .speech-error { min-height: 1em; margin: 0; padding: 0 18px 8px; color: var(--coral); font-size: .75rem; }
 .send-button { flex: 0 0 43px; height: 43px; border: 0; border-radius: 14px; color: white; background: var(--teal); font-weight: 800; font-size: 1.25rem; }
-.disclaimer { padding: 0 20px 13px; margin: 0; color: #829295; font-size: .68rem; line-height: 1.45; background: #fbfdfd; }
 .offline-card { border-bottom: 1px solid #f1d8d1; background: #fff6f3; padding: 14px 22px; color: #7e332b; font-size: .81rem; line-height: 1.45; }
 .offline-card p { margin: 5px 0 0; }
 .footer { display: flex; justify-content: space-between; gap: 14px; margin-top: 20px; color: #829395; font-size: .72rem; }

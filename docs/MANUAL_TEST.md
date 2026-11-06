@@ -8,7 +8,7 @@ Use this checklist after automated tests pass. Do not put API keys, passcodes, o
 - [ ] Leave `BAYMAX_USER_CONTROLS=0` (the default) and start with `python -m server`.
 - [ ] Open the app and confirm the connect screen is unchanged apart from the removed consent/review controls.
 - [ ] Confirm the main chat has no Care & privacy panel, no clear-history arrow, and no in-app settings/data controls.
-- [ ] Confirm the offline emergency card, emergency line, and existing not-a-doctor line remain present.
+- [ ] Confirm the offline emergency card is present; the chat screen has no always-visible emergency or not-a-doctor line, and the connect-screen privacy note remains.
 - [ ] Confirm no consent dialog appears and connecting does not require browser localStorage consent.
 - [ ] Confirm `/api/health` is public and the version is reported correctly.
 
@@ -70,6 +70,7 @@ HTTPS routing, or actual phone behaviour. Do not mark those checks as passed unt
 ## H. Face and voice — v0.6.11 phone checks
 
 - [ ] Open the chat on the phone and confirm the white face is visible at the top of the conversation panel and blinks slowly.
+- [ ] Scroll through a long conversation; confirm the face stays visible above the scrolling messages and the composer remains visible.
 - [ ] Send `my head hurts`; confirm the face reacts after the assistant response.
 - [ ] Confirm the top-bar Voice button starts on and can be switched off and on.
 - [ ] With Voice on, confirm live assistant replies sound slow and soft.

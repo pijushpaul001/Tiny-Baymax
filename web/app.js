@@ -218,7 +218,6 @@
       state.closing = null;
       const emergencyHint = typeof session.emergency_hint === "string" && session.emergency_hint.trim()
         ? session.emergency_hint.trim() : "your local emergency number";
-      byId("emergency-line").textContent = `In an emergency, contact ${emergencyHint}.`;
       byId("offline-card").querySelector("p").textContent =
         `If you may be experiencing a medical emergency, contact ${emergencyHint} now. Messages are not queued for later delivery.`;
       byId("offline-card").classList.add("hidden");

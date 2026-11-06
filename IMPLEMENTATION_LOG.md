@@ -578,3 +578,13 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Constrained the conversation panel height at desktop and narrow widths. The messages list now owns the flexible remaining height and is the only scrolling conversation region. The face is non-shrinking and 84px wide; composer and interaction tools remain outside the scrolling list.
 - Added a structural integration test proving the face precedes `#messages` and is not inside its contents.
 - **Verification:** tests added; not run locally in this GitHub-only editing session. GitHub Actions is ready to validate this commit. No phone/browser visual test is claimed.
+
+
+## v0.6.11 follow-up — remove permanent chat-screen lines (owner decision)
+
+- **Owner decision, 2026-11-06:** deliberately removed the always-visible emergency line and the "not a doctor or emergency service" line from the chat screen. This is an explicit owner decision, not an implementation reinterpretation.
+- Removed both paragraphs from `web/index.html`, the JavaScript write to `#emergency-line`, and the now-unused `.disclaimer` CSS. The connect-screen privacy note remains.
+- Kept `#offline-card`, its dynamic emergency-hint text and failed-send visibility behaviour, its position before `#connect-screen`, and all deterministic emergency replies unchanged.
+- Updated integration assertions to require the two strings to be absent while verifying the offline card is retained and displayed in the shared send-error catch path for 401, 429 and network failures.
+- Updated README, architecture and manual-test wording to state that the app keeps the offline emergency card only. Added the face-scroll visibility manual check. Appended the owner's superseding decision verbatim to the end of the Architecture change history.
+- **Verification:** tests updated; not run locally in this GitHub-only editing session. GitHub Actions is ready to validate this commit. No deterministic safety reply or Python/server file was changed.
