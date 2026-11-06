@@ -6,6 +6,7 @@
   const speechAvailable = typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance === "function";
   let speakEnabled = true;
   let selectedVoice = null;
+  let recognition = null;
   let faceController = null;
 
   function readSpeakPreference() {
@@ -26,6 +27,16 @@
   function refreshVoice() {
     if (!speechAvailable || !window.BaymaxSpeech) return;
     selectedVoice = window.BaymaxSpeech.pickVoice(window.speechSynthesis.getVoices(), navigator.language);
+  }
+
+  function stopRecognition() {
+    if (recognition) {
+      try { recognition.stop(); } catch (_) {}
+    }
+  }
+
+  function showSpeechError(text) {
+    byId("speech-error").textContent = text;
   }
 
   function speakReply(text) {
@@ -152,6 +163,7 @@
     const text = String(value ?? byId("message-input").value).trim();
     if (!text || state.busy || !state.token) return;
     cancelSpeech();
+    stopRecognition();
     byId("message-input").value = "";
     clearTools();
     message("user", text);
@@ -259,6 +271,38 @@
     }
   } else {
     byId("voice-toggle").classList.add("hidden");
+  }
+
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (typeof Recognition === "function") {
+    recognition = new Recognition();
+    recognition.lang = navigator.language || "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    const micButton = byId("mic-button");
+    micButton.addEventListener("click", () => {
+      showSpeechError("");
+      cancelSpeech();
+      try {
+        recognition.start();
+        micButton.setAttribute("aria-pressed", "true");
+      } catch (_) {
+        showSpeechError("Microphone is unavailable right now.");
+      }
+    });
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results || []).map((item) => item[0]?.transcript || "").join(" ").trim();
+      if (transcript) byId("message-input").value = transcript;
+      byId("message-input").focus();
+    };
+    recognition.onerror = (event) => {
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") showSpeechError("Microphone permission was denied.");
+      else showSpeechError("Microphone is unavailable right now.");
+      micButton.setAttribute("aria-pressed", "false");
+    };
+    recognition.onend = () => micButton.setAttribute("aria-pressed", "false");
+  } else {
+    byId("mic-button").classList.add("hidden");
   }
 
   byId("connect-form").addEventListener("submit", connect);

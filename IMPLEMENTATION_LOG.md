@@ -507,3 +507,12 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Live chat and safety replies plus the shutdown ritual prompt are spoken at rate 0.85 and pitch 0.9. History rendering does not call speech. Speech is cancelled on user send, Voice off and session end. The `voiceschanged` event refreshes voice selection. The control is hidden when speech synthesis is unavailable.
 - Added Node voice-selection cases and web integration assertions for live-only speech, rate/pitch and storage boundaries.
 - **Verification:** local face/voice and web integration tests passed in the combined working copy (10 tests). Node.js v22.16.0 was available. Actual device voices, audio quality and browser support are unverified.
+
+
+## v0.6.11 — optional microphone input
+
+- Added an optional composer microphone button using `SpeechRecognition` or `webkitSpeechRecognition`, with `navigator.language` as its locale.
+- Recognition fills the message textarea and does not submit it. Starting to listen cancels speech synthesis; sending a message stops recognition. Unsupported browsers hide the microphone control.
+- Added a short permission-denied state and a generic unavailable state.
+- Added integration checks for support detection, locale, textarea fill, no auto-send and the permission message.
+- **Verification:** local `python -m unittest tests.test_face_logic tests.test_web_integration -v` passed in the combined working copy (10 tests). Browser microphone permission and phone behaviour remain unverified.

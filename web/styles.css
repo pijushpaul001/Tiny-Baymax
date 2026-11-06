@@ -75,6 +75,9 @@ input:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px r
 .chip.skip { color: var(--muted); border-color: var(--line); }
 .composer { display: flex; gap: 10px; align-items: end; padding: 14px 18px; border-top: 1px solid #e7eeee; background: #fbfdfd; }
 .composer textarea { resize: none; min-height: 44px; max-height: 130px; border-radius: 15px; padding: 12px 14px; line-height: 1.35; }
+ .mic-button { flex: 0 0 auto; height: 43px; padding: 0 11px; border: 1px solid var(--line); border-radius: 13px; color: var(--teal-dark); background: #f7fbfb; font-size: .78rem; font-weight: 700; }
+.mic-button[aria-pressed="true"] { background: var(--teal-light); border-color: var(--teal); }
+.speech-error { min-height: 1em; margin: 0; padding: 0 18px 8px; color: var(--coral); font-size: .75rem; }
 .send-button { flex: 0 0 43px; height: 43px; border: 0; border-radius: 14px; color: white; background: var(--teal); font-weight: 800; font-size: 1.25rem; }
 .disclaimer { padding: 0 20px 13px; margin: 0; color: #829295; font-size: .68rem; line-height: 1.45; background: #fbfdfd; }
 .offline-card { border-bottom: 1px solid #f1d8d1; background: #fff6f3; padding: 14px 22px; color: #7e332b; font-size: .81rem; line-height: 1.45; }

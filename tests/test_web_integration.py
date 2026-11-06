@@ -86,6 +86,21 @@ class WebIntegrationTests(unittest.TestCase):
         history_end = script.index("function clearTools", history_start)
         self.assertNotIn("speakReply", script[history_start:history_end])
 
+
+    def test_optional_microphone_fills_composer_without_sending(self):
+        _, _, html_bytes = self.request("/")
+        _, _, script_bytes = self.request("/app.js")
+        html = html_bytes.decode()
+        script = script_bytes.decode()
+        self.assertIn('id="mic-button"', html)
+        self.assertIn('id="speech-error"', html)
+        self.assertIn("window.SpeechRecognition || window.webkitSpeechRecognition", script)
+        self.assertIn("recognition.lang = navigator.language || \"en-US\"", script)
+        self.assertIn('byId("message-input").value = transcript', script)
+        self.assertIn("Microphone permission was denied.", script)
+        self.assertNotIn("sendMessage(transcript)", script)
+        self.assertIn("cancelSpeech();", script)
+
     def test_index_has_no_inline_scripts_or_style_attributes(self):
         _, _, html_bytes = self.request("/")
         html = html_bytes.decode()
