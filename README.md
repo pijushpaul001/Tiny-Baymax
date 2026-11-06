@@ -8,7 +8,7 @@ Python server + installable web app. Gemini is the language brain; Python enforc
 
 Tiny Baymax is intended for two users: the owner and one friend. The default `BAYMAX_USER_CONTROLS=0` removes in-app
 memory, rating, settings, history, export and delete controls and enforces the same restriction on the server. The app
-keeps chat, End session, rating chips/Skip, the offline emergency card, the emergency line, and the existing not-a-doctor line.
+keeps chat, End session, rating chips/Skip and the offline emergency card only; the connect screen retains its privacy note.
 
 Stored messages and memories are kept without automatic 300-message/100-memory deletion. The model still receives only
 the latest 24 messages. The owner can inspect all users' stored data with the read-only `tools/export_all.py` script over SSH;

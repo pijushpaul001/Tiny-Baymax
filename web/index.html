@@ -19,6 +19,7 @@
       </div>
       <div class="topbar-actions">
         <span id="connection-status" class="status-pill" aria-live="polite">Not connected</span>
+        <button id="voice-toggle" class="button button-soft" type="button" aria-pressed="true">Voice on</button>
         <button id="end-session" class="button button-soft" type="button" disabled>End session</button>
       </div>
     </header>
@@ -47,20 +48,40 @@
           <div class="conversation-heading">
             <div><p class="eyebrow">Your conversation</p><h2>How are you feeling today?</h2></div>
           </div>
+          <div class="baymax-face-area">
+            <svg id="baymax-face" class="baymax-face" viewBox="0 0 120 96" role="img" aria-label="Baymax face" xmlns="http://www.w3.org/2000/svg">
+              <rect class="face-body" x="12" y="8" width="96" height="80" rx="40" />
+              <line class="face-bridge" x1="43" y1="43" x2="77" y2="43" />
+              <g class="face-eye-blink">
+                <g class="face-eye">
+                  <ellipse cx="43" cy="43" rx="6.3" ry="7.8" />
+                  <circle class="face-highlight" cx="41.1" cy="40.2" r="1.45" />
+                </g>
+              </g>
+              <g class="face-eye-blink">
+                <g class="face-eye">
+                  <ellipse cx="77" cy="43" rx="6.3" ry="7.8" />
+                  <circle class="face-highlight" cx="75.1" cy="40.2" r="1.45" />
+                </g>
+              </g>
+            </svg>
+          </div>
           <div id="messages" class="messages" aria-live="polite" aria-relevant="additions text"></div>
           <div id="interaction-tools" class="interaction-tools hidden"></div>
           <form id="chat-form" class="composer">
             <label class="sr-only" for="message-input">Your message</label>
             <textarea id="message-input" rows="1" maxlength="2000" placeholder="Tell Baymax what’s on your mind…" required></textarea>
+            <button id="mic-button" class="mic-button" type="button" aria-label="Use microphone" aria-pressed="false">Mic</button>
             <button id="send-button" type="submit" class="send-button" aria-label="Send message">↑</button>
           </form>
-          <p id="emergency-line" class="hint emergency-line">In an emergency, contact your local emergency number.</p>
-          <p class="disclaimer">Baymax is an AI companion, not a doctor or emergency service. Avoid sharing passwords, keys, or highly sensitive details.</p>
+          <p id="speech-error" class="speech-error" role="status" aria-live="polite"></p>
         </section>
       </section>
     </main>
     <footer class="footer"><span id="app-version">Tiny Baymax</span><span>Calm, practical, and under your control.</span></footer>
   </div>
+  <script src="/face.js" defer></script>
+  <script src="/speech.js" defer></script>
   <script src="/app.js" defer></script>
 </body>
 </html>

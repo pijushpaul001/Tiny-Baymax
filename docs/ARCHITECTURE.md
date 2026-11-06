@@ -6,7 +6,7 @@ Python before or after the model is called, never by the model alone.
 
 ## Closed-friends mode (v0.6.2)
 The default server setting is `BAYMAX_USER_CONTROLS=0`. The web app exposes chat, session ending, rating chips/Skip,
-the offline emergency card, the emergency line, and the existing not-a-doctor line. It does not expose in-app data
+the offline emergency card only; the connect screen retains its privacy note. It does not expose in-app data
 management.
 
 The restriction is enforced in `server/api.py`, not just by hiding UI. When controls are disabled, management routes for

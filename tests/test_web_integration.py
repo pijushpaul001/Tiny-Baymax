@@ -1,4 +1,5 @@
 import json
+import re
 import tempfile
 import threading
 import unittest
@@ -52,12 +53,125 @@ class WebIntegrationTests(unittest.TestCase):
 
     def test_web_assets_are_served_with_expected_types(self):
         for path, expected in (("/", "text/html"), ("/app.js", "javascript"),
-                               ("/styles.css", "text/css"), ("/manifest.webmanifest", "application/manifest+json")):
+                               ("/face.js", "javascript"), ("/speech.js", "javascript"), ("/styles.css", "text/css"), ("/manifest.webmanifest", "application/manifest+json")):
             with self.subTest(path=path):
                 status, ctype, body = self.request(path)
                 self.assertEqual(status, 200)
                 self.assertIn(expected, ctype)
                 self.assertTrue(body)
+
+
+    def test_face_is_in_chat_and_updates_from_live_emotion_only(self):
+        _, _, html_bytes = self.request("/")
+        _, _, app_bytes = self.request("/app.js")
+        html = html_bytes.decode()
+        script = app_bytes.decode()
+        self.assertIn('id="baymax-face"', html)
+        self.assertIn('src="/face.js"', html)
+        self.assertIn("session.emotion", script)
+        self.assertIn('hasOwnProperty.call(result, "emotion")', script)
+        self.assertIn("result.emotion", script)
+
+
+
+    def test_chat_response_emotion_is_passed_to_face_update(self):
+        _, _, script_bytes = self.request("/app.js")
+        script = script_bytes.decode()
+        send_start = script.index("async function sendMessage")
+        response_start = script.index('const result = await api("/api/chat"', send_start)
+        update_at = script.index("updateFace(result.emotion)", response_start)
+        response_guard_at = script.index('hasOwnProperty.call(result, "emotion")', response_start)
+        self.assertLess(response_start, response_guard_at)
+        self.assertLess(response_guard_at, update_at)
+
+    def test_face_svg_has_two_highlighted_eyes_and_no_mouth(self):
+        _, _, html_bytes = self.request("/")
+        html = html_bytes.decode()
+        svg_start = html.index('<svg id="baymax-face"')
+        svg_end = html.index("</svg>", svg_start) + len("</svg>")
+        svg = html[svg_start:svg_end]
+        eyes = svg.count('class="face-eye"')
+        highlights = svg.count('class="face-highlight"')
+        blink_groups = svg.count('class="face-eye-blink"')
+        self.assertEqual(eyes, 2)
+        self.assertEqual(highlights, 2)
+        self.assertEqual(blink_groups, 2)
+        self.assertEqual(svg.count("<ellipse "), 2)
+        self.assertEqual(svg.count("<circle "), 2)
+        self.assertNotRegex(svg, r"(?i)(mouth|<path\b|<text\b)")
+        highlighted_eye_groups = re.findall(
+            r'<g class="face-eye-blink">\s*<g class="face-eye">\s*'
+            r'<ellipse[^>]+>\s*<circle class="face-highlight"[^>]+>\s*</g>\s*</g>',
+            svg,
+        )
+        self.assertEqual(len(highlighted_eye_groups), 2)
+
+    def test_face_stays_outside_the_scrolling_message_list(self):
+        _, _, html_bytes = self.request("/")
+        html = html_bytes.decode()
+        face_at = html.index('id="baymax-face"')
+        messages_at = html.index('<div id="messages"')
+        messages_content_at = html.index(">", messages_at) + 1
+        messages_end_at = html.index("</div>", messages_content_at)
+        self.assertLess(face_at, messages_at)
+        self.assertNotIn("baymax-face", html[messages_content_at:messages_end_at])
+        _, _, css_bytes = self.request("/styles.css")
+        css = css_bytes.decode()
+        self.assertIn("overflow-y: auto", css)
+        self.assertIn("min-height: 0; max-height: none", css)
+        self.assertIn(".conversation-heading, .interaction-tools, .composer, .speech-error { flex: 0 0 auto; }", css)
+        self.assertIn("transform-box: fill-box", css)
+        self.assertIn("transform-origin: center", css)
+        self.assertIn("transform: scale(var(--eye-scale-x, 1), var(--eye-scale-y, 1))", css)
+        self.assertIn("transition: transform 900ms ease", css)
+        self.assertIn(".face-eye-blink.is-blinking { transform: scaleY(.06);", css)
+        self.assertIn("transform-box: fill-box", css)
+        self.assertIn("transform-origin: center", css)
+        self.assertIn(".face-highlight { fill: #fff; }", css)
+
+    def test_voice_controls_only_speak_live_replies_and_cancel_on_send(self):
+        _, _, html_bytes = self.request("/")
+        _, _, script_bytes = self.request("/app.js")
+        html = html_bytes.decode()
+        script = script_bytes.decode()
+        self.assertIn('id="voice-toggle"', html)
+        self.assertIn('src="/speech.js"', html)
+        self.assertIn("speechSynthesis", script)
+        self.assertIn("utterance.rate = 0.85", script)
+        self.assertIn("utterance.pitch = 0.9", script)
+        self.assertIn('["chat", "safety", "ritual"].includes(result.kind)', script)
+        history_start = script.index("function renderHistory")
+        history_end = script.index("function clearTools", history_start)
+        self.assertNotIn("speakReply", script[history_start:history_end])
+
+
+    def test_optional_microphone_fills_composer_without_sending(self):
+        _, _, html_bytes = self.request("/")
+        _, _, script_bytes = self.request("/app.js")
+        html = html_bytes.decode()
+        script = script_bytes.decode()
+        self.assertIn('id="mic-button"', html)
+        self.assertIn('id="speech-error"', html)
+        self.assertIn("window.SpeechRecognition || window.webkitSpeechRecognition", script)
+        self.assertIn("recognition.lang = navigator.language || \"en-US\"", script)
+        self.assertIn('byId("message-input").value = transcript', script)
+        self.assertIn("Microphone permission was denied.", script)
+        self.assertNotIn("sendMessage(transcript)", script)
+        self.assertIn("cancelSpeech();", script)
+
+    def test_index_has_no_inline_scripts_or_style_attributes(self):
+        _, _, html_bytes = self.request("/")
+        html = html_bytes.decode()
+        self.assertNotRegex(html, r"(?i)\sstyle\s*=")
+        self.assertNotRegex(html, r"(?is)<script(?![^>]*\bsrc=)[^>]*>")
+
+
+    def test_service_worker_caches_face_and_speech_assets(self):
+        _, _, sw_bytes = self.request("/sw.js")
+        sw = sw_bytes.decode()
+        self.assertIn('tiny-baymax-static-v2', sw)
+        self.assertIn('"/face.js"', sw)
+        self.assertIn('"/speech.js"', sw)
 
     def test_default_closed_friends_web_has_no_user_controls_or_consent_ui(self):
         _, _, html_bytes = self.request("/")
@@ -68,11 +182,18 @@ class WebIntegrationTests(unittest.TestCase):
                            "export-data", "reset-emotion", "delete-all", "clear-history",
                            "consent-dialog", "review-consent", "consent-form"):
             self.assertNotIn(forbidden, html)
-        for forbidden in ("CONSENT_KEY", "consented_version", "localStorage", "consentDialog"):
+        for forbidden in ("CONSENT_KEY", "consented_version", "consentDialog"):
             self.assertNotIn(forbidden, script)
+        self.assertIn('"tiny-baymax-speak"', script)
+        self.assertEqual(script.count("localStorage."), 2)
+        self.assertIn("localStorage.getItem(SPEAK_PREFERENCE_KEY)", script)
+        self.assertIn("localStorage.setItem(SPEAK_PREFERENCE_KEY, String(speakEnabled))", script)
+        self.assertNotIn('localStorage.setItem("token"', script)
+        self.assertNotIn('localStorage.setItem("passcode"', script)
+        self.assertNotIn('localStorage.setItem("X-Baymax-Token"', script)
         self.assertIn('id="offline-card"', html)
-        self.assertIn("In an emergency, contact your local emergency number.", html)
-        self.assertIn("Baymax is an AI companion, not a doctor or emergency service.", html)
+        self.assertNotIn("In an emergency, contact your local emergency number.", html)
+        self.assertNotIn("Baymax is an AI companion, not a doctor or emergency service.", html)
 
     def test_default_server_locks_management_routes_and_commands(self):
         for method, path, payload in (
@@ -127,21 +248,25 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(ratings)["ratings"][-1]["rating"], 8)
 
-    def test_emergency_card_and_line_remain_available_for_failed_sends(self):
+    def test_offline_emergency_card_remains_available_for_failed_sends(self):
         _, _, html_bytes = self.request("/")
         _, _, script_bytes = self.request("/app.js")
         html = html_bytes.decode()
         script = script_bytes.decode()
         self.assertIn('id="offline-card"', html)
         self.assertIn("contact local emergency services now", html)
-        self.assertIn("In an emergency, contact your local emergency number.", html)
+        self.assertNotIn("In an emergency, contact your local emergency number.", html)
+        self.assertNotIn("Baymax is an AI companion, not a doctor or emergency service.", html)
         self.assertLess(html.index('id="offline-card"'), html.index('id="connect-screen"'))
         send_start = script.index('async function sendMessage')
         catch_start = script.index('    } catch (error) {', send_start)
         catch_end = script.index('    } finally {', catch_start)
         catch_block = script[catch_start:catch_end]
-        self.assertIn('byId("offline-card").classList.remove("hidden")', catch_block)
-        self.assertIn('error.status === 401 || error.status === 429', catch_block)
+        card_show = catch_block.index('byId("offline-card").classList.remove("hidden")')
+        status_split = catch_block.index("error.status === 401 || error.status === 429")
+        self.assertLess(card_show, status_split)
+        self.assertIn("error.status === 401 || error.status === 429", catch_block)
+        self.assertIn('message("assistant", "I cannot reach the server right now.', catch_block)
         self.assertNotIn('byId("offline-card").classList.add("hidden")', catch_block)
 
 

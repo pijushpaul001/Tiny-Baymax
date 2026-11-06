@@ -47,6 +47,16 @@ class ServiceTests(unittest.TestCase):
         self.assertIn("skip", response["reply"].lower())
         self.assertEqual(self.llm.calls, [])
 
+    def test_pain_response_emotion_is_high_enough_for_face_reaction_with_fake_llm(self):
+        llm = FakeLLM()
+        svc = self.build(llm=llm)
+        response = svc.handle("u1", "my head hurts")
+        self.assertEqual(response["kind"], "chat")
+        self.assertIn("from 0 to 10", response["reply"])
+        self.assertGreaterEqual(response["emotion"]["concern"], 0.30)
+        # The immediate pain-rating path is deterministic and intentionally does not call the model.
+        self.assertEqual(llm.calls, [])
+
     def test_secret_and_pain_still_triggers_rating_without_exposing_secret(self):
         svc = self.build()
         raw = "my password is hunter2 and my head hurts"

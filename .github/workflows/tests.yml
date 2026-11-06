@@ -34,6 +34,11 @@ jobs:
               echo "BAYMAX_DATA_DIR=/tmp/baymax-shell-data"
             } >> "$GITHUB_ENV"
           fi
+      - name: Check JavaScript syntax
+        run: |
+          for file in web/*.js; do
+            node --check "$file"
+          done
       - name: Compile Python sources
         run: python -m compileall -q baymax server tests
       - name: Run unit and API tests

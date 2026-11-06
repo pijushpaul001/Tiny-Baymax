@@ -2,6 +2,60 @@
   "use strict";
   const byId = (id) => document.getElementById(id);
   const state = { token: null, busy: false, closing: null };
+  const SPEAK_PREFERENCE_KEY = "tiny-baymax-speak";
+  const speechAvailable = typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance === "function";
+  let speakEnabled = true;
+  let selectedVoice = null;
+  let recognition = null;
+  let faceController = null;
+
+  function readSpeakPreference() {
+    try {
+      const saved = window.localStorage.getItem(SPEAK_PREFERENCE_KEY);
+      return saved === null ? true : saved === "true";
+    } catch (_) { return true; }
+  }
+
+  function saveSpeakPreference() {
+    try { window.localStorage.setItem(SPEAK_PREFERENCE_KEY, String(speakEnabled)); } catch (_) {}
+  }
+
+  function cancelSpeech() {
+    if (speechAvailable) window.speechSynthesis.cancel();
+  }
+
+  function refreshVoice() {
+    if (!speechAvailable || !window.BaymaxSpeech) return;
+    selectedVoice = window.BaymaxSpeech.pickVoice(window.speechSynthesis.getVoices(), navigator.language);
+  }
+
+  function stopRecognition() {
+    if (recognition) {
+      try { recognition.stop(); } catch (_) {}
+    }
+  }
+
+  function showSpeechError(text) {
+    byId("speech-error").textContent = text;
+  }
+
+  function speakReply(text) {
+    if (!speechAvailable || !speakEnabled || !text) return;
+    refreshVoice();
+    const utterance = new window.SpeechSynthesisUtterance(String(text));
+    utterance.rate = 0.85;
+    utterance.pitch = 0.9;
+    if (selectedVoice) utterance.voice = selectedVoice;
+    if (navigator.language) utterance.lang = navigator.language;
+    cancelSpeech();
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function updateFace(emotion) {
+    if (!window.BaymaxFace) return;
+    if (!faceController) faceController = window.BaymaxFace.mountFace(byId("baymax-face"), emotion);
+    else faceController.update(emotion);
+  }
 
   function setStatus(text, connected = false) {
     const el = byId("connection-status");
@@ -108,6 +162,8 @@
   async function sendMessage(value) {
     const text = String(value ?? byId("message-input").value).trim();
     if (!text || state.busy || !state.token) return;
+    cancelSpeech();
+    stopRecognition();
     byId("message-input").value = "";
     clearTools();
     message("user", text);
@@ -116,6 +172,11 @@
     try {
       const result = await api("/api/chat", { method: "POST", body: JSON.stringify({ message: text }) });
       message("assistant", result.reply, result.kind === "safety");
+      if (["chat", "safety", "ritual"].includes(result.kind)) {
+        if (result.ended) cancelSpeech();
+        else speakReply(result.reply);
+      } else if (result.ended) cancelSpeech();
+      if (Object.prototype.hasOwnProperty.call(result, "emotion")) updateFace(result.emotion);
       state.closing = result.closing;
       updateInteraction(result);
       if (result.ended) {
@@ -157,11 +218,11 @@
       state.closing = null;
       const emergencyHint = typeof session.emergency_hint === "string" && session.emergency_hint.trim()
         ? session.emergency_hint.trim() : "your local emergency number";
-      byId("emergency-line").textContent = `In an emergency, contact ${emergencyHint}.`;
       byId("offline-card").querySelector("p").textContent =
         `If you may be experiencing a medical emergency, contact ${emergencyHint} now. Messages are not queued for later delivery.`;
       byId("offline-card").classList.add("hidden");
       renderHistory(session.history);
+      updateFace(session.emotion);
       byId("connect-screen").classList.add("hidden");
       byId("chat-screen").classList.remove("hidden");
       byId("end-session").disabled = false;
@@ -181,10 +242,68 @@
     try {
       const result = await api("/api/session/end", { method: "POST", body: JSON.stringify({}) });
       message("assistant", result.reply);
+      speakReply(result.reply);
+      if (Object.prototype.hasOwnProperty.call(result, "emotion")) updateFace(result.emotion);
       updateInteraction(result);
     } catch (error) {
       message("assistant", error.message, true);
     } finally { setBusy(false); }
+  }
+
+  if (speechAvailable) {
+    speakEnabled = readSpeakPreference();
+    const voiceButton = byId("voice-toggle");
+    function renderVoiceButton() {
+      voiceButton.textContent = speakEnabled ? "Voice on" : "Voice off";
+      voiceButton.setAttribute("aria-pressed", String(speakEnabled));
+    }
+    renderVoiceButton();
+    voiceButton.addEventListener("click", () => {
+      speakEnabled = !speakEnabled;
+      saveSpeakPreference();
+      renderVoiceButton();
+      if (!speakEnabled) cancelSpeech();
+    });
+    refreshVoice();
+    if (typeof window.speechSynthesis.addEventListener === "function") {
+      window.speechSynthesis.addEventListener("voiceschanged", refreshVoice);
+    } else {
+      window.speechSynthesis.onvoiceschanged = refreshVoice;
+    }
+  } else {
+    byId("voice-toggle").classList.add("hidden");
+  }
+
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (typeof Recognition === "function") {
+    recognition = new Recognition();
+    recognition.lang = navigator.language || "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    const micButton = byId("mic-button");
+    micButton.addEventListener("click", () => {
+      showSpeechError("");
+      cancelSpeech();
+      try {
+        recognition.start();
+        micButton.setAttribute("aria-pressed", "true");
+      } catch (_) {
+        showSpeechError("Microphone is unavailable right now.");
+      }
+    });
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results || []).map((item) => item[0]?.transcript || "").join(" ").trim();
+      if (transcript) byId("message-input").value = transcript;
+      byId("message-input").focus();
+    };
+    recognition.onerror = (event) => {
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") showSpeechError("Microphone permission was denied.");
+      else showSpeechError("Microphone is unavailable right now.");
+      micButton.setAttribute("aria-pressed", "false");
+    };
+    recognition.onend = () => micButton.setAttribute("aria-pressed", "false");
+  } else {
+    byId("mic-button").classList.add("hidden");
   }
 
   byId("connect-form").addEventListener("submit", connect);

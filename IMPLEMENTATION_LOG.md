@@ -481,3 +481,157 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Bumped `baymax.__version__` from `0.6.9` to `0.6.10` in the dedicated version-only commit `174e9bd38752bf4d4e98e40bc63f55440d50f934`.
 - **Verification before version bump:** Actions run [41826707933](https://github.com/pijushpaul001/Tiny-Baymax/actions/runs/41826707933) passed 166 tests in each of six combinations (Python 3.10/3.11/3.12 × dummy `.env`/no `.env` with dummy shell variables); compileall passed in all jobs. Local unittest **not run**. The version-only commit and following log commit require their own Actions result; real Gemini and device checks **not run**.
+
+
+## v0.6.11 — face logic
+
+- Added the pure `faceParams(emotion, reducedMotion)` calculation with baseline defaults, finite-number handling, the specified scaling/interval formulas and clamps.
+- Added a small browser controller for emotion-driven eye scaling, jittered blinking, hidden-tab pause and reduced-motion support. CSS custom properties are applied with `style.setProperty`.
+- Added Node-backed tests for baseline values, concern, happiness, clamps, malformed input and reduced motion.
+- **Verification:** `python -m unittest tests.test_face_logic -v` passed locally (1 test; Node.js v22.16.0). Browser rendering and phone behaviour not tested. This commit contains face logic only; chat-panel integration follows separately.
+
+
+## v0.6.11 — face panel integration
+
+- Added the inline SVG face above the conversation heading, with a white body, pale grey outline, two black ellipse eyes and a thin joining line. No mouth or extra features were added; `baymax.svg` is unchanged.
+- Added CSP-compatible CSS for smooth eye-size changes and blink styling. The controller applies CSS custom properties through `style.setProperty`.
+- Connected the face to `session.emotion` on connect and to `result.emotion` when present after chat and ritual responses. Missing emotion keys are guarded.
+- Added integration checks for the face element, script reference, emotion updates, and the no-inline-script/no-style-attribute rules.
+- **Verification:** locally ran `python -m unittest tests.test_face_logic tests.test_web_integration -v` in the face-only working copy: 9 tests passed. Node.js v22.16.0 was available. Phone rendering and real reduced-motion behaviour remain unverified.
+
+
+## v0.6.11 — speech synthesis and voice preference
+
+- Added `pickVoice(voices, lang)`: exact locale first, then English, preferring local-service voices within the selected group. No voice names are hard-coded.
+- Added the top-bar Voice on/off control (default on), with its preference stored client-side under the single key `tiny-baymax-speak`. Storage access is wrapped in `try/catch`; the passcode and token are not stored.
+- Live chat and safety replies plus the shutdown ritual prompt are spoken at rate 0.85 and pitch 0.9. History rendering does not call speech. Speech is cancelled on user send, Voice off and session end. The `voiceschanged` event refreshes voice selection. The control is hidden when speech synthesis is unavailable.
+- Added Node voice-selection cases and web integration assertions for live-only speech, rate/pitch and storage boundaries.
+- **Verification:** local face/voice and web integration tests passed in the combined working copy (10 tests). Node.js v22.16.0 was available. Actual device voices, audio quality and browser support are unverified.
+
+
+## v0.6.11 — optional microphone input
+
+- Added an optional composer microphone button using `SpeechRecognition` or `webkitSpeechRecognition`, with `navigator.language` as its locale.
+- Recognition fills the message textarea and does not submit it. Starting to listen cancels speech synthesis; sending a message stops recognition. Unsupported browsers hide the microphone control.
+- Added a short permission-denied state and a generic unavailable state.
+- Added integration checks for support detection, locale, textarea fill, no auto-send and the permission message.
+- **Verification:** local `python -m unittest tests.test_face_logic tests.test_web_integration -v` passed in the combined working copy (10 tests). Browser microphone permission and phone behaviour remain unverified.
+
+
+## v0.6.11 — static asset cache and JavaScript CI checks
+
+- Added `/face.js` and `/speech.js` to the service-worker static asset list and changed the cache name to `tiny-baymax-static-v2`.
+- Added a CI step that runs `node --check` for every `web/*.js` file.
+- Added an integration check for the cache version and both new assets.
+- **Verification:** local web integration suite passed in the combined working copy (11 tests); JavaScript syntax checks passed locally with Node.js v22.16.0. GitHub Actions has not yet run on this branch.
+
+
+## v0.6.11 — manual phone checklist
+
+- Added Section H with the requested face, emotion reaction, Voice toggle, speech quality, microphone, reduced-motion and cancel-on-send checks.
+- All checks remain unchecked; no phone/device behaviour is claimed as verified.
+- **Verification:** documentation reviewed; no manual phone checks were performed.
+
+
+### v0.6.11 local validation — current branch implementation
+
+- Ran `python -m unittest discover -s tests -t . -v`: **172 tests passed**.
+- Ran `node --check` for every `web/*.js` file: passed (Node.js v22.16.0).
+- Ran `python -m compileall -q baymax server tests`: passed.
+- GitHub Actions has **not** been reported green by the owner; no CI success is claimed here. Phone checks in Section H remain unchecked.
+- No files under `baymax/` or `server/` were changed. Package version remains 0.6.10. No PR was opened.
+
+
+### Speech scope guard correction
+
+- Restricted spoken chat responses to the specified live kinds only: `chat`, `safety` and `ritual`. Command, limit and error replies are not spoken. Session-end cancellation remains in place.
+- Added an integration assertion for the allowed response kinds.
+- **Verification:** the focused voice integration test passed locally; `node --check web/app.js` passed. Full suite rerun follows this correction.
+
+
+### v0.6.11 post-correction verification
+
+- After restricting speech to `chat`, `safety` and `ritual` response kinds, reran `python -m unittest discover -s tests -t . -v`: **172 tests passed**.
+- Re-ran `node --check` for every `web/*.js` file: passed (Node.js v22.16.0).
+- Re-ran `python -m compileall -q baymax server tests`: passed.
+- GitHub Actions and phone checks remain pending/unverified.
+
+
+### Storage assertion strengthening
+
+- Tightened the web integration test to assert that the only two localStorage calls are the read and write of `SPEAK_PREFERENCE_KEY`, which resolves to `tiny-baymax-speak`. The existing explicit token/passcode write checks remain.
+- **Verification:** focused closed-friends web integration test passed locally. Full suite rerun follows this test-only correction.
+
+
+### v0.6.11 final local verification after storage-test strengthening
+
+- Ran `python -m unittest discover -s tests -t . -v`: **172 tests passed**.
+- Ran `node --check` for every `web/*.js` file: passed (Node.js v22.16.0).
+- Ran `python -m compileall -q baymax server tests`: passed.
+- Actions remains pending owner confirmation; phone checks remain unchecked.
+
+
+## v0.6.11 follow-up — keep the face visible during message scrolling
+
+- **Cause:** the conversation panel used a minimum height rather than a constrained height, while the messages list also had a viewport-based maximum height and a 260px minimum. The combined content could exceed the panel, so the page/panel scrolled instead of keeping the face and composer in a fixed conversation frame.
+- Moved the face to immediately after the conversation heading and directly before `#messages`; it remains outside the message list.
+- Constrained the conversation panel height at desktop and narrow widths. The messages list now owns the flexible remaining height and is the only scrolling conversation region. The face is non-shrinking and 84px wide; composer and interaction tools remain outside the scrolling list.
+- Added a structural integration test proving the face precedes `#messages` and is not inside its contents.
+- **Verification:** tests added; not run locally in this GitHub-only editing session. GitHub Actions is ready to validate this commit. No phone/browser visual test is claimed.
+
+
+## v0.6.11 follow-up — remove permanent chat-screen lines (owner decision)
+
+- **Owner decision, 2026-11-06:** deliberately removed the always-visible emergency line and the "not a doctor or emergency service" line from the chat screen. This is an explicit owner decision, not an implementation reinterpretation.
+- Removed both paragraphs from `web/index.html`, the JavaScript write to `#emergency-line`, and the now-unused `.disclaimer` CSS. The connect-screen privacy note remains.
+- Kept `#offline-card`, its dynamic emergency-hint text and failed-send visibility behaviour, its position before `#connect-screen`, and all deterministic emergency replies unchanged.
+- Updated integration assertions to require the two strings to be absent while verifying the offline card is retained and displayed in the shared send-error catch path for 401, 429 and network failures.
+- Updated README, architecture and manual-test wording to state that the app keeps the offline emergency card only. Added the face-scroll visibility manual check. Appended the owner's superseding decision verbatim to the end of the Architecture change history.
+- **Verification:** tests updated; not run locally in this GitHub-only editing session. GitHub Actions is ready to validate this commit. No deterministic safety reply or Python/server file was changed.
+
+
+### Face/composer flex sizing follow-up
+
+- Explicitly made the conversation heading, interaction tools, composer and speech-error row non-shrinking flex items. The messages list alone takes the remaining panel height and scrolls.
+- Extended the structural integration test to assert the message scroll container and non-shrinking composer/tool regions.
+- **Verification:** regression assertions added; not run locally in this GitHub-only editing session. Actions should validate this follow-up commit.
+
+
+### Manual checklist wording clarification
+
+- Reworded the manual check to describe the absence of permanent chat-screen emergency/disclaimer copy without retaining the superseded line labels. The check still confirms the offline emergency card and connect-screen privacy note.
+- **Verification:** documentation-only wording update; no tests run for this commit.
+
+
+## v0.6.11 follow-up — retune visible emotion response
+
+- **Cause 1 confirmed:** the previous face formula used a 0.90 concern span and a 0.15 concern coefficient. At concern 0.35 it produced eyeScale approximately 1.042, a roughly 4% increase. Replaced it with the owner-specified 0.50 concern span and 0.25 coefficient; concern 0.35 now produces 1.125.
+- **Cause 2 verification, point 1 — response wiring:** connect calls `updateFace(session.emotion)`. Every normal chat response is built by `ChatService._resp` with the current emotion; the browser checks for the emotion field and calls `updateFace(result.emotion)`. The end-session response also updates the face when emotion is present. This wiring was already present.
+- **Cause 2 verification, point 2 — CSS scale application:** `updateFace` writes `--eye-scale` through `style.setProperty`. The eye rule consumes it in `transform: scale(var(--eye-scale, 1))` and already had `transform-box: fill-box` plus `transform-origin: center`. The scale application path was present; the transition was retuned separately.
+- **Cause 2 verification, point 3 — blink composition:** the blinking selector includes the same `scale(var(--eye-scale, 1))` before `scaleY(.06)`; blinking therefore preserves the emotion scale rather than replacing it. No extra face behaviour or mouth was added.
+- **Cause 2 verification, point 4 — transition:** the previous eye transform transition was 480 ms, below the requested 800–1,000 ms. Changed the normal eye transform transition to 900 ms. The blink state retains its short blink-duration override for the blink itself.
+- Retuned `faceParams` to the requested concern/happiness excess calculations, coefficients and clamps. Baseline remains exactly `eyeScale=1.0`, `blinkIntervalMs=5000`, `blinkDurationMs=160`; missing, non-numeric and non-finite emotion values use baseline defaults; reduced motion still disables blinking.
+- Updated Node-backed formula tests for concern 0.35, concern 0.60+, happiness 0.70, extreme values, invalid/non-finite inputs and reduced motion.
+- Added a FakeLLM-backed service integration test proving the `my head hurts` response exposes concern >= 0.30. The immediate pain-rating path is deterministic and intentionally does not invoke FakeLLM; the test asserts that no model call occurs.
+- Added a structural web integration test proving the chat response emotion is passed to `updateFace`, and CSS assertions for centered SVG scaling, the 900 ms transition and scale-preserving blink rule.
+- Updated Manual Test Section H with the requested phone checks for visible eye growth after `my head hurts` and slight eye reduction after `I got the job!`.
+- **Verification:** source and test changes committed; local test suite not run in this GitHub-only editing session. GitHub Actions will validate this commit. Actual phone rendering remains unverified; leave Section H unchecked until tested. No files under `baymax/` or `server/` were changed. Package version remains 0.6.10. No PR opened.
+
+
+## v0.6.11 follow-up — adorable face and two-axis expression (owner decision 2026-11-06)
+
+- **Owner decision, 2026-11-06:** deliberately revise the earlier face design: the face should be cuter and more adorable, not movie-accurate. The on-screen face area remains unchanged; only facial elements are enlarged. This supersedes the earlier small, movie-style eye treatment in CLAUDE_HANDOFF.md H-2.
+- Kept the white body and pale grey outline, slightly rounded the body further, and increased the two baseline eye ovals by 50% (rx 4.2→6.3; ry 5.2→7.8). Their positions preserve a clear margin to the body edge and a visible central joining line.
+- Added exactly one small white highlight dot in the upper part of each eye group. No mouth, extra facial feature, new colour, or additional animation was added.
+- Replaced the single `eyeScale` result with `eyeScaleX` and `eyeScaleY` using the owner's exact concern/happiness excess formulas and clamps. Baseline remains exactly X=1, Y=1, blink interval 5000 ms, blink duration 160 ms. Missing, non-numeric and non-finite fields continue to use baseline values.
+- Preserved blink interval, duration and reduced-motion logic from the previous tuning. Moved blink class application to the two parent `.face-eye-blink` groups while expression transforms apply to each child `.face-eye` group; this composes the vertical blink with the X/Y expression scaling. The eye transform uses `--eye-scale-x` and `--eye-scale-y`, centered with `transform-box: fill-box` and `transform-origin: center`, and retains the 900 ms transition.
+- Updated Node-backed face-parameter tests for concern 0.35, concern 0.60+, happiness 0.70, happiness 0.80+, baseline, malformed/non-finite input and reduced motion. Updated web structural/CSS assertions and added a structural SVG test for exactly two eye groups, exactly one highlight per eye, and no mouth/path/text element.
+- Updated Section H of `docs/MANUAL_TEST.md` to check that eyes visibly get taller after `my head hurts` and visibly flatter after `I got the job!`.
+- **Verification:** source, tests and docs committed; local tests not run in this GitHub-only editing session. GitHub Actions is ready to validate this commit. Actual phone rendering remains unverified; manual Section H items remain unchecked. No files under `baymax/` or `server/` were changed. Package version remains 0.6.10. No PR opened.
+
+
+### Face blink transition and SVG structure test correction
+
+- Follow-up source review found the parent blink group had its transition declared only while the blink class was active. Moved the transition declaration to the base parent-group rule so both closing and reopening use the configured blink duration; the active class now changes only its vertical scale.
+- Tightened the SVG structure test to verify each highlight is nested inside its own eye group, and corrected the no-mouth/no-extra-SVG-element assertion to use actual regex word boundaries.
+- **Verification:** correction committed; local tests not run in this GitHub-only editing session. Actions will validate the updated branch head. No additional runtime behaviour or files under `baymax/` or `server/` changed.

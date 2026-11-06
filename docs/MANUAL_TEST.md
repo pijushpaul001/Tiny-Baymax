@@ -8,7 +8,7 @@ Use this checklist after automated tests pass. Do not put API keys, passcodes, o
 - [ ] Leave `BAYMAX_USER_CONTROLS=0` (the default) and start with `python -m server`.
 - [ ] Open the app and confirm the connect screen is unchanged apart from the removed consent/review controls.
 - [ ] Confirm the main chat has no Care & privacy panel, no clear-history arrow, and no in-app settings/data controls.
-- [ ] Confirm the offline emergency card, emergency line, and existing not-a-doctor line remain present.
+- [ ] Confirm the offline emergency card is present; no permanent emergency/disclaimer copy appears on the chat screen, and the connect-screen privacy note remains.
 - [ ] Confirm no consent dialog appears and connecting does not require browser localStorage consent.
 - [ ] Confirm `/api/health` is public and the version is reported correctly.
 
@@ -65,3 +65,18 @@ HTTPS routing, or actual phone behaviour. Do not mark those checks as passed unt
 
 - The default delay is 6 seconds after each model-backed reply. Override it with `--delay SECONDS`; for example, `python tools/persona_check.py --delay 2.5`. Use `--delay 0` to disable waiting. Negative values are rejected. Replies handled without the model (ritual, command and safety) do not trigger a delay.
 
+
+
+## H. Face and voice — v0.6.11 phone checks
+
+- [ ] Open the chat on the phone and confirm the white face is visible at the top of the conversation panel and blinks slowly.
+- [ ] Scroll through a long conversation; confirm the face stays visible above the scrolling messages and the composer remains visible.
+- [ ] Send `my head hurts`; within about one second after the assistant response, confirm the eyes visibly get taller.
+- [ ] Send `I got the job!`; confirm the eyes become visibly flatter.
+- [ ] Confirm the top-bar Voice button starts on and can be switched off and on.
+- [ ] With Voice on, confirm live assistant replies sound slow and soft.
+- [ ] Use the microphone button; confirm recognized words fill the composer without being sent automatically.
+- [ ] Enable the device's reduced-motion preference; confirm the face does not blink.
+- [ ] Start a spoken reply, then send another message; confirm the previous speech is cancelled.
+
+These are manual verification steps only. Leave every item unchecked until it has been tested on the target phone/browser. Do not include passcodes, tokens or private health conversations in screenshots or logs.
