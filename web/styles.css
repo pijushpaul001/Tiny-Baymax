@@ -55,7 +55,7 @@ input:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px r
 .baymax-face { display: block; width: 84px; height: 67px; overflow: visible; }
 .face-body { fill: #fff; stroke: #e1e7e8; stroke-width: 1.5; }
 .face-bridge { stroke: #111; stroke-width: 1.5; stroke-linecap: round; }
-.face-eye { fill: #000; transform-box: fill-box; transform-origin: center; transform: scale(var(--eye-scale, 1)); transition: transform 480ms ease; }
+.face-eye { fill: #000; transform-box: fill-box; transform-origin: center; transform: scale(var(--eye-scale, 1)); transition: transform 900ms ease; }
 .baymax-face.is-blinking .face-eye { transform: scale(var(--eye-scale, 1)) scaleY(.06); transition-duration: var(--blink-duration, 160ms); }
 .conversation-heading { display: flex; align-items: center; justify-content: space-between; padding: 23px 24px 18px; border-bottom: 1px solid #edf2f2; }
 .conversation-heading h2 { font-size: 1.12rem; margin: 0; letter-spacing: -.02em; }

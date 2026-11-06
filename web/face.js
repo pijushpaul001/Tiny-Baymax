@@ -13,11 +13,11 @@
   function faceParams(emotion, reducedMotion) {
     const concern = finiteField(emotion, "concern", 0.10);
     const happiness = finiteField(emotion, "happiness", 0.50);
-    const concernExcess = Math.max(0, concern - 0.10) / 0.90;
-    const happyExcess = Math.max(0, happiness - 0.50) / 0.50;
+    const concernExcess = clamp((concern - 0.10) / 0.50, 0, 1);
+    const happyExcess = clamp((happiness - 0.50) / 0.30, 0, 1);
     return {
-      eyeScale: clamp(1 + 0.15 * concernExcess - 0.10 * happyExcess, 0.88, 1.15),
-      blinkIntervalMs: clamp(5000 + 3500 * concernExcess - 1000 * happyExcess, 3500, 8500),
+      eyeScale: clamp(1 + 0.25 * concernExcess - 0.15 * happyExcess, 0.80, 1.30),
+      blinkIntervalMs: clamp(5000 + 4000 * concernExcess - 1500 * happyExcess, 3000, 9000),
       blinkDurationMs: 160 + 60 * happyExcess,
       blinkEnabled: !reducedMotion
     };

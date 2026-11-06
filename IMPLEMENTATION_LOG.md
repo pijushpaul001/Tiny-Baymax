@@ -601,3 +601,18 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Reworded the manual check to describe the absence of permanent chat-screen emergency/disclaimer copy without retaining the superseded line labels. The check still confirms the offline emergency card and connect-screen privacy note.
 - **Verification:** documentation-only wording update; no tests run for this commit.
+
+
+## v0.6.11 follow-up — retune visible emotion response
+
+- **Cause 1 confirmed:** the previous face formula used a 0.90 concern span and a 0.15 concern coefficient. At concern 0.35 it produced eyeScale approximately 1.042, a roughly 4% increase. Replaced it with the owner-specified 0.50 concern span and 0.25 coefficient; concern 0.35 now produces 1.125.
+- **Cause 2 verification, point 1 — response wiring:** connect calls `updateFace(session.emotion)`. Every normal chat response is built by `ChatService._resp` with the current emotion; the browser checks for the emotion field and calls `updateFace(result.emotion)`. The end-session response also updates the face when emotion is present. This wiring was already present.
+- **Cause 2 verification, point 2 — CSS scale application:** `updateFace` writes `--eye-scale` through `style.setProperty`. The eye rule consumes it in `transform: scale(var(--eye-scale, 1))` and already had `transform-box: fill-box` plus `transform-origin: center`. The scale application path was present; the transition was retuned separately.
+- **Cause 2 verification, point 3 — blink composition:** the blinking selector includes the same `scale(var(--eye-scale, 1))` before `scaleY(.06)`; blinking therefore preserves the emotion scale rather than replacing it. No extra face behaviour or mouth was added.
+- **Cause 2 verification, point 4 — transition:** the previous eye transform transition was 480 ms, below the requested 800–1,000 ms. Changed the normal eye transform transition to 900 ms. The blink state retains its short blink-duration override for the blink itself.
+- Retuned `faceParams` to the requested concern/happiness excess calculations, coefficients and clamps. Baseline remains exactly `eyeScale=1.0`, `blinkIntervalMs=5000`, `blinkDurationMs=160`; missing, non-numeric and non-finite emotion values use baseline defaults; reduced motion still disables blinking.
+- Updated Node-backed formula tests for concern 0.35, concern 0.60+, happiness 0.70, extreme values, invalid/non-finite inputs and reduced motion.
+- Added a FakeLLM-backed service integration test proving the `my head hurts` response exposes concern >= 0.30. The immediate pain-rating path is deterministic and intentionally does not invoke FakeLLM; the test asserts that no model call occurs.
+- Added a structural web integration test proving the chat response emotion is passed to `updateFace`, and CSS assertions for centered SVG scaling, the 900 ms transition and scale-preserving blink rule.
+- Updated Manual Test Section H with the requested phone checks for visible eye growth after `my head hurts` and slight eye reduction after `I got the job!`.
+- **Verification:** source and test changes committed; local test suite not run in this GitHub-only editing session. GitHub Actions will validate this commit. Actual phone rendering remains unverified; leave Section H unchecked until tested. No files under `baymax/` or `server/` were changed. Package version remains 0.6.10. No PR opened.

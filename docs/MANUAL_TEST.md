@@ -71,7 +71,8 @@ HTTPS routing, or actual phone behaviour. Do not mark those checks as passed unt
 
 - [ ] Open the chat on the phone and confirm the white face is visible at the top of the conversation panel and blinks slowly.
 - [ ] Scroll through a long conversation; confirm the face stays visible above the scrolling messages and the composer remains visible.
-- [ ] Send `my head hurts`; confirm the face reacts after the assistant response.
+- [ ] Send `my head hurts`; within about one second after the assistant response, confirm the eyes visibly grow.
+- [ ] Send `I got the job!`; confirm the eyes become slightly smaller.
 - [ ] Confirm the top-bar Voice button starts on and can be switched off and on.
 - [ ] With Voice on, confirm live assistant replies sound slow and soft.
 - [ ] Use the microphone button; confirm recognized words fill the composer without being sent automatically.

@@ -73,6 +73,16 @@ class WebIntegrationTests(unittest.TestCase):
 
 
 
+    def test_chat_response_emotion_is_passed_to_face_update(self):
+        _, _, script_bytes = self.request("/app.js")
+        script = script_bytes.decode()
+        send_start = script.index("async function sendMessage")
+        response_start = script.index('const result = await api("/api/chat"', send_start)
+        update_at = script.index("updateFace(result.emotion)", response_start)
+        response_guard_at = script.index('hasOwnProperty.call(result, "emotion")', response_start)
+        self.assertLess(response_start, response_guard_at)
+        self.assertLess(response_guard_at, update_at)
+
     def test_face_stays_outside_the_scrolling_message_list(self):
         _, _, html_bytes = self.request("/")
         html = html_bytes.decode()
@@ -87,6 +97,11 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertIn("overflow-y: auto", css)
         self.assertIn("min-height: 0; max-height: none", css)
         self.assertIn(".conversation-heading, .interaction-tools, .composer, .speech-error { flex: 0 0 auto; }", css)
+        self.assertIn("transform-box: fill-box", css)
+        self.assertIn("transform-origin: center", css)
+        self.assertIn("transform: scale(var(--eye-scale, 1))", css)
+        self.assertIn("transition: transform 900ms ease", css)
+        self.assertIn("transform: scale(var(--eye-scale, 1)) scaleY(.06)", css)
 
     def test_voice_controls_only_speak_live_replies_and_cancel_on_send(self):
         _, _, html_bytes = self.request("/")
