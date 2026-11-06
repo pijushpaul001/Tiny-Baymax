@@ -1,4 +1,5 @@
 import json
+import re
 import tempfile
 import threading
 import unittest
@@ -97,12 +98,13 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertEqual(blink_groups, 2)
         self.assertEqual(svg.count("<ellipse "), 2)
         self.assertEqual(svg.count("<circle "), 2)
-        self.assertNotRegex(svg, r"(?i)(mouth|<path\\b|<text\\b)")
-        for fragment in (
-            '<g class="face-eye-blink">\\n                <g class="face-eye">\\n                  <ellipse',
-            '<circle class="face-highlight"',
-        ):
-            self.assertIn(fragment, svg)
+        self.assertNotRegex(svg, r"(?i)(mouth|<path\b|<text\b)")
+        highlighted_eye_groups = re.findall(
+            r'<g class="face-eye-blink">\s*<g class="face-eye">\s*'
+            r'<ellipse[^>]+>\s*<circle class="face-highlight"[^>]+>\s*</g>\s*</g>',
+            svg,
+        )
+        self.assertEqual(len(highlighted_eye_groups), 2)
 
     def test_face_stays_outside_the_scrolling_message_list(self):
         _, _, html_bytes = self.request("/")

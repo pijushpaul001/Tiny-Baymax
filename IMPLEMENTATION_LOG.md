@@ -628,3 +628,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Updated Node-backed face-parameter tests for concern 0.35, concern 0.60+, happiness 0.70, happiness 0.80+, baseline, malformed/non-finite input and reduced motion. Updated web structural/CSS assertions and added a structural SVG test for exactly two eye groups, exactly one highlight per eye, and no mouth/path/text element.
 - Updated Section H of `docs/MANUAL_TEST.md` to check that eyes visibly get taller after `my head hurts` and visibly flatter after `I got the job!`.
 - **Verification:** source, tests and docs committed; local tests not run in this GitHub-only editing session. GitHub Actions is ready to validate this commit. Actual phone rendering remains unverified; manual Section H items remain unchecked. No files under `baymax/` or `server/` were changed. Package version remains 0.6.10. No PR opened.
+
+
+### Face blink transition and SVG structure test correction
+
+- Follow-up source review found the parent blink group had its transition declared only while the blink class was active. Moved the transition declaration to the base parent-group rule so both closing and reopening use the configured blink duration; the active class now changes only its vertical scale.
+- Tightened the SVG structure test to verify each highlight is nested inside its own eye group, and corrected the no-mouth/no-extra-SVG-element assertion to use actual regex word boundaries.
+- **Verification:** correction committed; local tests not run in this GitHub-only editing session. Actions will validate the updated branch head. No additional runtime behaviour or files under `baymax/` or `server/` changed.
