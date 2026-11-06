@@ -82,6 +82,7 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertIn("speechSynthesis", script)
         self.assertIn("utterance.rate = 0.85", script)
         self.assertIn("utterance.pitch = 0.9", script)
+        self.assertIn('["chat", "safety", "ritual"].includes(result.kind)', script)
         history_start = script.index("function renderHistory")
         history_end = script.index("function clearTools", history_start)
         self.assertNotIn("speakReply", script[history_start:history_end])

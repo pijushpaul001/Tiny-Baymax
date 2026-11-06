@@ -540,3 +540,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Ran `python -m compileall -q baymax server tests`: passed.
 - GitHub Actions has **not** been reported green by the owner; no CI success is claimed here. Phone checks in Section H remain unchecked.
 - No files under `baymax/` or `server/` were changed. Package version remains 0.6.10. No PR was opened.
+
+
+### Speech scope guard correction
+
+- Restricted spoken chat responses to the specified live kinds only: `chat`, `safety` and `ritual`. Command, limit and error replies are not spoken. Session-end cancellation remains in place.
+- Added an integration assertion for the allowed response kinds.
+- **Verification:** the focused voice integration test passed locally; `node --check web/app.js` passed. Full suite rerun follows this correction.

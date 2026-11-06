@@ -172,8 +172,10 @@
     try {
       const result = await api("/api/chat", { method: "POST", body: JSON.stringify({ message: text }) });
       message("assistant", result.reply, result.kind === "safety");
-      if (result.ended) cancelSpeech();
-      else speakReply(result.reply);
+      if (["chat", "safety", "ritual"].includes(result.kind)) {
+        if (result.ended) cancelSpeech();
+        else speakReply(result.reply);
+      } else if (result.ended) cancelSpeech();
       if (Object.prototype.hasOwnProperty.call(result, "emotion")) updateFace(result.emotion);
       state.closing = result.closing;
       updateInteraction(result);
