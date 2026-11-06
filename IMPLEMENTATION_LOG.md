@@ -524,3 +524,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added a CI step that runs `node --check` for every `web/*.js` file.
 - Added an integration check for the cache version and both new assets.
 - **Verification:** local web integration suite passed in the combined working copy (11 tests); JavaScript syntax checks passed locally with Node.js v22.16.0. GitHub Actions has not yet run on this branch.
+
+
+## v0.6.11 — manual phone checklist
+
+- Added Section H with the requested face, emotion reaction, Voice toggle, speech quality, microphone, reduced-motion and cancel-on-send checks.
+- All checks remain unchecked; no phone/device behaviour is claimed as verified.
+- **Verification:** documentation reviewed; no manual phone checks were performed.

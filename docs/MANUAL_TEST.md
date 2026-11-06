@@ -65,3 +65,16 @@ HTTPS routing, or actual phone behaviour. Do not mark those checks as passed unt
 
 - The default delay is 6 seconds after each model-backed reply. Override it with `--delay SECONDS`; for example, `python tools/persona_check.py --delay 2.5`. Use `--delay 0` to disable waiting. Negative values are rejected. Replies handled without the model (ritual, command and safety) do not trigger a delay.
 
+
+
+## H. Face and voice — v0.6.11 phone checks
+
+- [ ] Open the chat on the phone and confirm the white face is visible at the top of the conversation panel and blinks slowly.
+- [ ] Send `my head hurts`; confirm the face reacts after the assistant response.
+- [ ] Confirm the top-bar Voice button starts on and can be switched off and on.
+- [ ] With Voice on, confirm live assistant replies sound slow and soft.
+- [ ] Use the microphone button; confirm recognized words fill the composer without being sent automatically.
+- [ ] Enable the device's reduced-motion preference; confirm the face does not blink.
+- [ ] Start a spoken reply, then send another message; confirm the previous speech is cancelled.
+
+These are manual verification steps only. Leave every item unchecked until it has been tested on the target phone/browser. Do not include passcodes, tokens or private health conversations in screenshots or logs.
