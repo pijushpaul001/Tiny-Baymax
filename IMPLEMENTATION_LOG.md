@@ -547,3 +547,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Restricted spoken chat responses to the specified live kinds only: `chat`, `safety` and `ritual`. Command, limit and error replies are not spoken. Session-end cancellation remains in place.
 - Added an integration assertion for the allowed response kinds.
 - **Verification:** the focused voice integration test passed locally; `node --check web/app.js` passed. Full suite rerun follows this correction.
+
+
+### v0.6.11 post-correction verification
+
+- After restricting speech to `chat`, `safety` and `ritual` response kinds, reran `python -m unittest discover -s tests -t . -v`: **172 tests passed**.
+- Re-ran `node --check` for every `web/*.js` file: passed (Node.js v22.16.0).
+- Re-ran `python -m compileall -q baymax server tests`: passed.
+- GitHub Actions and phone checks remain pending/unverified.
