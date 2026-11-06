@@ -498,3 +498,12 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Connected the face to `session.emotion` on connect and to `result.emotion` when present after chat and ritual responses. Missing emotion keys are guarded.
 - Added integration checks for the face element, script reference, emotion updates, and the no-inline-script/no-style-attribute rules.
 - **Verification:** locally ran `python -m unittest tests.test_face_logic tests.test_web_integration -v` in the face-only working copy: 9 tests passed. Node.js v22.16.0 was available. Phone rendering and real reduced-motion behaviour remain unverified.
+
+
+## v0.6.11 — speech synthesis and voice preference
+
+- Added `pickVoice(voices, lang)`: exact locale first, then English, preferring local-service voices within the selected group. No voice names are hard-coded.
+- Added the top-bar Voice on/off control (default on), with its preference stored client-side under the single key `tiny-baymax-speak`. Storage access is wrapped in `try/catch`; the passcode and token are not stored.
+- Live chat and safety replies plus the shutdown ritual prompt are spoken at rate 0.85 and pitch 0.9. History rendering does not call speech. Speech is cancelled on user send, Voice off and session end. The `voiceschanged` event refreshes voice selection. The control is hidden when speech synthesis is unavailable.
+- Added Node voice-selection cases and web integration assertions for live-only speech, rate/pitch and storage boundaries.
+- **Verification:** local face/voice and web integration tests passed in the combined working copy (10 tests). Node.js v22.16.0 was available. Actual device voices, audio quality and browser support are unverified.

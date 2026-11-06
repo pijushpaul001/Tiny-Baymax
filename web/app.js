@@ -2,7 +2,43 @@
   "use strict";
   const byId = (id) => document.getElementById(id);
   const state = { token: null, busy: false, closing: null };
+  const SPEAK_PREFERENCE_KEY = "tiny-baymax-speak";
+  const speechAvailable = typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance === "function";
+  let speakEnabled = true;
+  let selectedVoice = null;
   let faceController = null;
+
+  function readSpeakPreference() {
+    try {
+      const saved = window.localStorage.getItem(SPEAK_PREFERENCE_KEY);
+      return saved === null ? true : saved === "true";
+    } catch (_) { return true; }
+  }
+
+  function saveSpeakPreference() {
+    try { window.localStorage.setItem(SPEAK_PREFERENCE_KEY, String(speakEnabled)); } catch (_) {}
+  }
+
+  function cancelSpeech() {
+    if (speechAvailable) window.speechSynthesis.cancel();
+  }
+
+  function refreshVoice() {
+    if (!speechAvailable || !window.BaymaxSpeech) return;
+    selectedVoice = window.BaymaxSpeech.pickVoice(window.speechSynthesis.getVoices(), navigator.language);
+  }
+
+  function speakReply(text) {
+    if (!speechAvailable || !speakEnabled || !text) return;
+    refreshVoice();
+    const utterance = new window.SpeechSynthesisUtterance(String(text));
+    utterance.rate = 0.85;
+    utterance.pitch = 0.9;
+    if (selectedVoice) utterance.voice = selectedVoice;
+    if (navigator.language) utterance.lang = navigator.language;
+    cancelSpeech();
+    window.speechSynthesis.speak(utterance);
+  }
 
   function updateFace(emotion) {
     if (!window.BaymaxFace) return;
@@ -115,6 +151,7 @@
   async function sendMessage(value) {
     const text = String(value ?? byId("message-input").value).trim();
     if (!text || state.busy || !state.token) return;
+    cancelSpeech();
     byId("message-input").value = "";
     clearTools();
     message("user", text);
@@ -123,6 +160,8 @@
     try {
       const result = await api("/api/chat", { method: "POST", body: JSON.stringify({ message: text }) });
       message("assistant", result.reply, result.kind === "safety");
+      if (result.ended) cancelSpeech();
+      else speakReply(result.reply);
       if (Object.prototype.hasOwnProperty.call(result, "emotion")) updateFace(result.emotion);
       state.closing = result.closing;
       updateInteraction(result);
@@ -190,11 +229,36 @@
     try {
       const result = await api("/api/session/end", { method: "POST", body: JSON.stringify({}) });
       message("assistant", result.reply);
+      speakReply(result.reply);
       if (Object.prototype.hasOwnProperty.call(result, "emotion")) updateFace(result.emotion);
       updateInteraction(result);
     } catch (error) {
       message("assistant", error.message, true);
     } finally { setBusy(false); }
+  }
+
+  if (speechAvailable) {
+    speakEnabled = readSpeakPreference();
+    const voiceButton = byId("voice-toggle");
+    function renderVoiceButton() {
+      voiceButton.textContent = speakEnabled ? "Voice on" : "Voice off";
+      voiceButton.setAttribute("aria-pressed", String(speakEnabled));
+    }
+    renderVoiceButton();
+    voiceButton.addEventListener("click", () => {
+      speakEnabled = !speakEnabled;
+      saveSpeakPreference();
+      renderVoiceButton();
+      if (!speakEnabled) cancelSpeech();
+    });
+    refreshVoice();
+    if (typeof window.speechSynthesis.addEventListener === "function") {
+      window.speechSynthesis.addEventListener("voiceschanged", refreshVoice);
+    } else {
+      window.speechSynthesis.onvoiceschanged = refreshVoice;
+    }
+  } else {
+    byId("voice-toggle").classList.add("hidden");
   }
 
   byId("connect-form").addEventListener("submit", connect);

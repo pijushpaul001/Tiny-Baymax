@@ -52,7 +52,7 @@ class WebIntegrationTests(unittest.TestCase):
 
     def test_web_assets_are_served_with_expected_types(self):
         for path, expected in (("/", "text/html"), ("/app.js", "javascript"),
-                               ("/face.js", "javascript"), ("/styles.css", "text/css"), ("/manifest.webmanifest", "application/manifest+json")):
+                               ("/face.js", "javascript"), ("/speech.js", "javascript"), ("/styles.css", "text/css"), ("/manifest.webmanifest", "application/manifest+json")):
             with self.subTest(path=path):
                 status, ctype, body = self.request(path)
                 self.assertEqual(status, 200)
@@ -71,6 +71,21 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertIn('hasOwnProperty.call(result, "emotion")', script)
         self.assertIn("result.emotion", script)
 
+
+    def test_voice_controls_only_speak_live_replies_and_cancel_on_send(self):
+        _, _, html_bytes = self.request("/")
+        _, _, script_bytes = self.request("/app.js")
+        html = html_bytes.decode()
+        script = script_bytes.decode()
+        self.assertIn('id="voice-toggle"', html)
+        self.assertIn('src="/speech.js"', html)
+        self.assertIn("speechSynthesis", script)
+        self.assertIn("utterance.rate = 0.85", script)
+        self.assertIn("utterance.pitch = 0.9", script)
+        history_start = script.index("function renderHistory")
+        history_end = script.index("function clearTools", history_start)
+        self.assertNotIn("speakReply", script[history_start:history_end])
+
     def test_index_has_no_inline_scripts_or_style_attributes(self):
         _, _, html_bytes = self.request("/")
         html = html_bytes.decode()
@@ -86,8 +101,12 @@ class WebIntegrationTests(unittest.TestCase):
                            "export-data", "reset-emotion", "delete-all", "clear-history",
                            "consent-dialog", "review-consent", "consent-form"):
             self.assertNotIn(forbidden, html)
-        for forbidden in ("CONSENT_KEY", "consented_version", "localStorage", "consentDialog"):
+        for forbidden in ("CONSENT_KEY", "consented_version", "consentDialog"):
             self.assertNotIn(forbidden, script)
+        self.assertIn('"tiny-baymax-speak"', script)
+        self.assertNotIn('localStorage.setItem("token"', script)
+        self.assertNotIn('localStorage.setItem("passcode"', script)
+        self.assertNotIn('localStorage.setItem("X-Baymax-Token"', script)
         self.assertIn('id="offline-card"', html)
         self.assertIn("In an emergency, contact your local emergency number.", html)
         self.assertIn("Baymax is an AI companion, not a doctor or emergency service.", html)

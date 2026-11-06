@@ -17,6 +17,7 @@ class FaceLogicTests(unittest.TestCase):
         source = r"""
 const assert = require("node:assert/strict");
 const { faceParams } = require(process.argv[1]);
+const { pickVoice } = require(process.argv[2]);
 const baseline = faceParams({ concern: 0.10, happiness: 0.50 }, false);
 assert.deepEqual(baseline, { eyeScale: 1.0, blinkIntervalMs: 5000, blinkDurationMs: 160, blinkEnabled: true });
 assert.equal(faceParams({ concern: 1, happiness: 0.5 }, false).eyeScale, 1.15);
@@ -29,9 +30,21 @@ assert.equal(faceParams({ concern: 0.1, happiness: 100 }, false).blinkIntervalMs
 assert.equal(faceParams({ concern: "bad", happiness: NaN }, false).eyeScale, 1.0);
 assert.equal(faceParams(undefined, false).blinkIntervalMs, 5000);
 assert.equal(faceParams({}, true).blinkEnabled, false);
+const voices = [
+  { name: "English remote", lang: "en-US", localService: false },
+  { name: "English local", lang: "en-US", localService: true },
+  { name: "Hindi local", lang: "hi-IN", localService: true },
+  { name: "British local", lang: "en-GB", localService: true }
+];
+assert.equal(pickVoice(voices, "hi-IN").name, "Hindi local");
+assert.equal(pickVoice(voices, "fr-FR").name, "English local");
+assert.equal(pickVoice(voices, "en-US").name, "English local");
+assert.equal(pickVoice([{ name: "English remote", lang: "en-US", localService: false }], "fr").name, "English remote");
+assert.equal(pickVoice([{ name: "Hindi", lang: "hi-IN" }], "fr-FR"), null);
+assert.equal(pickVoice([], "en-US"), null);
 """
         result = subprocess.run(
-            [self.node, "-e", source, str(ROOT / "web" / "face.js")],
+            [self.node, "-e", source, str(ROOT / "web" / "face.js"), str(ROOT / "web" / "speech.js")],
             capture_output=True, text=True, check=False,
         )
         self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
