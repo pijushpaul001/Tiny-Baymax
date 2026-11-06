@@ -1,5 +1,5 @@
-const CACHE_NAME = "tiny-baymax-static-v1";
-const STATIC_ASSETS = ["/", "/index.html", "/styles.css", "/app.js", "/manifest.webmanifest", "/baymax.svg"];
+const CACHE_NAME = "tiny-baymax-static-v2";
+const STATIC_ASSETS = ["/", "/index.html", "/styles.css", "/app.js", "/face.js", "/speech.js", "/manifest.webmanifest", "/baymax.svg"];
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)));
   self.skipWaiting();

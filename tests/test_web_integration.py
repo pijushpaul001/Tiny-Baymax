@@ -107,6 +107,14 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertNotRegex(html, r"(?i)\sstyle\s*=")
         self.assertNotRegex(html, r"(?is)<script(?![^>]*\bsrc=)[^>]*>")
 
+
+    def test_service_worker_caches_face_and_speech_assets(self):
+        _, _, sw_bytes = self.request("/sw.js")
+        sw = sw_bytes.decode()
+        self.assertIn('tiny-baymax-static-v2', sw)
+        self.assertIn('"/face.js"', sw)
+        self.assertIn('"/speech.js"', sw)
+
     def test_default_closed_friends_web_has_no_user_controls_or_consent_ui(self):
         _, _, html_bytes = self.request("/")
         _, _, script_bytes = self.request("/app.js")

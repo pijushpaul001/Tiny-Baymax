@@ -516,3 +516,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added a short permission-denied state and a generic unavailable state.
 - Added integration checks for support detection, locale, textarea fill, no auto-send and the permission message.
 - **Verification:** local `python -m unittest tests.test_face_logic tests.test_web_integration -v` passed in the combined working copy (10 tests). Browser microphone permission and phone behaviour remain unverified.
+
+
+## v0.6.11 — static asset cache and JavaScript CI checks
+
+- Added `/face.js` and `/speech.js` to the service-worker static asset list and changed the cache name to `tiny-baymax-static-v2`.
+- Added a CI step that runs `node --check` for every `web/*.js` file.
+- Added an integration check for the cache version and both new assets.
+- **Verification:** local web integration suite passed in the combined working copy (11 tests); JavaScript syntax checks passed locally with Node.js v22.16.0. GitHub Actions has not yet run on this branch.
