@@ -82,6 +82,11 @@ class WebIntegrationTests(unittest.TestCase):
         messages_end_at = html.index("</div>", messages_content_at)
         self.assertLess(face_at, messages_at)
         self.assertNotIn("baymax-face", html[messages_content_at:messages_end_at])
+        _, _, css_bytes = self.request("/styles.css")
+        css = css_bytes.decode()
+        self.assertIn("overflow-y: auto", css)
+        self.assertIn("min-height: 0; max-height: none", css)
+        self.assertIn(".conversation-heading, .interaction-tools, .composer, .speech-error { flex: 0 0 auto; }", css)
 
     def test_voice_controls_only_speak_live_replies_and_cancel_on_send(self):
         _, _, html_bytes = self.request("/")

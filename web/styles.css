@@ -59,6 +59,7 @@ input:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px r
 .baymax-face.is-blinking .face-eye { transform: scale(var(--eye-scale, 1)) scaleY(.06); transition-duration: var(--blink-duration, 160ms); }
 .conversation-heading { display: flex; align-items: center; justify-content: space-between; padding: 23px 24px 18px; border-bottom: 1px solid #edf2f2; }
 .conversation-heading h2 { font-size: 1.12rem; margin: 0; letter-spacing: -.02em; }
+.conversation-heading, .interaction-tools, .composer, .speech-error { flex: 0 0 auto; }
 .icon-button { border: 1px solid var(--line); border-radius: 12px; width: 38px; height: 38px; font-size: 1.3rem; color: var(--teal); background: #f7fbfb; }
 .messages { display: flex; flex: 1 1 0; flex-direction: column; gap: 12px; padding: 22px 24px; min-height: 0; max-height: none; overflow-y: auto; overscroll-behavior: contain; }
 .message-row { display: flex; gap: 9px; align-items: flex-end; max-width: 92%; }

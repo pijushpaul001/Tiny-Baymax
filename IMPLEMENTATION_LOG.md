@@ -588,3 +588,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Updated integration assertions to require the two strings to be absent while verifying the offline card is retained and displayed in the shared send-error catch path for 401, 429 and network failures.
 - Updated README, architecture and manual-test wording to state that the app keeps the offline emergency card only. Added the face-scroll visibility manual check. Appended the owner's superseding decision verbatim to the end of the Architecture change history.
 - **Verification:** tests updated; not run locally in this GitHub-only editing session. GitHub Actions is ready to validate this commit. No deterministic safety reply or Python/server file was changed.
+
+
+### Face/composer flex sizing follow-up
+
+- Explicitly made the conversation heading, interaction tools, composer and speech-error row non-shrinking flex items. The messages list alone takes the remaining panel height and scrolls.
+- Extended the structural integration test to assert the message scroll container and non-shrinking composer/tool regions.
+- **Verification:** regression assertions added; not run locally in this GitHub-only editing session. Actions should validate this follow-up commit.
