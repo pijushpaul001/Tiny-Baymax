@@ -595,3 +595,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Explicitly made the conversation heading, interaction tools, composer and speech-error row non-shrinking flex items. The messages list alone takes the remaining panel height and scrolls.
 - Extended the structural integration test to assert the message scroll container and non-shrinking composer/tool regions.
 - **Verification:** regression assertions added; not run locally in this GitHub-only editing session. Actions should validate this follow-up commit.
+
+
+### Manual checklist wording clarification
+
+- Reworded the manual check to describe the absence of permanent chat-screen emergency/disclaimer copy without retaining the superseded line labels. The check still confirms the offline emergency card and connect-screen privacy note.
+- **Verification:** documentation-only wording update; no tests run for this commit.

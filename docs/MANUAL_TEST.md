@@ -8,7 +8,7 @@ Use this checklist after automated tests pass. Do not put API keys, passcodes, o
 - [ ] Leave `BAYMAX_USER_CONTROLS=0` (the default) and start with `python -m server`.
 - [ ] Open the app and confirm the connect screen is unchanged apart from the removed consent/review controls.
 - [ ] Confirm the main chat has no Care & privacy panel, no clear-history arrow, and no in-app settings/data controls.
-- [ ] Confirm the offline emergency card is present; the chat screen has no always-visible emergency or not-a-doctor line, and the connect-screen privacy note remains.
+- [ ] Confirm the offline emergency card is present; no permanent emergency/disclaimer copy appears on the chat screen, and the connect-screen privacy note remains.
 - [ ] Confirm no consent dialog appears and connecting does not require browser localStorage consent.
 - [ ] Confirm `/api/health` is public and the version is reported correctly.
 
