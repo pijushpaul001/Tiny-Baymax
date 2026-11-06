@@ -128,6 +128,9 @@ class WebIntegrationTests(unittest.TestCase):
         for forbidden in ("CONSENT_KEY", "consented_version", "consentDialog"):
             self.assertNotIn(forbidden, script)
         self.assertIn('"tiny-baymax-speak"', script)
+        self.assertEqual(script.count("localStorage."), 2)
+        self.assertIn("localStorage.getItem(SPEAK_PREFERENCE_KEY)", script)
+        self.assertIn("localStorage.setItem(SPEAK_PREFERENCE_KEY, String(speakEnabled))", script)
         self.assertNotIn('localStorage.setItem("token"', script)
         self.assertNotIn('localStorage.setItem("passcode"', script)
         self.assertNotIn('localStorage.setItem("X-Baymax-Token"', script)

@@ -555,3 +555,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Re-ran `node --check` for every `web/*.js` file: passed (Node.js v22.16.0).
 - Re-ran `python -m compileall -q baymax server tests`: passed.
 - GitHub Actions and phone checks remain pending/unverified.
+
+
+### Storage assertion strengthening
+
+- Tightened the web integration test to assert that the only two localStorage calls are the read and write of `SPEAK_PREFERENCE_KEY`, which resolves to `tiny-baymax-speak`. The existing explicit token/passcode write checks remain.
+- **Verification:** focused closed-friends web integration test passed locally. Full suite rerun follows this test-only correction.
