@@ -635,3 +635,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Follow-up source review found the parent blink group had its transition declared only while the blink class was active. Moved the transition declaration to the base parent-group rule so both closing and reopening use the configured blink duration; the active class now changes only its vertical scale.
 - Tightened the SVG structure test to verify each highlight is nested inside its own eye group, and corrected the no-mouth/no-extra-SVG-element assertion to use actual regex word boundaries.
 - **Verification:** correction committed; local tests not run in this GitHub-only editing session. Actions will validate the updated branch head. No additional runtime behaviour or files under `baymax/` or `server/` changed.
+
+### AGENTS.md rule 7 correction
+
+- Replaced the malformed, concatenated rule 7 with the owner's exact closed-friends-mode wording. Removed the contradictory legacy statement that users can inspect, delete and export their data in-app.
+- No application code or runtime behaviour changed.
+- **Verification:** confirmed the malformed combined line was present before editing; validated the updated file contains exactly one rule 7 with the requested wording. No local test suite run because this is an agent-instructions documentation-only correction.
