@@ -9,7 +9,7 @@ Read `CLAUDE_HANDOFF.md` first. It is the authoritative architecture spec. Log y
 4. Secrets never in code, logs, database or git. Keys live in `.env` (git-ignored).
 5. Simulated emotion is computational state, never claimed as real feeling, and must change behaviour.
 6. Caring but never clingy. Never invent implications about the user.
-7. The user can always inspect, delete and export data, clear history, reset emotion and exit.7. Closed-friends mode (BAYMAX_USER_CONTROLS=0, the default): users do not inspect, edit, export or delete stored data in the app. The owner reads all users' data with the read-only tools/export_all.py over SSH. Never re-add in-app data controls and never expose the export over HTTP. Locked routes and commands are refused on the server (403 not_available), not just hidden. Users can always end the session. BAYMAX_USER_CONTROLS=1 exists for tests and Codespaces only.
+7. Closed-friends mode (BAYMAX_USER_CONTROLS=0, the default): users do not inspect, edit, export or delete stored data in the app. The owner reads all users' data with the read-only tools/export_all.py over SSH. Never re-add in-app data controls and never expose the export over HTTP. Locked routes and commands are refused on the server (403 not_available), not just hidden. Users can always end the session. BAYMAX_USER_CONTROLS=1 exists for tests and Codespaces only.
 8. Write new dialogue in Baymax's manner (short, calm, plain, few contractions). No film lines, no voice cloning.
 
 ## Engineering
