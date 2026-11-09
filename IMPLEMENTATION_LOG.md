@@ -692,3 +692,19 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Tightened the busy-state wiring so Thinking gaze is enabled only by `sendMessage`'s in-flight chat request. The shutdown ritual's separate session-end request still disables the composer/buttons but does not move the eyes.
 - Extended the web integration assertion to distinguish chat busy state from the session-end request.
 - **Verification:** code/test correction committed. The preceding Actions run on the prior head is still in progress; this commit will receive its own Actions run. No other behaviour or files changed.
+
+## v0.6.12 follow-up — subtle emotion-driven face bridge (owner decision 2026-11-09)
+
+- Replaced the straight SVG bridge line with one quadratic path.face-bridge, retaining the existing .face-bridge stroke styling and its position before the eyes. The baseline markup uses a 1.5-unit bend; no mouth or other facial element was added.
+- Added the three tuning constants at the top of web/face.js: RESTING_SMILE_DEPTH = 1.5, HAPPY_SMILE_GAIN = 3.0, and MAX_SMILE_DEPTH = 4.5. faceParams now returns smileDepth using the requested happy/concern excess formula; the existing parameter calculations are otherwise unchanged.
+- The face controller updates the path's d attribute directly and tweens the bend over 900 ms with requestAnimationFrame. A new tween cancels the previous frame; reduced-motion mode applies the target immediately. No CSS transition is used for the path data.
+- Updated Node-backed formula expectations for baseline, happiness 0.70, happiness 0.80+, concern 0.35, concern 0.60+ and malformed input. Updated the SVG integration assertion to require exactly one path.face-bridge, two eyes, two highlights, and no mouth, text or other SVG shape elements.
+- Updated H-2 with the owner decision dated 2026-11-09 and added the three requested manual checks to Section H. Manual device checks remain unchecked.
+- Commit history (one focused commit per file):
+  - e6ebcdeca87a69bc0527531ee36cbebf3d961c9f — web/index.html
+  - 3876127f5a24223ec8943cbb9f5838b7e750628d — web/face.js
+  - 7909dfc1104b14cc9f11396923a4c1c4f9298863 — tests/test_face_logic.py
+  - 619777c22a2653773e12541b202f42b5130066df — tests/test_web_integration.py
+  - 18dda357c85d49de508fe26ce0a5260da819796b — CLAUDE_HANDOFF.md
+  - cd471a69d21ed5435b4c4b67d677955c61788f22 — docs/MANUAL_TEST.md
+- Verification: no local test suite was run in this GitHub-only editing session. GitHub Actions is ready to check the branch head. No files under baymax/ or server/ were changed. Package version was not bumped. No PR was opened.
