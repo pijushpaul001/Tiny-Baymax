@@ -149,6 +149,36 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertNotIn("speakReply", script[history_start:history_end])
 
 
+
+    def test_live_face_reactions_are_gated_to_chat_results_not_history(self):
+        _, _, script_bytes = self.request("/app.js")
+        script = script_bytes.decode()
+        send_start = script.index("async function sendMessage")
+        response_start = script.index('const result = await api("/api/chat"', send_start)
+        reaction_guard = script.index('result.kind === "chat" && window.BaymaxFace', response_start)
+        reaction_call = script.index("window.BaymaxFace.reactionFor(result)", reaction_guard)
+        trigger_call = script.index("faceController.triggerReaction(reaction)", reaction_call)
+        self.assertLess(response_start, reaction_guard)
+        self.assertLess(reaction_guard, reaction_call)
+        self.assertLess(reaction_call, trigger_call)
+        history_start = script.index("function renderHistory")
+        history_end = script.index("function clearTools", history_start)
+        self.assertNotIn("reactionFor", script[history_start:history_end])
+        self.assertNotIn("triggerReaction", script[history_start:history_end])
+        self.assertIn("faceController.setBusy(busy)", script)
+        self.assertIn("faceController.setComposerText(event.target.value)", script)
+        self.assertIn("faceController.setComposerText(\"\")", script)
+
+    def test_speaking_pulse_tracks_utterance_lifecycle_and_cancel(self):
+        _, _, script_bytes = self.request("/app.js")
+        script = script_bytes.decode()
+        self.assertIn("utterance.onstart", script)
+        self.assertIn("utterance.onend = finishSpeaking", script)
+        self.assertIn("utterance.onerror = finishSpeaking", script)
+        self.assertIn("faceController.setSpeaking(true)", script)
+        self.assertIn("faceController.setSpeaking(false)", script)
+        self.assertIn("activeUtterance = null", script)
+
     def test_optional_microphone_fills_composer_without_sending(self):
         _, _, html_bytes = self.request("/")
         _, _, script_bytes = self.request("/app.js")

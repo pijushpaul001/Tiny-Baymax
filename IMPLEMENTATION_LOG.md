@@ -651,3 +651,12 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added the 900 ms gaze/tilt transitions, 520 ms three-unit hop, and a highlight-only speaking pulse. Gaze is suppressed at concern >= 0.50. Reduced-motion handling suppresses gaze, hop, wink and speaking pulse while retaining static eye tilt and scale.
 - Extended structural/CSS integration assertions for the wrapper hierarchy and reaction styles.
 - **Verification:** source and tests committed; local tests not run in this GitHub-only editing session. Actions is expected to validate this commit. No app wiring or documentation change in this commit; no `baymax/`, `server/` or version changes.
+
+
+### v0.6.12 — live gaze and speech/reply wiring
+
+- Wired the face's thinking gaze to the existing request busy state and the listening gaze to composer input (including microphone transcripts). Both reset when cleared/sent or when the request completes/fails; the face controller suppresses gaze at concern >= 0.50.
+- Connected the pure reaction selector only inside the live `/api/chat` response path and only when `result.kind === "chat"`. History rendering and session-end/other response paths do not trigger hop or wink.
+- Added speech-synthesis utterance start/end/error handlers. The highlight pulse starts only on the active utterance's start event and stops on end, error or explicit cancellation; no other face part moves for speaking.
+- Added integration assertions for live-chat-only reaction dispatch, absence of history reactions, gaze state wiring and utterance lifecycle.
+- **Verification:** source and tests committed; local tests not run in this GitHub-only editing session. Actions is expected to validate this commit. No files under `baymax/` or `server/` changed; version remains unchanged.

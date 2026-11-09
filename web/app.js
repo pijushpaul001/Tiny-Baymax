@@ -8,6 +8,7 @@
   let selectedVoice = null;
   let recognition = null;
   let faceController = null;
+  let activeUtterance = null;
 
   function readSpeakPreference() {
     try {
@@ -21,6 +22,8 @@
   }
 
   function cancelSpeech() {
+    activeUtterance = null;
+    if (faceController) faceController.setSpeaking(false);
     if (speechAvailable) window.speechSynthesis.cancel();
   }
 
@@ -48,6 +51,18 @@
     if (selectedVoice) utterance.voice = selectedVoice;
     if (navigator.language) utterance.lang = navigator.language;
     cancelSpeech();
+    activeUtterance = utterance;
+    utterance.onstart = () => {
+      if (activeUtterance === utterance && faceController) faceController.setSpeaking(true);
+    };
+    const finishSpeaking = () => {
+      if (activeUtterance === utterance) {
+        activeUtterance = null;
+        if (faceController) faceController.setSpeaking(false);
+      }
+    };
+    utterance.onend = finishSpeaking;
+    utterance.onerror = finishSpeaking;
     window.speechSynthesis.speak(utterance);
   }
 
@@ -154,6 +169,7 @@
 
   function setBusy(busy) {
     state.busy = busy;
+    if (faceController) faceController.setBusy(busy);
     byId("send-button").disabled = busy;
     byId("message-input").disabled = busy;
     byId("end-session").disabled = busy;
@@ -165,6 +181,7 @@
     cancelSpeech();
     stopRecognition();
     byId("message-input").value = "";
+    if (faceController) faceController.setComposerText("");
     clearTools();
     message("user", text);
     setBusy(true);
@@ -177,6 +194,10 @@
         else speakReply(result.reply);
       } else if (result.ended) cancelSpeech();
       if (Object.prototype.hasOwnProperty.call(result, "emotion")) updateFace(result.emotion);
+      if (result.kind === "chat" && window.BaymaxFace) {
+        const reaction = window.BaymaxFace.reactionFor(result);
+        if (reaction && faceController) faceController.triggerReaction(reaction);
+      }
       state.closing = result.closing;
       updateInteraction(result);
       if (result.ended) {
@@ -293,7 +314,10 @@
     });
     recognition.onresult = (event) => {
       const transcript = Array.from(event.results || []).map((item) => item[0]?.transcript || "").join(" ").trim();
-      if (transcript) byId("message-input").value = transcript;
+      if (transcript) {
+        byId("message-input").value = transcript;
+        if (faceController) faceController.setComposerText(transcript);
+      }
       byId("message-input").focus();
     };
     recognition.onerror = (event) => {
@@ -308,6 +332,9 @@
 
   byId("connect-form").addEventListener("submit", connect);
   byId("chat-form").addEventListener("submit", (event) => { event.preventDefault(); sendMessage(); });
+  byId("message-input").addEventListener("input", (event) => {
+    if (faceController) faceController.setComposerText(event.target.value);
+  });
   byId("message-input").addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendMessage(); }
   });
