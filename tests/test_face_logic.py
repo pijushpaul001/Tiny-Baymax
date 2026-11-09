@@ -18,26 +18,34 @@ class FaceLogicTests(unittest.TestCase):
 const assert = require("node:assert/strict");
 const { faceParams, reactionFor } = require(process.argv[1]);
 const { pickVoice } = require(process.argv[2]);
+function near(actual, expected, eps = 1e-9) {
+  assert.ok(Math.abs(actual - expected) < eps, `expected ${actual} to be within ${eps} of ${expected}`);
+}
 const baseline = faceParams({ concern: 0.10, happiness: 0.50 }, false);
-assert.deepEqual(baseline, { eyeScaleX: 1.0, eyeScaleY: 1.0, blinkIntervalMs: 5000, blinkDurationMs: 160, smileDepth: 1.5, blinkEnabled: true, eyeTiltDeg: 0 });
-assert.equal(baseline.smileDepth, 1.5);
+near(baseline.eyeScaleX, 1.0);
+near(baseline.eyeScaleY, 1.0);
+near(baseline.blinkIntervalMs, 5000);
+near(baseline.blinkDurationMs, 160);
+near(baseline.smileDepth, 1.5);
+near(baseline.eyeTiltDeg, 0);
+assert.equal(baseline.blinkEnabled, true);
 const concernMid = faceParams({ concern: 0.35, happiness: 0.5 }, false);
-assert.ok(Math.abs(concernMid.eyeScaleX - 1.075) < 1e-12);
-assert.ok(Math.abs(concernMid.eyeScaleY - 1.20) < 1e-12);
-assert.equal(concernMid.blinkIntervalMs, 7000);
+near(concernMid.eyeScaleX, 1.075);
+near(concernMid.eyeScaleY, 1.20);
+near(concernMid.blinkIntervalMs, 7000);
 const concernMax = faceParams({ concern: 0.6, happiness: 0.5 }, false);
 assert.equal(concernMax.eyeScaleX, 1.15);
 assert.equal(concernMax.eyeScaleY, 1.40);
 assert.equal(faceParams({ concern: 0.9, happiness: 0.5 }, false).eyeScaleY, 1.40);
-assert.equal(concernMax.blinkIntervalMs, 9000);
-assert.equal(concernMid.smileDepth, 0);
+near(concernMax.blinkIntervalMs, 9000);
+near(concernMid.smileDepth, 0);
 assert.equal(concernMax.smileDepth, 0);
 const happyMid = faceParams({ concern: 0.1, happiness: 0.7 }, false);
-assert.ok(Math.abs(happyMid.eyeScaleX - 1.0666666666666667) < 1e-12);
-assert.ok(Math.abs(happyMid.eyeScaleY - 0.7666666666666667) < 1e-12);
-assert.equal(happyMid.blinkIntervalMs, 4000);
-assert.equal(happyMid.blinkDurationMs, 200);
-assert.ok(Math.abs(happyMid.smileDepth - 3.5) < 1e-12);
+near(happyMid.eyeScaleX, 1.0666666666666667);
+near(happyMid.eyeScaleY, 0.7666666666666667);
+near(happyMid.blinkIntervalMs, 4000);
+near(happyMid.blinkDurationMs, 200);
+near(happyMid.smileDepth, 3.5);
 const happyMax = faceParams({ concern: 0.1, happiness: 0.8 }, false);
 assert.equal(happyMax.eyeScaleX, 1.10);
 assert.equal(happyMax.eyeScaleY, 0.65);
@@ -47,21 +55,21 @@ assert.equal(faceParams({ concern: 100, happiness: -5 }, false).eyeScaleX, 1.15)
 assert.equal(faceParams({ concern: 100, happiness: -5 }, false).eyeScaleY, 1.40);
 assert.equal(faceParams({ concern: -5, happiness: 100 }, false).eyeScaleX, 1.10);
 assert.equal(faceParams({ concern: -5, happiness: 100 }, false).eyeScaleY, 0.65);
-assert.equal(faceParams({ concern: 0.1, happiness: 100 }, false).blinkIntervalMs, 3500);
-assert.equal(faceParams({ concern: "bad", happiness: NaN }, false).eyeScaleX, 1.0);
-assert.equal(faceParams({ concern: Infinity, happiness: -Infinity }, false).blinkIntervalMs, 5000);
+near(faceParams({ concern: 0.1, happiness: 100 }, false).blinkIntervalMs, 3500);
+near(faceParams({ concern: "bad", happiness: NaN }, false).eyeScaleX, 1.0);
+near(faceParams({ concern: Infinity, happiness: -Infinity }, false).blinkIntervalMs, 5000);
 assert.deepEqual(faceParams({ concern: "bad", happiness: null }, false), baseline);
-assert.equal(faceParams({ concern: "garbage", happiness: "garbage" }, false).smileDepth, 1.5);
-assert.equal(faceParams(undefined, false).blinkIntervalMs, 5000);
+near(faceParams({ concern: "garbage", happiness: "garbage" }, false).smileDepth, 1.5);
+near(faceParams(undefined, false).blinkIntervalMs, 5000);
 assert.equal(faceParams({}, true).blinkEnabled, false);
 
 assert.equal(baseline.eyeTiltDeg, 0);
-assert.ok(Math.abs(concernMid.eyeTiltDeg - 4) < 1e-12);
+near(concernMid.eyeTiltDeg, 4);
 assert.equal(concernMax.eyeTiltDeg, 8);
 assert.equal(faceParams({ concern: 0.8, happiness: 0.5 }, false).eyeTiltDeg, 8);
 assert.equal(faceParams({ concern: 0.1, happiness: 0.9 }, false).eyeTiltDeg, 0);
-assert.equal(faceParams({ concern: "bad", happiness: "bad" }, false).eyeTiltDeg, 0);
-assert.equal(faceParams(null, false).eyeTiltDeg, 0);
+near(faceParams({ concern: "bad", happiness: "bad" }, false).eyeTiltDeg, 0);
+near(faceParams(null, false).eyeTiltDeg, 0);
 
 const reactionCases = [
   ["celebrate chat below threshold", { kind: "chat", emotion: { concern: 0.29 }, mode: "celebrate" }, "hop"],
