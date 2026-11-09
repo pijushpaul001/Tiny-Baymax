@@ -635,3 +635,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Follow-up source review found the parent blink group had its transition declared only while the blink class was active. Moved the transition declaration to the base parent-group rule so both closing and reopening use the configured blink duration; the active class now changes only its vertical scale.
 - Tightened the SVG structure test to verify each highlight is nested inside its own eye group, and corrected the no-mouth/no-extra-SVG-element assertion to use actual regex word boundaries.
 - **Verification:** correction committed; local tests not run in this GitHub-only editing session. Actions will validate the updated branch head. No additional runtime behaviour or files under `baymax/` or `server/` changed.
+
+
+## v0.6.12 — pure face reaction logic
+
+- Added `eyeTiltDeg` to `faceParams`: 8 degrees multiplied by the existing clamped concern excess. Baseline and happiness-only tilt remain zero.
+- Added pure `reactionFor(result)`: only a `chat` result with finite numeric concern below 0.30 and mode `celebrate` or `playful` returns `hop` or `wink`; every other/malformed case returns null.
+- Expanded Node-backed tests for baseline, concern 0.35, concern 0.60+, happiness-only, garbage input and the full reaction gating table.
+- **Verification:** test code added. Local execution is pending; this GitHub-only editing path does not provide a checkout of the current branch. No runtime controller, CSS, app wiring, documentation, package version, `baymax/` or `server/` changes in this commit.

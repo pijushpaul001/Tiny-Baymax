@@ -18,10 +18,21 @@
     return {
       eyeScaleX: clamp(1 + 0.15 * concernExcess + 0.10 * happyExcess, 0.90, 1.15),
       eyeScaleY: clamp(1 + 0.40 * concernExcess - 0.35 * happyExcess, 0.60, 1.40),
+      eyeTiltDeg: 8 * concernExcess,
       blinkIntervalMs: clamp(5000 + 4000 * concernExcess - 1500 * happyExcess, 3000, 9000),
       blinkDurationMs: 160 + 60 * happyExcess,
       blinkEnabled: !reducedMotion
     };
+  }
+
+  function reactionFor(result) {
+    if (!result || typeof result !== "object" || result.kind !== "chat") return null;
+    if (!result.emotion || typeof result.emotion !== "object") return null;
+    const concern = result.emotion.concern;
+    if (typeof concern !== "number" || !Number.isFinite(concern) || concern >= 0.30) return null;
+    if (result.mode === "celebrate") return "hop";
+    if (result.mode === "playful") return "wink";
+    return null;
   }
 
   function mountFace(svg, initialEmotion) {
@@ -100,6 +111,6 @@
     };
   }
 
-  if (typeof module !== "undefined" && module.exports) module.exports = { faceParams: faceParams };
-  if (root) root.BaymaxFace = { faceParams: faceParams, mountFace: mountFace };
+  if (typeof module !== "undefined" && module.exports) module.exports = { faceParams: faceParams, reactionFor: reactionFor };
+  if (root) root.BaymaxFace = { faceParams: faceParams, reactionFor: reactionFor, mountFace: mountFace };
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));

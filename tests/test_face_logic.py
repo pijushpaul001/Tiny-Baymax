@@ -16,10 +16,10 @@ class FaceLogicTests(unittest.TestCase):
     def test_face_parameters(self):
         source = r"""
 const assert = require("node:assert/strict");
-const { faceParams } = require(process.argv[1]);
+const { faceParams, reactionFor } = require(process.argv[1]);
 const { pickVoice } = require(process.argv[2]);
 const baseline = faceParams({ concern: 0.10, happiness: 0.50 }, false);
-assert.deepEqual(baseline, { eyeScaleX: 1.0, eyeScaleY: 1.0, blinkIntervalMs: 5000, blinkDurationMs: 160, blinkEnabled: true });
+assert.deepEqual(baseline, { eyeScaleX: 1.0, eyeScaleY: 1.0, blinkIntervalMs: 5000, blinkDurationMs: 160, blinkEnabled: true, eyeTiltDeg: 0 });
 const concernMid = faceParams({ concern: 0.35, happiness: 0.5 }, false);
 assert.ok(Math.abs(concernMid.eyeScaleX - 1.075) < 1e-12);
 assert.ok(Math.abs(concernMid.eyeScaleY - 1.20) < 1e-12);
@@ -47,6 +47,35 @@ assert.equal(faceParams({ concern: Infinity, happiness: -Infinity }, false).blin
 assert.deepEqual(faceParams({ concern: "bad", happiness: null }, false), baseline);
 assert.equal(faceParams(undefined, false).blinkIntervalMs, 5000);
 assert.equal(faceParams({}, true).blinkEnabled, false);
+
+assert.equal(baseline.eyeTiltDeg, 0);
+assert.equal(concernMid.eyeTiltDeg, 4);
+assert.equal(concernMax.eyeTiltDeg, 8);
+assert.equal(faceParams({ concern: 0.8, happiness: 0.5 }, false).eyeTiltDeg, 8);
+assert.equal(faceParams({ concern: 0.1, happiness: 0.9 }, false).eyeTiltDeg, 0);
+assert.equal(faceParams({ concern: "bad", happiness: "bad" }, false).eyeTiltDeg, 0);
+assert.equal(faceParams(null, false).eyeTiltDeg, 0);
+
+const reactionCases = [
+  ["celebrate chat below threshold", { kind: "chat", emotion: { concern: 0.29 }, mode: "celebrate" }, "hop"],
+  ["playful chat below threshold", { kind: "chat", emotion: { concern: 0.29 }, mode: "playful" }, "wink"],
+  ["concern exactly 0.30", { kind: "chat", emotion: { concern: 0.30 }, mode: "celebrate" }, null],
+  ["concern 0.40", { kind: "chat", emotion: { concern: 0.40 }, mode: "playful" }, null],
+  ["safety", { kind: "safety", emotion: { concern: 0.1 }, mode: "celebrate" }, null],
+  ["ritual", { kind: "ritual", emotion: { concern: 0.1 }, mode: "playful" }, null],
+  ["command", { kind: "command", emotion: { concern: 0.1 }, mode: "celebrate" }, null],
+  ["error", { kind: "error", emotion: { concern: 0.1 }, mode: "playful" }, null],
+  ["null mode", { kind: "chat", emotion: { concern: 0.1 }, mode: null }, null],
+  ["missing emotion", { kind: "chat", mode: "celebrate" }, null],
+  ["string concern", { kind: "chat", emotion: { concern: "0.1" }, mode: "celebrate" }, null],
+  ["missing result", undefined, null],
+  ["null result", null, null],
+  ["malformed result", "chat", null]
+];
+for (const [name, result, expected] of reactionCases) {
+  assert.equal(reactionFor(result), expected, name);
+}
+
 const voices = [
   { name: "English remote", lang: "en-US", localService: false },
   { name: "English local", lang: "en-US", localService: true },
