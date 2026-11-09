@@ -673,3 +673,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - Updated the existing per-eye highlight structural assertion to account for the new gaze/tilt wrapper groups while still requiring exactly two eyes and exactly one highlight nested in each eye. Added explicit counts for the hop, gaze and tilt wrappers.
 - **Verification:** test assertion correction committed; local test execution remains pending GitHub Actions. No production files or other behaviour changed.
+
+
+### v0.6.12 — floating-point tolerance in tilt test
+
+- The first Actions run showed the expected 4-degree tilt at concern 0.35 is represented as 3.9999999999999996 by JavaScript floating-point arithmetic. Changed that one assertion to a 1e-12 tolerance; the production formula remains the exact requested calculation.
+- **Verification:** the failure was isolated from Actions run 42572171026; all other tests in the Python 3.12 job passed, including the new web integration tests. Correction committed; a fresh Actions run is pending. No production code changed.

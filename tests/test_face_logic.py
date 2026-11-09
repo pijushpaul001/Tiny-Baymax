@@ -49,7 +49,7 @@ assert.equal(faceParams(undefined, false).blinkIntervalMs, 5000);
 assert.equal(faceParams({}, true).blinkEnabled, false);
 
 assert.equal(baseline.eyeTiltDeg, 0);
-assert.equal(concernMid.eyeTiltDeg, 4);
+assert.ok(Math.abs(concernMid.eyeTiltDeg - 4) < 1e-12);
 assert.equal(concernMax.eyeTiltDeg, 8);
 assert.equal(faceParams({ concern: 0.8, happiness: 0.5 }, false).eyeTiltDeg, 8);
 assert.equal(faceParams({ concern: 0.1, happiness: 0.9 }, false).eyeTiltDeg, 0);
