@@ -58,7 +58,6 @@ input:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px r
 .face-eye-blink { transform-box: fill-box; transform-origin: center; transition: transform var(--blink-duration, 160ms) ease; }
 .face-eye-blink.is-blinking { transform: scaleY(.06); }
 .face-eye { fill: #080808; transform-box: fill-box; transform-origin: center; transform: scale(var(--eye-scale-x, 1), var(--eye-scale-y, 1)); transition: transform 900ms ease; }
-.face-highlight { fill: #fff; }
 .conversation-heading { display: flex; align-items: center; justify-content: space-between; padding: 23px 24px 18px; border-bottom: 1px solid #edf2f2; }
 .conversation-heading h2 { font-size: 1.12rem; margin: 0; letter-spacing: -.02em; }
 .conversation-heading, .interaction-tools, .composer, .speech-error { flex: 0 0 auto; }
@@ -111,15 +110,7 @@ input:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px r
 }
 .face-tilt-left { transform: rotate(var(--eye-tilt-left, 0deg)); }
 .face-tilt-right { transform: rotate(var(--eye-tilt-right, 0deg)); }
-.face-highlight { transform-box: fill-box; transform-origin: center; }
-.baymax-face.is-speaking .face-highlight {
-  animation: face-speaking-pulse 900ms ease-in-out infinite alternate;
-}
-@keyframes face-speaking-pulse {
-  from { opacity: 1; }
-  to { opacity: .55; }
-}
 @media (prefers-reduced-motion: reduce) {
-  .face-hop.is-hopping, .baymax-face.is-speaking .face-highlight { animation: none; }
+  .face-hop.is-hopping { animation: none; }
   .face-gaze, .face-tilt { transition: none; }
 }
