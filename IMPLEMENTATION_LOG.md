@@ -660,3 +660,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added speech-synthesis utterance start/end/error handlers. The highlight pulse starts only on the active utterance's start event and stops on end, error or explicit cancellation; no other face part moves for speaking.
 - Added integration assertions for live-chat-only reaction dispatch, absence of history reactions, gaze state wiring and utterance lifecycle.
 - **Verification:** source and tests committed; local tests not run in this GitHub-only editing session. Actions is expected to validate this commit. No files under `baymax/` or `server/` changed; version remains unchanged.
+
+
+### v0.6.12 — owner decision and manual verification checklist
+
+- Updated H-2 with the owner decision dated 2026-11-09: exact permitted reaction set, face composition constraints, concern and reduced-motion gates, deterministic hop/wink selection, and CSP restrictions.
+- Replaced Manual Test Section H with explicit phone checks for Thinking, Listening, Speaking, worried tilt, Hop, Wink, safety gating (including `my head hurts`), history behaviour and reduced motion. All checks remain unchecked.
+- **Verification:** documentation reviewed and committed. No manual device tests performed. Package version remains unchanged; no `baymax/` or `server/` files changed.
