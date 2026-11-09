@@ -99,12 +99,12 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertEqual(svg.count("<ellipse "), 2)
         self.assertEqual(svg.count("<circle "), 2)
         self.assertNotRegex(svg, r"(?i)(mouth|<path\b|<text\b)")
-        highlighted_eye_groups = re.findall(
-            r'<g class="face-eye-blink">\s*<g class="face-eye">\s*'
-            r'<ellipse[^>]+>\s*<circle class="face-highlight"[^>]+>\s*</g>\s*</g>',
-            svg,
-        )
-        self.assertEqual(len(highlighted_eye_groups), 2)
+        eye_groups = re.findall(r'<g class="face-eye">([\\s\\S]*?)</g>', svg)
+        self.assertEqual(len(eye_groups), 2)
+        self.assertTrue(all(group.count('class="face-highlight"') == 1 for group in eye_groups))
+        self.assertIn('class="face-hop"', svg)
+        self.assertEqual(svg.count('class="face-gaze '), 2)
+        self.assertEqual(svg.count('class="face-tilt '), 2)
 
     def test_face_stays_outside_the_scrolling_message_list(self):
         _, _, html_bytes = self.request("/")

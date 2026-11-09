@@ -667,3 +667,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Updated H-2 with the owner decision dated 2026-11-09: exact permitted reaction set, face composition constraints, concern and reduced-motion gates, deterministic hop/wink selection, and CSP restrictions.
 - Replaced Manual Test Section H with explicit phone checks for Thinking, Listening, Speaking, worried tilt, Hop, Wink, safety gating (including `my head hurts`), history behaviour and reduced motion. All checks remain unchecked.
 - **Verification:** documentation reviewed and committed. No manual device tests performed. Package version remains unchanged; no `baymax/` or `server/` files changed.
+
+
+### v0.6.12 — wrapper-aware SVG structural assertion
+
+- Updated the existing per-eye highlight structural assertion to account for the new gaze/tilt wrapper groups while still requiring exactly two eyes and exactly one highlight nested in each eye. Added explicit counts for the hop, gaze and tilt wrappers.
+- **Verification:** test assertion correction committed; local test execution remains pending GitHub Actions. No production files or other behaviour changed.
