@@ -679,3 +679,9 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - The first Actions run showed the expected 4-degree tilt at concern 0.35 is represented as 3.9999999999999996 by JavaScript floating-point arithmetic. Changed that one assertion to a 1e-12 tolerance; the production formula remains the exact requested calculation.
 - **Verification:** the failure was isolated from Actions run 42572171026; all other tests in the Python 3.12 job passed, including the new web integration tests. Correction committed; a fresh Actions run is pending. No production code changed.
+
+
+### v0.6.12 — correct regex escaping in wrapper-aware SVG test
+
+- The next Actions run exposed an over-escaped character class in the new per-eye regex, so it matched no eye groups. Corrected the Python raw-string pattern to use the intended single-backslash whitespace/non-whitespace classes.
+- **Verification:** failure isolated to the new structural assertion in run 42572262261; the floating-point tilt assertion was corrected separately. Updated assertion committed; Actions rerun pending.

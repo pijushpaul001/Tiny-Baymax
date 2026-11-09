@@ -99,7 +99,7 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertEqual(svg.count("<ellipse "), 2)
         self.assertEqual(svg.count("<circle "), 2)
         self.assertNotRegex(svg, r"(?i)(mouth|<path\b|<text\b)")
-        eye_groups = re.findall(r'<g class="face-eye">([\\s\\S]*?)</g>', svg)
+        eye_groups = re.findall(r'<g class="face-eye">([\s\S]*?)</g>', svg)
         self.assertEqual(len(eye_groups), 2)
         self.assertTrue(all(group.count('class="face-highlight"') == 1 for group in eye_groups))
         self.assertIn('class="face-hop"', svg)
