@@ -84,20 +84,18 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertLess(response_start, response_guard_at)
         self.assertLess(response_guard_at, update_at)
 
-    def test_face_svg_has_two_highlighted_eyes_and_no_mouth(self):
+    def test_face_svg_has_two_plain_eyes_and_no_mouth(self):
         _, _, html_bytes = self.request("/")
         html = html_bytes.decode()
         svg_start = html.index('<svg id="baymax-face"')
         svg_end = html.index("</svg>", svg_start) + len("</svg>")
         svg = html[svg_start:svg_end]
         eyes = svg.count('class="face-eye"')
-        highlights = svg.count('class="face-highlight"')
         blink_groups = svg.count('class="face-eye-blink"')
         self.assertEqual(eyes, 2)
-        self.assertEqual(highlights, 2)
+        self.assertEqual(svg.count("<circle "), 0)
         self.assertEqual(blink_groups, 2)
         self.assertEqual(svg.count("<ellipse "), 2)
-        self.assertEqual(svg.count("<circle "), 2)
         paths = re.findall(r"<path\b([^>]*)>", svg)
         self.assertEqual(len(paths), 1)
         self.assertRegex(paths[0], r'class="face-bridge"')
@@ -106,7 +104,7 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertNotRegex(svg, r"(?i)(mouth|<text\b)")
         eye_groups = re.findall(r'<g class="face-eye">([\s\S]*?)</g>', svg)
         self.assertEqual(len(eye_groups), 2)
-        self.assertTrue(all(group.count('class="face-highlight"') == 1 for group in eye_groups))
+        self.assertTrue(all("<ellipse " in group and "face-highlight" not in group for group in eye_groups))
         self.assertIn('class="face-hop"', svg)
         self.assertEqual(svg.count('class="face-gaze '), 2)
         self.assertEqual(svg.count('class="face-tilt '), 2)
@@ -132,9 +130,9 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertIn(".face-eye-blink.is-blinking { transform: scaleY(.06);", css)
         self.assertIn("transform-box: fill-box", css)
         self.assertIn("transform-origin: center", css)
-        self.assertIn(".face-highlight { fill: #fff; }", css)
+        self.assertNotIn("face-highlight", css)
         self.assertIn("transition: transform 900ms ease", css)
-        self.assertIn("face-speaking-pulse", css)
+        self.assertNotIn("face-speaking-pulse", css)
         self.assertIn("translateY(-3px)", css)
         self.assertIn("rotate(var(--eye-tilt-left, 0deg))", css)
 
