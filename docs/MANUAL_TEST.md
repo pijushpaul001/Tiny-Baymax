@@ -69,6 +69,9 @@ HTTPS routing, or actual phone behaviour. Do not mark those checks as passed unt
 
 ## H. Face and voice — v0.6.12 phone checks
 
+- [ ] At rest, confirm the bridge line has a very faint, small smile-like bend; it remains the same line, not a mouth.
+- [ ] Send `I got the job!`; confirm the bridge line bends a little more into a deeper but still subtle smile.
+- [ ] Send `my head hurts`; confirm the bridge line becomes flat.
 - [ ] Open the chat on the phone and confirm the white face is visible at the top of the conversation panel and blinks slowly.
 - [ ] Scroll through a long conversation; confirm the face stays visible above the scrolling messages and the composer remains visible.
 - [ ] Send a message and, while the request is pending, confirm the eyes drift slowly upward and slightly sideways; confirm they return after a successful reply.
