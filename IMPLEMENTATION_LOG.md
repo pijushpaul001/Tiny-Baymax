@@ -685,3 +685,10 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 
 - The next Actions run exposed an over-escaped character class in the new per-eye regex, so it matched no eye groups. Corrected the Python raw-string pattern to use the intended single-backslash whitespace/non-whitespace classes.
 - **Verification:** failure isolated to the new structural assertion in run 42572262261; the floating-point tilt assertion was corrected separately. Updated assertion committed; Actions rerun pending.
+
+
+### v0.6.12 — limit Thinking gaze to chat requests
+
+- Tightened the busy-state wiring so Thinking gaze is enabled only by `sendMessage`'s in-flight chat request. The shutdown ritual's separate session-end request still disables the composer/buttons but does not move the eyes.
+- Extended the web integration assertion to distinguish chat busy state from the session-end request.
+- **Verification:** code/test correction committed. The preceding Actions run on the prior head is still in progress; this commit will receive its own Actions run. No other behaviour or files changed.

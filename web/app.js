@@ -167,9 +167,9 @@
     if (reply.ui?.quick_replies?.length) return showQuickReplies(reply.ui.quick_replies);
   }
 
-  function setBusy(busy) {
+  function setBusy(busy, chatRequest = false) {
     state.busy = busy;
-    if (faceController) faceController.setBusy(busy);
+    if (faceController) faceController.setBusy(Boolean(busy && chatRequest));
     byId("send-button").disabled = busy;
     byId("message-input").disabled = busy;
     byId("end-session").disabled = busy;
@@ -184,7 +184,7 @@
     if (faceController) faceController.setComposerText("");
     clearTools();
     message("user", text);
-    setBusy(true);
+    setBusy(true, true);
     byId("offline-card").classList.add("hidden");
     try {
       const result = await api("/api/chat", { method: "POST", body: JSON.stringify({ message: text }) });

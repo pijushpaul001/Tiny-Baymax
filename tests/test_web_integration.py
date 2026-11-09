@@ -165,7 +165,12 @@ class WebIntegrationTests(unittest.TestCase):
         history_end = script.index("function clearTools", history_start)
         self.assertNotIn("reactionFor", script[history_start:history_end])
         self.assertNotIn("triggerReaction", script[history_start:history_end])
-        self.assertIn("faceController.setBusy(busy)", script)
+        self.assertIn("faceController.setBusy(Boolean(busy && chatRequest))", script)
+        self.assertIn("setBusy(true, true)", script)
+        end_start = script.index("async function endSession")
+        end_end = script.index("if (speechAvailable)", end_start)
+        self.assertIn("setBusy(true)", script[end_start:end_end])
+        self.assertNotIn("setBusy(true, true)", script[end_start:end_end])
         self.assertIn("faceController.setComposerText(event.target.value)", script)
         self.assertIn("faceController.setComposerText(\"\")", script)
 
