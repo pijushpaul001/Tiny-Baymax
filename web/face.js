@@ -1,6 +1,10 @@
 (function (root) {
   "use strict";
 
+  const RESTING_SMILE_DEPTH = 1.5;
+  const HAPPY_SMILE_GAIN = 3.0;
+  const MAX_SMILE_DEPTH = 4.5;
+
   function finiteField(emotion, field, fallback) {
     const value = emotion && typeof emotion === "object" ? emotion[field] : undefined;
     return typeof value === "number" && Number.isFinite(value) ? value : fallback;
@@ -21,6 +25,7 @@
       eyeTiltDeg: 8 * concernExcess,
       blinkIntervalMs: clamp(5000 + 4000 * concernExcess - 1500 * happyExcess, 3000, 9000),
       blinkDurationMs: 160 + 60 * happyExcess,
+      smileDepth: clamp(RESTING_SMILE_DEPTH + HAPPY_SMILE_GAIN * happyExcess - HAPPY_SMILE_GAIN * concernExcess, 0, MAX_SMILE_DEPTH),
       blinkEnabled: !reducedMotion
     };
   }
@@ -53,8 +58,42 @@
     let current = faceParams(emotion, Boolean(motionQuery && motionQuery.matches));
     const blinkGroups = Array.from(svg.querySelectorAll(".face-eye-blink"));
     const hopGroup = svg.querySelector(".face-hop");
+    const bridge = svg.querySelector(".face-bridge");
+    let renderedSmileDepth = RESTING_SMILE_DEPTH;
+    let smileFrame = null;
 
     function reduced() { return Boolean(motionQuery && motionQuery.matches); }
+    function setSmileDepth(depth) {
+      if (!bridge) return;
+      bridge.setAttribute("d", "M43 43 Q60 " + (43 + 2 * depth) + " 77 43");
+    }
+    function animateSmileDepth(target) {
+      if (smileFrame !== null && typeof root.cancelAnimationFrame === "function") {
+        root.cancelAnimationFrame(smileFrame);
+        smileFrame = null;
+      }
+      if (reduced() || typeof root.requestAnimationFrame !== "function") {
+        renderedSmileDepth = target;
+        setSmileDepth(target);
+        return;
+      }
+      const startDepth = renderedSmileDepth;
+      const startedAt = typeof root.performance !== "undefined" && root.performance && typeof root.performance.now === "function"
+        ? root.performance.now() : null;
+      if (startedAt === null) {
+        renderedSmileDepth = target;
+        setSmileDepth(target);
+        return;
+      }
+      function step(now) {
+        const progress = clamp((now - startedAt) / 900, 0, 1);
+        renderedSmileDepth = startDepth + (target - startDepth) * progress;
+        setSmileDepth(renderedSmileDepth);
+        if (progress < 1) smileFrame = root.requestAnimationFrame(step);
+        else smileFrame = null;
+      }
+      smileFrame = root.requestAnimationFrame(step);
+    }
     function concernBlocksGaze() {
       const concern = finiteField(emotion, "concern", 0.10);
       return concern >= 0.50;
@@ -97,6 +136,7 @@
     }
     function apply() {
       current = faceParams(emotion, reduced());
+      animateSmileDepth(current.smileDepth);
       svg.style.setProperty("--eye-scale-x", String(current.eyeScaleX));
       svg.style.setProperty("--eye-scale-y", String(current.eyeScaleY));
       svg.style.setProperty("--eye-tilt-left", (-current.eyeTiltDeg) + "deg");
@@ -155,6 +195,8 @@
       },
       stop: function () {
         stopped = true;
+        if (smileFrame !== null && typeof root.cancelAnimationFrame === "function") root.cancelAnimationFrame(smileFrame);
+        smileFrame = null;
         clearTimers();
         if (hopTimer !== null) root.clearTimeout(hopTimer);
         if (winkTimer !== null) root.clearTimeout(winkTimer);
