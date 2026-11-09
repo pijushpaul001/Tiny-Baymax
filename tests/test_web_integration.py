@@ -128,6 +128,10 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertIn("transform-box: fill-box", css)
         self.assertIn("transform-origin: center", css)
         self.assertIn(".face-highlight { fill: #fff; }", css)
+        self.assertIn("transition: transform 900ms ease", css)
+        self.assertIn("face-speaking-pulse", css)
+        self.assertIn("translateY(-3px)", css)
+        self.assertIn("rotate(var(--eye-tilt-left, 0deg))", css)
 
     def test_voice_controls_only_speak_live_replies_and_cancel_on_send(self):
         _, _, html_bytes = self.request("/")

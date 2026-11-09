@@ -643,3 +643,11 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Added pure `reactionFor(result)`: only a `chat` result with finite numeric concern below 0.30 and mode `celebrate` or `playful` returns `hop` or `wink`; every other/malformed case returns null.
 - Expanded Node-backed tests for baseline, concern 0.35, concern 0.60+, happiness-only, garbage input and the full reaction gating table.
 - **Verification:** test code added. Local execution is pending; this GitHub-only editing path does not provide a checkout of the current branch. No runtime controller, CSS, app wiring, documentation, package version, `baymax/` or `server/` changes in this commit.
+
+
+### v0.6.12 — composable face motion and reaction controller
+
+- Wrapped the existing face artwork in a hop group and each eye in separate gaze and tilt groups, preserving the existing blink parent and expression-scale child. The SVG still contains exactly two eye elements and two highlights; the face area's dimensions and placement are unchanged.
+- Added the 900 ms gaze/tilt transitions, 520 ms three-unit hop, and a highlight-only speaking pulse. Gaze is suppressed at concern >= 0.50. Reduced-motion handling suppresses gaze, hop, wink and speaking pulse while retaining static eye tilt and scale.
+- Extended structural/CSS integration assertions for the wrapper hierarchy and reaction styles.
+- **Verification:** source and tests committed; local tests not run in this GitHub-only editing session. Actions is expected to validate this commit. No app wiring or documentation change in this commit; no `baymax/`, `server/` or version changes.

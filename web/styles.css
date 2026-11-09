@@ -89,3 +89,37 @@ input:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px r
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 @media (max-width: 900px) { .conversation-panel { height: min(70vh, 760px); } }
 @media (max-width: 560px) { .app-shell { padding: 12px 10px; } .topbar { align-items: flex-start; } .brand-mark { width: 41px; height: 41px; } .brand p { font-size: .72rem; } .topbar-actions { flex-direction: column; align-items: flex-end; gap: 6px; } .topbar-actions .button { padding: 8px 10px; font-size: .75rem; } .conversation-heading { padding: 18px 15px 14px; }  .messages { padding: 18px 13px; } .message-row { max-width: 98%; } .interaction-tools { padding: 0 14px 14px; } .composer { padding: 12px; } .footer { flex-direction: column; gap: 4px; } .connect-panel { margin: 3vh auto; padding: 25px 22px; } }
+
+/* Face reactions: wrappers keep gaze, tilt, blink, expression and hop transforms independent. */
+.face-hop { transform-box: fill-box; transform-origin: center; }
+.face-hop.is-hopping { animation: face-hop 520ms ease-out both; }
+@keyframes face-hop {
+  0%, 100% { transform: translateY(0); }
+  35% { transform: translateY(-3px); }
+  68% { transform: translateY(-1px); }
+}
+.face-gaze {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: translate(var(--gaze-x, 0px), var(--gaze-y, 0px));
+  transition: transform 900ms ease;
+}
+.face-tilt {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 900ms ease;
+}
+.face-tilt-left { transform: rotate(var(--eye-tilt-left, 0deg)); }
+.face-tilt-right { transform: rotate(var(--eye-tilt-right, 0deg)); }
+.face-highlight { transform-box: fill-box; transform-origin: center; }
+.baymax-face.is-speaking .face-highlight {
+  animation: face-speaking-pulse 900ms ease-in-out infinite alternate;
+}
+@keyframes face-speaking-pulse {
+  from { opacity: 1; }
+  to { opacity: .55; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .face-hop.is-hopping, .baymax-face.is-speaking .face-highlight { animation: none; }
+  .face-gaze, .face-tilt { transition: none; }
+}
