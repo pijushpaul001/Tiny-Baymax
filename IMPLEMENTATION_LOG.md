@@ -669,3 +669,12 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - Updated `tests/test_web_integration.py` to assert the no-stroke eye styling and preserved configurable blink transition.
 - **Files changed:** `web/styles.css`, `tests/test_web_integration.py`, `IMPLEMENTATION_LOG.md`.
 - **Verification:** GitHub source updates only; local tests and browser/phone rendering were not run. GitHub Actions status must be checked on the resulting branch HEAD. No changes to `baymax/`, `server/`, other web JavaScript, version, PR or merge.
+
+
+## v0.6.12 web integration test correction — Actions failure, 2026-11-10
+
+- **Failure source:** GitHub Actions run 42772207856 (head `78feb2eb8304d95509e6ab7aae04602034e150c7`) failed in `Compile Python sources` before the unit/API test step. Python reported an unterminated raw string in `tests/test_web_integration.py` line 109: `self.assertRegex(group.strip(), r'^<ellipse\b[^>]*/>`.
+- **Change:** closed the regex string and anchored it with `$`, so each eye-group assertion still requires exactly one self-closing `<ellipse>` and no other content. No assertion was removed or weakened. Existing checks still require two ellipses total, zero circles, zero face highlights, allow SVG paths, ban mouth and `<text>`, and require the 80×133 desktop dimensions.
+- **Files changed:** `tests/test_web_integration.py`, `IMPLEMENTATION_LOG.md` only.
+- **Verification limitation:** GitHub Actions logs were inspected. A local checkout of the exact branch HEAD was unavailable: network access to GitHub failed, and the only mounted ZIP is a 2026-11-04 snapshot at commit `f0df425878de046f53d61e7ec281086c2df81770`, not the current branch HEAD. Therefore `python -m unittest discover -s tests -t . -v` has **not** been run locally; results from the stale ZIP would not verify the current branch. Do not treat local tests or Actions as passing until rerun against the corrected HEAD.
+- No SVG, CSS, other source, package version, PR or merge was changed.
