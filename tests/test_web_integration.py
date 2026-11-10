@@ -106,7 +106,7 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertEqual(len(eye_groups), 2)
         for group in eye_groups:
             self.assertEqual(len(re.findall(r'<ellipse\b[^>]*/>', group)), 1)
-            self.assertRegex(group.strip(), r'^<ellipse\b[^>]*/>
+            self.assertRegex(group.strip(), r'^<ellipse\b[^>]*/>$')
 
     def test_face_stays_outside_the_scrolling_message_list(self):
         _, _, html_bytes = self.request("/")
