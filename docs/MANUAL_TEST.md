@@ -80,3 +80,6 @@ HTTPS routing, or actual phone behaviour. Do not mark those checks as passed unt
 - [ ] Start a spoken reply, then send another message; confirm the previous speech is cancelled.
 
 These are manual verification steps only. Leave every item unchecked until it has been tested on the target phone/browser. Do not include passcodes, tokens or private health conversations in screenshots or logs.
+
+- [ ] Confirm the full cream figure (head, body, arms, legs, grey patches) shows above the messages; the eyes blink and nothing else moves.
+- [ ] Confirm the messages list still scrolls and the composer stays visible on the phone.
