@@ -53,13 +53,54 @@ input:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px r
 .conversation-panel { display: flex; flex-direction: column; height: min(78vh, 880px); min-height: 0; overflow: hidden; }
 .baymax-face-area { display: flex; flex: 0 0 auto; justify-content: center; padding: 8px 12px 0; }
 .baymax-face { display: block; width: 80px; height: 133px; overflow: visible; }
-.face-body, .figure-part { fill: #f4e7c9; stroke: #4a3f31; stroke-width: 1.5px; stroke-linecap: round; stroke-linejoin: round; }
-.figure-plate { fill: #c9c9c9; stroke: #4a3f31; stroke-width: 1.3px; stroke-linecap: round; stroke-linejoin: round; }
-.figure-line { fill: none; stroke: #4a3f31; stroke-width: 1.2px; stroke-linecap: round; }
-.face-bridge { fill: none; stroke: #111; stroke-width: 1.8px; stroke-linecap: round; }
-.face-eye-blink { transform-box: fill-box; transform-origin: center; transition: transform var(--blink-duration, 160ms) ease; }
+
+.face-body,
+.figure-part {
+  fill: #f4e7c9;
+  stroke: #4a3f31;
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.figure-plate {
+  fill: #c9c9c9;
+  stroke: #4a3f31;
+  stroke-width: 1.3px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.figure-line {
+  fill: none;
+  stroke: #4a3f31;
+  stroke-width: 1.2px;
+  stroke-linecap: round;
+}
+
+.face-bridge {
+  fill: none;
+  stroke: #111111;
+  stroke-width: 1.8px;
+  stroke-linecap: round;
+}
+
+.face-eye {
+  fill: #080808;
+  stroke: none;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(var(--eye-scale-x, 1), var(--eye-scale-y, 1));
+  transition: transform 900ms ease;
+}
+
+.face-eye-blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform var(--blink-duration, 160ms) ease;
+}
+
 .face-eye-blink.is-blinking { transform: scaleY(.06); }
-.face-eye { fill: #080808; transform-box: fill-box; transform-origin: center; transform: scale(var(--eye-scale-x, 1), var(--eye-scale-y, 1)); transition: transform 900ms ease; }
 .conversation-heading { display: flex; align-items: center; justify-content: space-between; padding: 23px 24px 18px; border-bottom: 1px solid #edf2f2; }
 .conversation-heading h2 { font-size: 1.12rem; margin: 0; letter-spacing: -.02em; }
 .conversation-heading, .interaction-tools, .composer, .speech-error { flex: 0 0 auto; }
