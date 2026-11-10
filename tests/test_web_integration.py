@@ -126,6 +126,8 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertIn("transform-origin: center", css)
         self.assertIn("transform: scale(var(--eye-scale-x, 1), var(--eye-scale-y, 1))", css)
         self.assertIn("transition: transform 900ms ease", css)
+        self.assertIn("stroke: none", css)
+        self.assertIn("transition: transform var(--blink-duration, 160ms) ease", css)
         self.assertIn(".figure-plate", css)
         self.assertIn(".figure-part", css)
         self.assertIn("width: 80px; height: 133px", css)
