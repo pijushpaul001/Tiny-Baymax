@@ -84,27 +84,27 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertLess(response_start, response_guard_at)
         self.assertLess(response_guard_at, update_at)
 
-    def test_face_svg_has_two_highlighted_eyes_and_no_mouth(self):
+    def test_face_svg_has_two_plain_eyes_and_no_mouth(self):
         _, _, html_bytes = self.request("/")
         html = html_bytes.decode()
         svg_start = html.index('<svg id="baymax-face"')
         svg_end = html.index("</svg>", svg_start) + len("</svg>")
         svg = html[svg_start:svg_end]
         eyes = svg.count('class="face-eye"')
-        highlights = svg.count('class="face-highlight"')
         blink_groups = svg.count('class="face-eye-blink"')
         self.assertEqual(eyes, 2)
-        self.assertEqual(highlights, 2)
         self.assertEqual(blink_groups, 2)
-        self.assertEqual(svg.count("<ellipse "), 2)
-        self.assertEqual(svg.count("<circle "), 2)
-        self.assertNotRegex(svg, r"(?i)(mouth|<path\b|<text\b)")
-        highlighted_eye_groups = re.findall(
-            r'<g class="face-eye-blink">\s*<g class="face-eye">\s*'
-            r'<ellipse[^>]+>\s*<circle class="face-highlight"[^>]+>\s*</g>\s*</g>',
-            svg,
-        )
-        self.assertEqual(len(highlighted_eye_groups), 2)
+        self.assertEqual(svg.count("face-highlight"), 0)
+        self.assertEqual(svg.count("<circle"), 0)
+        self.assertNotRegex(svg, r"(?i)(mouth|<path\\b|<text\\b)")
+        self.assertEqual(svg.count('class="face-bridge"'), 1)
+        self.assertIn('class="figure-part"', svg)
+        self.assertIn('class="figure-plate"', svg)
+        eye_groups = re.findall(r'<g class="face-eye">(.*?)</g>', svg)
+        self.assertEqual(len(eye_groups), 2)
+        for group in eye_groups:
+            self.assertEqual(len(re.findall(r'<ellipse\\b[^>]*/>', group)), 1)
+            self.assertRegex(group.strip(), r'^<ellipse\\b[^>]*/>$')
 
     def test_face_stays_outside_the_scrolling_message_list(self):
         _, _, html_bytes = self.request("/")
@@ -124,10 +124,12 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertIn("transform-origin: center", css)
         self.assertIn("transform: scale(var(--eye-scale-x, 1), var(--eye-scale-y, 1))", css)
         self.assertIn("transition: transform 900ms ease", css)
+        self.assertIn(".figure-plate", css)
+        self.assertIn(".figure-part", css)
+        self.assertIn("width: 72px; height: 120px", css)
         self.assertIn(".face-eye-blink.is-blinking { transform: scaleY(.06);", css)
         self.assertIn("transform-box: fill-box", css)
         self.assertIn("transform-origin: center", css)
-        self.assertIn(".face-highlight { fill: #fff; }", css)
 
     def test_voice_controls_only_speak_live_replies_and_cancel_on_send(self):
         _, _, html_bytes = self.request("/")
