@@ -678,3 +678,12 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - **Files changed:** `tests/test_web_integration.py`, `IMPLEMENTATION_LOG.md` only.
 - **Verification limitation:** GitHub Actions logs were inspected. A local checkout of the exact branch HEAD was unavailable: network access to GitHub failed, and the only mounted ZIP is a 2026-11-04 snapshot at commit `f0df425878de046f53d61e7ec281086c2df81770`, not the current branch HEAD. Therefore `python -m unittest discover -s tests -t . -v` has **not** been run locally; results from the stale ZIP would not verify the current branch. Do not treat local tests or Actions as passing until rerun against the corrected HEAD.
 - No SVG, CSS, other source, package version, PR or merge was changed.
+
+
+## v0.6.12 web integration test structure correction — Actions failure, 2026-11-10
+
+- **Failure source:** GitHub Actions run 42774744942 on branch head `7c11cdddc00b6d00026bdd1e28333bd5e29f8604` failed in `Compile Python sources` on all six Python/mode matrix jobs. The reported error was `SyntaxError: unmatched ')'` at `tests/test_web_integration.py` line 281. The unit/API test step was skipped.
+- **Cause:** a duplicated tail of the test module had been appended after the first `if __name__ == "__main__": unittest.main()` block. It included a stray closing parenthesis and a second copy of several tests, including an obsolete 72×120 size assertion.
+- **Change:** retained the single canonical copy of every test; moved the one missing face-scroll/composer layout test back inside `WebIntegrationTests`; updated that test's desktop size expectation to the approved `80px × 133px`. Removed only the duplicated copies and stray syntax after the module entry point. No assertion was weakened or removed from the canonical test set. The SVG checks still require exactly two ellipses, zero circles, zero face highlights, allow paths, and ban mouth and `<text>`.
+- **Files changed:** `tests/test_web_integration.py`, `IMPLEMENTATION_LOG.md` only. No SVG, CSS, `baymax/`, `server/`, package version, PR or merge changed.
+- **Verification:** the exact Actions log was inspected and the syntax defect isolated. Local `python -m unittest discover -s tests -t . -v` remains **not run** in this environment; the current branch checkout is not available locally. New Actions results are pending after this correction. No passing test result is claimed.
