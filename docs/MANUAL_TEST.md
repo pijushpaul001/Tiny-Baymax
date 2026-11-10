@@ -83,3 +83,4 @@ These are manual verification steps only. Leave every item unchecked until it ha
 
 - [ ] Confirm the full cream figure (head, body, arms, legs, grey patches) shows above the messages; the eyes blink and nothing else moves.
 - [ ] Confirm the messages list still scrolls and the composer stays visible on the phone.
+- [ ] Send my head hurts and confirm the eyes grow taller while staying inside the head.
