@@ -660,3 +660,12 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - **Not done:** no changes to `baymax/`, `server/`, `tools/`, `web/face.js`, `web/app.js`, `web/speech.js`, `web/sw.js`, shutdown ritual or safety code. No version bump, PR or merge. No phone/browser rendering.
 - **Verification:** GitHub source edits and branch diff were inspected. This session cannot run shell commands against the current branch checkout, so `node --check web/*.js`, `python -m compileall -q baymax server tests tools`, and `python -m unittest discover -s tests -t . -v` were not run locally. The test count and Python 3.10/3.11/3.12 results remain unverified pending Actions. Do not claim CI success; wait for the branch-head Actions result.
 - **Spec review:** no coordinate or design ambiguity was found; the supplied SVG and CSS were applied as written. The SVG uses multiple subpaths inside the hand paths, which is valid and intentional; tests permit path elements while still rejecting mouth and text elements.
+
+
+## v0.6.12 figure CSS refinement — owner confirmation, 2026-11-10
+
+- Applied the owner's supplied figure CSS formatting and declarations in `web/styles.css`: explicit multiline figure/body/plate/line/bridge rules, black eye fill with no stroke, and centered fill-box transforms for the eye and blink groups.
+- Preserved the existing expression-driven X/Y eye scaling and 900 ms transition, plus the parent-group blink transition and blink scale. Kept the existing desktop (80×133) and mobile (64×107) SVG dimensions and all surrounding layout rules.
+- Updated `tests/test_web_integration.py` to assert the no-stroke eye styling and preserved configurable blink transition.
+- **Files changed:** `web/styles.css`, `tests/test_web_integration.py`, `IMPLEMENTATION_LOG.md`.
+- **Verification:** GitHub source updates only; local tests and browser/phone rendering were not run. GitHub Actions status must be checked on the resulting branch HEAD. No changes to `baymax/`, `server/`, other web JavaScript, version, PR or merge.
