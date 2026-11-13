@@ -7,7 +7,7 @@ from unittest.mock import patch
 from baymax.llm.fake import FakeLLM
 from baymax.decision import DecisionLayer, DecisionState
 from baymax.emotion import EmotionState
-from baymax.service import ChatService, _closing_should_end
+from baymax.service import ALLOWED_GESTURES, ChatService, _closing_should_end
 from baymax.storage import Store
 
 
@@ -39,6 +39,73 @@ class ServiceTests(unittest.TestCase):
         self.service = ChatService(self.store, self.llm)
         self.addCleanup(self.store.close)
         return self.service
+
+
+    def test_session_greeting_includes_wave_gesture(self):
+        self.assertEqual(ALLOWED_GESTURES, {"wave", "smile_blush", "celebrate"})
+        svc = self.build()
+        opened = svc.open_session("gesture-greeting")
+        self.assertEqual(opened["ui"]["gesture"], "wave")
+        self.assertIn(opened["ui"]["gesture"], ALLOWED_GESTURES)
+
+    def test_hello_type_message_includes_wave_gesture(self):
+        svc = self.build()
+        response = svc.handle("gesture-hello", "hello there")
+        self.assertEqual(response["ui"]["gesture"], "wave")
+
+    def test_thanks_and_compliment_include_smile_blush_gesture(self):
+        for message in ("thanks Baymax", "you are so kind"):
+            with self.subTest(message=message):
+                svc = self.build()
+                response = svc.handle("gesture-kind-" + message[:2], message)
+                self.assertEqual(response["ui"]["gesture"], "smile_blush")
+
+    def test_good_news_includes_celebrate_gesture(self):
+        svc = self.build()
+        response = svc.handle("gesture-good-news", "I got the job")
+        self.assertEqual(response["ui"]["gesture"], "celebrate")
+
+    def test_pain_turn_never_includes_positive_gesture(self):
+        svc = self.build()
+        response = svc.handle("gesture-pain", "my head hurts")
+        self.assertNotIn("gesture", response.get("ui", {}))
+
+    def test_sadness_turn_never_includes_positive_gesture(self):
+        svc = self.build()
+        response = svc.handle("gesture-sad", "I feel sad")
+        self.assertNotIn("gesture", response.get("ui", {}))
+
+    def test_emergency_turn_never_includes_positive_gesture(self):
+        svc = self.build()
+        response = svc.handle("gesture-emergency", "I have chest pain")
+        self.assertEqual(response["kind"], "safety")
+        self.assertNotIn("gesture", response.get("ui", {}))
+
+    def test_safety_hold_turn_never_includes_positive_gesture(self):
+        svc = self.build()
+        first = svc.handle("gesture-hold", "I want to kill myself")
+        self.assertEqual(first["kind"], "safety")
+        response = svc.handle("gesture-hold", "you are so kind")
+        self.assertNotIn("gesture", response.get("ui", {}))
+
+    def test_rating_turn_never_includes_positive_gesture(self):
+        svc = self.build()
+        svc.handle("gesture-rating", "my head hurts")
+        response = svc.handle("gesture-rating", "7")
+        self.assertNotIn("gesture", response.get("ui", {}))
+
+    def test_error_reply_never_includes_positive_gesture(self):
+        svc = self.build(FakeLLM(replies=[RuntimeError("offline")]))
+        response = svc.handle("gesture-error", "thanks")
+        self.assertEqual(response["kind"], "error")
+        self.assertNotIn("gesture", response.get("ui", {}))
+
+    def test_goodbye_completion_includes_wave_gesture(self):
+        svc = self.build()
+        svc.handle("gesture-goodbye", "/quit")
+        response = svc.handle("gesture-goodbye", "yes")
+        self.assertTrue(response["ended"])
+        self.assertEqual(response["ui"]["gesture"], "wave")
 
     def test_pain_asks_immediate_skippable_rating_without_llm(self):
         svc = self.build()

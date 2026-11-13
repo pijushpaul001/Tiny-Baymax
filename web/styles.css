@@ -52,20 +52,20 @@ input:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px r
 .chat-layout { display: grid; grid-template-columns: 1fr; gap: 18px; align-items: start; }
 .conversation-panel { display: flex; flex-direction: column; height: min(78vh, 880px); min-height: 0; overflow: hidden; }
 .baymax-face-area { display: flex; flex: 0 0 auto; justify-content: center; padding: 8px 12px 0; }
-.baymax-face { display: block; width: 80px; height: 133px; overflow: visible; }
+.baymax-face { display: block; width: 80px; height: 133px; overflow: visible; animation: baymax-breathe 4.2s ease-in-out infinite; transform-origin: 50% 55%; }
 
 .face-body,
 .figure-part {
-  fill: #f4e7c9;
-  stroke: #4a3f31;
+  fill: #ffffff;
+  stroke: #d2d7da;
   stroke-width: 1.5px;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
 .figure-plate {
-  fill: #c9c9c9;
-  stroke: #4a3f31;
+  fill: #e4e7e9;
+  stroke: #cbd1d4;
   stroke-width: 1.3px;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -73,7 +73,7 @@ input:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px r
 
 .figure-line {
   fill: none;
-  stroke: #4a3f31;
+  stroke: #d2d7da;
   stroke-width: 1.2px;
   stroke-linecap: round;
 }
@@ -83,10 +83,20 @@ input:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px r
   stroke: #111111;
   stroke-width: 1.8px;
   stroke-linecap: round;
+  transition: opacity 240ms ease;
 }
+.face-bridge-straight { opacity: 1; }
+.face-bridge-bent { opacity: 0; }
+.baymax-face.is-smiling .face-bridge-straight { opacity: 0; }
+.baymax-face.is-smiling .face-bridge-bent { opacity: 1; }
+.face-body { transition: transform 300ms ease; }
+.face-blush { fill: #efb9b8; opacity: 0; transition: opacity 240ms ease; }
+.thought-dot { fill: #b9c6ca; opacity: 0; transition: opacity 180ms ease; }
+.baymax-face.is-smiling .face-blush { opacity: .58; }
+.baymax-face.is-thinking .thought-dot { opacity: .9; }
 
 .face-eye {
-  fill: #080808;
+  fill: #111111;
   stroke: none;
   transform-box: fill-box;
   transform-origin: center;
@@ -101,6 +111,27 @@ input:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px r
 }
 
 .face-eye-blink.is-blinking { transform: scaleY(.06); }
+.figure-arm { transform-box: fill-box; transform-origin: center; }
+.baymax-face.is-waving .figure-arm { animation: baymax-wave 480ms ease-in-out 3 alternate; }
+.baymax-face.is-thinking .face-body { transform-box: fill-box; transform-origin: center; transform: rotate(3deg) translate(1px, 1px); }
+.baymax-face.is-thinking .face-eye { translate: 2px 0; }
+.baymax-face.is-attentive .face-body { transform-box: fill-box; transform-origin: center; transform: rotate(-1.5deg); }
+.baymax-face.is-listening .face-body { filter: drop-shadow(0 0 1px rgba(160, 190, 195, .5)); }
+.baymax-face.is-speaking .face-body { transform-box: fill-box; transform-origin: center; transform: translateY(-1px) scale(1.005); }
+.baymax-face.is-celebrating .figure-part { animation: baymax-celebrate 700ms ease-in-out 2; }
+
+@keyframes baymax-breathe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
+}
+@keyframes baymax-wave {
+  from { transform: rotate(-3deg); }
+  to { transform: rotate(5deg); }
+}
+@keyframes baymax-celebrate {
+  0%, 100% { translate: 0 0; }
+  45% { translate: 0 -3px; }
+}
 .conversation-heading { display: flex; align-items: center; justify-content: space-between; padding: 23px 24px 18px; border-bottom: 1px solid #edf2f2; }
 .conversation-heading h2 { font-size: 1.12rem; margin: 0; letter-spacing: -.02em; }
 .conversation-heading, .interaction-tools, .composer, .speech-error { flex: 0 0 auto; }
@@ -131,3 +162,11 @@ input:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px r
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 @media (max-width: 900px) { .conversation-panel { height: min(70vh, 760px); } }
 @media (max-width: 560px) { .baymax-face { width: 64px; height: 107px; } .app-shell { padding: 12px 10px; } .topbar { align-items: flex-start; } .brand-mark { width: 41px; height: 41px; } .brand p { font-size: .72rem; } .topbar-actions { flex-direction: column; align-items: flex-end; gap: 6px; } .topbar-actions .button { padding: 8px 10px; font-size: .75rem; } .conversation-heading { padding: 18px 15px 14px; }  .messages { padding: 18px 13px; } .message-row { max-width: 98%; } .interaction-tools { padding: 0 14px 14px; } .composer { padding: 12px; } .footer { flex-direction: column; gap: 4px; } .connect-panel { margin: 3vh auto; padding: 25px 22px; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -687,3 +687,30 @@ Earlier Rounds 1–4 hardening work remains in the branch history and included r
 - **Change:** retained the single canonical copy of every test; moved the one missing face-scroll/composer layout test back inside `WebIntegrationTests`; updated that test's desktop size expectation to the approved `80px × 133px`. Removed only the duplicated copies and stray syntax after the module entry point. No assertion was weakened or removed from the canonical test set. The SVG checks still require exactly two ellipses, zero circles, zero face highlights, allow paths, and ban mouth and `<text>`.
 - **Files changed:** `tests/test_web_integration.py`, `IMPLEMENTATION_LOG.md` only. No SVG, CSS, `baymax/`, `server/`, package version, PR or merge changed.
 - **Verification:** the exact Actions log was inspected and the syntax defect isolated. Local `python -m unittest discover -s tests -t . -v` remains **not run** in this environment; the current branch checkout is not available locally. New Actions results are pending after this correction. No passing test result is claimed.
+
+
+## v0.6.12 chibi figure — commit 1, 2026-11-13
+
+- Replaced the figure's cream fill/dark outline with the owner-decided white body, pale grey outline and near-black eyes. Added hidden blush cheeks and thought dots. Replaced the single bridge line with straight and subtly bent bridge paths that cross-fade; no mouth or separate smile element was added.
+- Preserved the full-body Argon path artwork, exactly two nested eye/blink groups, the existing eye geometry and 900 ms expression transition, the 80×133 desktop / 64×107 phone size, and the figure's fixed position outside the scrolling messages and composer flow. Added reduced-motion coverage, including breathing.
+- Updated `CLAUDE_HANDOFF.md` Architecture change history with the dated H-2 supersession decision.
+- Files in this commit: `web/index.html`, `web/styles.css`, `tests/test_web_integration.py`, `CLAUDE_HANDOFF.md`, `IMPLEMENTATION_LOG.md`.
+- Tests after this commit: 176 tests passed with `python -m unittest discover -s tests -t .`.
+
+## v0.6.12 server gesture contract — commit 2, 2026-11-13
+
+- Added optional additive `ui.gesture` hints to session greeting, eligible chat turns and completed shutdown. The allowed values are exactly `wave`, `smile_blush`, and `celebrate`.
+- Python selects greeting/hello waves, thanks/compliment smile-blush, and existing CELEBRATE-pattern good-news celebrations. Pain/difficulty, sadness, emergency, active safety-hold, rating and LLM-error replies cannot receive a positive gesture.
+- No persona, safety, rating or shutdown decision logic was changed; the goodbye gesture is only a UI hint.
+- Files in this commit: `baymax/service.py`, `tests/test_service.py`, `IMPLEMENTATION_LOG.md`.
+- Tests after this commit: 187 tests passed with `python -m unittest discover -s tests -t .`.
+
+
+## v0.6.12 browser state rendering — commit 3, 2026-11-13
+
+- The browser now renders server gesture hints, applies browser-only thinking/listening/speaking/attentive states, and clears each state when its corresponding request, microphone, speech, or focus event ends.
+- Added a non-blocking 1.5-second goodbye wave before visual closure. The API response and safety replies are not delayed; hiding the page during the delay closes the visual session immediately.
+- Added web integration checks for dynamic state class coverage, gesture values, the hidden blush/thought elements, bridge cross-fade, reduced motion and desktop/phone figure sizes.
+- Files in this commit: `web/app.js`, `tests/test_web_integration.py`, `IMPLEMENTATION_LOG.md`.
+- Final local verification on the completed patch series: `node --check web/app.js` passed; `node --check web/face.js` passed; `python -m compileall -q baymax server tests` passed; `python -m unittest discover -s tests -t .` passed all 188 tests. GitHub Actions and browser/phone visual rendering have not yet been run for these changes.
+- `web/face.js` is unchanged. Persona, safety detection/replies, rating logic, shutdown decision logic, storage and server routes are unchanged. No `__version__` bump, PR, merge or deployment was made.

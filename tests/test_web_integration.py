@@ -84,29 +84,62 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertLess(response_start, response_guard_at)
         self.assertLess(response_guard_at, update_at)
 
-    def test_face_svg_has_two_plain_eyes_and_no_mouth(self):
+    def test_face_svg_structure_and_hidden_features(self):
         _, _, html_bytes = self.request("/")
         html = html_bytes.decode()
         svg_start = html.index('<svg id="baymax-face"')
         svg_end = html.index("</svg>", svg_start) + len("</svg>")
         svg = html[svg_start:svg_end]
-        eyes = svg.count('class="face-eye"')
-        blink_groups = svg.count('class="face-eye-blink"')
-        self.assertEqual(eyes, 2)
-        self.assertEqual(blink_groups, 2)
-        self.assertEqual(svg.count("face-highlight"), 0)
-        self.assertEqual(svg.count("<circle"), 0)
-        self.assertEqual(svg.count("<ellipse"), 2)
-        self.assertNotRegex(svg, r"(?i)(mouth|<text\b)")
-        self.assertEqual(svg.count('class="face-bridge"'), 1)
-        self.assertEqual(svg.count('class="face-body"'), 1)
-        self.assertGreaterEqual(svg.count('class="figure-part"'), 1)
-        self.assertGreaterEqual(svg.count('class="figure-plate"'), 1)
-        eye_groups = re.findall(r'<g class="face-eye">(.*?)</g>', svg)
+        nested_eye_groups = re.findall(
+            r'<g class="face-eye-blink">\s*<g class="face-eye">(.*?)</g>\s*</g>', svg, re.S
+        )
+        self.assertEqual(len(nested_eye_groups), 2)
+        eye_groups = re.findall(r'<g class="face-eye">(.*?)</g>', svg, re.S)
         self.assertEqual(len(eye_groups), 2)
-        for group in eye_groups:
-            self.assertEqual(len(re.findall(r'<ellipse\b[^>]*/>', group)), 1)
+        for group in nested_eye_groups:
             self.assertRegex(group.strip(), r'^<ellipse\b[^>]*/>$')
+        self.assertEqual(svg.count("<ellipse"), 2)
+        self.assertNotRegex(svg, r"(?i)<text\b|mouth|face-smile")
+        self.assertEqual(svg.count('class="face-bridge face-bridge-straight"'), 1)
+        self.assertEqual(svg.count('class="face-bridge face-bridge-bent"'), 1)
+        self.assertEqual(len(re.findall(r'<path class="face-bridge\b', svg)), 2)
+        self.assertEqual(svg.count('class="face-blush"'), 2)
+        self.assertEqual(svg.count('class="thought-dot"'), 3)
+        self.assertGreaterEqual(svg.count('class="figure-part'), 1)
+        self.assertGreaterEqual(svg.count('class="figure-plate"'), 1)
+
+        _, _, css_bytes = self.request("/styles.css")
+        css = css_bytes.decode()
+        self.assertIn(".face-blush { fill:", css)
+        self.assertIn(".face-body,", css)
+        self.assertIn("fill: #ffffff", css)
+        self.assertIn("stroke: #d2d7da", css)
+        self.assertIn(".face-blush { fill: #efb9b8; opacity: 0", css)
+        self.assertIn(".thought-dot { fill: #b9c6ca; opacity: 0", css)
+        self.assertIn(".baymax-face.is-smiling .face-bridge-straight { opacity: 0; }", css)
+        self.assertIn(".baymax-face.is-smiling .face-bridge-bent { opacity: 1; }", css)
+        self.assertIn("@media (prefers-reduced-motion: reduce)", css)
+        self.assertIn("animation: none !important", css)
+        self.assertIn("transition: none !important", css)
+
+    def test_face_js_states_all_have_css_rules(self):
+        _, _, app_bytes = self.request("/app.js")
+        _, _, face_bytes = self.request("/face.js")
+        _, _, css_bytes = self.request("/styles.css")
+        js = app_bytes.decode() + face_bytes.decode()
+        css = css_bytes.decode()
+        classes = set(re.findall(r"\bis-[a-z][a-z-]*\b", js))
+        self.assertTrue(classes)
+        for class_name in classes:
+            self.assertRegex(css, rf"\.{re.escape(class_name)}\b")
+        app = app_bytes.decode()
+        for state_name in ("thinking", "listening", "speaking", "attentive"):
+            self.assertIn(f'setFaceState("{state_name}"', app)
+            self.assertRegex(css, rf"\.baymax-face\.is-{state_name}\b")
+        for gesture_state in ("waving", "smiling", "celebrating"):
+            self.assertIn(f'"{gesture_state}"', app)
+            self.assertRegex(css, rf"\.baymax-face\.is-{gesture_state}\b")
+        self.assertIn('"wave", "smile_blush", "celebrate"', app)
 
     def test_face_stays_outside_the_scrolling_message_list(self):
         _, _, html_bytes = self.request("/")
@@ -131,6 +164,8 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertIn(".figure-plate", css)
         self.assertIn(".figure-part", css)
         self.assertIn("width: 80px; height: 133px", css)
+        self.assertIn(".baymax-face { width: 64px; height: 107px; }", css)
+        self.assertIn("animation: baymax-breathe 4.2s ease-in-out infinite", css)
         self.assertIn(".face-eye-blink.is-blinking { transform: scaleY(.06);", css)
         self.assertIn("transform-box: fill-box", css)
         self.assertIn("transform-origin: center", css)
@@ -297,6 +332,8 @@ class WebIntegrationTests(unittest.TestCase):
         self.assertIn(".figure-plate", css)
         self.assertIn(".figure-part", css)
         self.assertIn("width: 80px; height: 133px", css)
+        self.assertIn(".baymax-face { width: 64px; height: 107px; }", css)
+        self.assertIn("animation: baymax-breathe 4.2s ease-in-out infinite", css)
         self.assertIn(".face-eye-blink.is-blinking { transform: scaleY(.06);", css)
         self.assertIn("transform-box: fill-box", css)
         self.assertIn("transform-origin: center", css)

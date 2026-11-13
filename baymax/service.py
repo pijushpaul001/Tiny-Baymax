@@ -20,6 +20,12 @@ from .storage import Store
 
 MAX_MESSAGE_CHARS = 2000
 GREET_AFTER_SECONDS = 6 * 3600
+GESTURE_HELLO = re.compile(r"\b(?:hi|hello|hey|hiya|good morning|good afternoon|good evening)\b", re.I)
+GESTURE_COMPLIMENT = re.compile(
+    r"\b(?:you(?:'re| are) (?:so )?(?:kind|sweet|helpful|wonderful|amazing|great)|"
+    r"i appreciate you|you helped me|you are the best)\b", re.I
+)
+ALLOWED_GESTURES = {"wave", "smile_blush", "celebrate"}
 
 DEFAULT_LLM_FAILURE_REPLY = "I could not answer that one. Could you say it a different way?"
 RETRY_LLM_FAILURE_REPLY = "I had trouble answering. Please try again in a moment."
@@ -145,6 +151,7 @@ class ChatService:
 
     def open_session(self, uid: str) -> dict:
         """Called when the app opens. Greets once per session (and again after a long gap)."""
+        greeted = False
         while True:
             s = self.session(uid)
             with s.lock:
@@ -154,9 +161,13 @@ class ChatService:
                     s.greeted_at = time.time()
                     s.closing = None
                     self.store.add_messages(uid, [("assistant", " ".join(GREETING))])
+                    greeted = True
                 break
-        return {"history": self.store.history_with_time(uid, 40), "emotion": self._emotion(uid).to_dict(),
-                "settings": self.store.get_settings(uid)}
+        response = {"history": self.store.history_with_time(uid, 40), "emotion": self._emotion(uid).to_dict(),
+                    "settings": self.store.get_settings(uid)}
+        if greeted:
+            response["ui"] = {"gesture": "wave"}
+        return response
 
     # ------------------------------------------------------------ helpers
     def _emotion(self, uid) -> EmotionState:
@@ -345,7 +356,7 @@ class ChatService:
     def _finish(self, uid, s, reply):
         s.closing = None
         s.greeted_at = 0.0                           # greet again next time the app opens
-        return self._resp(uid, reply, kind="ritual", ended=True, s=s)
+        return self._resp(uid, reply, kind="ritual", ended=True, s=s, ui={"gesture": "wave"})
 
     # ------------------------------------------------------------ commands
     def _command(self, uid, text, lower, s):
@@ -463,6 +474,26 @@ class ChatService:
             episode = s.dstate.episode
             about = "pain" if episode and episode.type == "physical" else "feeling"
             ui["rating"] = {"min": 0, "max": 10, "about": about, "skippable": True}
+
+        # Gestures are a small, additive presentation hint. Safety, difficulty,
+        # rating and safety-hold turns are deliberately ineligible.
+        blocked_gesture_turn = (
+            raw_detection.type != "none" or bool(raw_detection.red_flag)
+            or r.decision.detection.type != "none" or bool(r.decision.detection.red_flag)
+            or r.decision.rating_action != "none" or r.decision.rating is not None
+            or safety_hold_active(s.dstate.turn, s.dstate.safety_hold_until)
+        )
+        if not blocked_gesture_turn:
+            from .detection import CELEBRATE, THANKS
+            gesture = None
+            if CELEBRATE.search(text):
+                gesture = "celebrate"
+            elif THANKS.search(text) or GESTURE_COMPLIMENT.search(text):
+                gesture = "smile_blush"
+            elif GESTURE_HELLO.search(text):
+                gesture = "wave"
+            if gesture in ALLOWED_GESTURES:
+                ui["gesture"] = gesture
         return self._resp(uid, r.reply, kind="chat", mode=r.mode, s=s,
                           memory_saved=memory_fact, trace=trace, **({"ui": ui} if ui else {}))
 

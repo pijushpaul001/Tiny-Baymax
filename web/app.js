@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const byId = (id) => document.getElementById(id);
-  const state = { token: null, busy: false, closing: null };
+  const state = { token: null, busy: false, closing: null, sessionEnding: false, gestureTimer: null, closeTimer: null };
   const SPEAK_PREFERENCE_KEY = "tiny-baymax-speak";
   const speechAvailable = typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance === "function";
   let speakEnabled = true;
@@ -20,8 +20,27 @@
     try { window.localStorage.setItem(SPEAK_PREFERENCE_KEY, String(speakEnabled)); } catch (_) {}
   }
 
+  function setFaceState(name, enabled) {
+    const face = byId("baymax-face");
+    if (face) face.classList.toggle(`is-${name}`, Boolean(enabled));
+  }
+
+  function applyGesture(gesture, duration = 1900) {
+    const face = byId("baymax-face");
+    if (!face || !["wave", "smile_blush", "celebrate"].includes(gesture)) return;
+    if (state.gestureTimer) window.clearTimeout(state.gestureTimer);
+    ["waving", "smiling", "celebrating"].forEach((name) => setFaceState(name, false));
+    const className = gesture === "wave" ? "waving" : gesture === "smile_blush" ? "smiling" : "celebrating";
+    setFaceState(className, true);
+    state.gestureTimer = window.setTimeout(() => {
+      setFaceState(className, false);
+      state.gestureTimer = null;
+    }, duration);
+  }
+
   function cancelSpeech() {
     if (speechAvailable) window.speechSynthesis.cancel();
+    setFaceState("speaking", false);
   }
 
   function refreshVoice() {
@@ -48,6 +67,9 @@
     if (selectedVoice) utterance.voice = selectedVoice;
     if (navigator.language) utterance.lang = navigator.language;
     cancelSpeech();
+    utterance.onstart = () => setFaceState("speaking", true);
+    utterance.onend = () => setFaceState("speaking", false);
+    utterance.onerror = () => setFaceState("speaking", false);
     window.speechSynthesis.speak(utterance);
   }
 
@@ -154,6 +176,7 @@
 
   function setBusy(busy) {
     state.busy = busy;
+    setFaceState("thinking", busy);
     byId("send-button").disabled = busy;
     byId("message-input").disabled = busy;
     byId("end-session").disabled = busy;
@@ -161,7 +184,7 @@
 
   async function sendMessage(value) {
     const text = String(value ?? byId("message-input").value).trim();
-    if (!text || state.busy || !state.token) return;
+    if (!text || state.busy || state.sessionEnding || !state.token) return;
     cancelSpeech();
     stopRecognition();
     byId("message-input").value = "";
@@ -180,11 +203,11 @@
       state.closing = result.closing;
       updateInteraction(result);
       if (result.ended) {
-        message("assistant", "This session is closed. You can reconnect when you are ready.");
-        state.token = null;
-        byId("chat-screen").classList.add("hidden");
-        byId("connect-screen").classList.remove("hidden");
-        setStatus("Not connected");
+        state.sessionEnding = true;
+        applyGesture(result.ui?.gesture || "wave", 1500);
+        state.closeTimer = window.setTimeout(closeSessionVisually, 1500);
+      } else if (result.ui?.gesture) {
+        applyGesture(result.ui.gesture);
       }
     } catch (error) {
       byId("offline-card").classList.remove("hidden");
@@ -203,6 +226,19 @@
     }
   }
 
+  function closeSessionVisually() {
+    if (state.gestureTimer) window.clearTimeout(state.gestureTimer);
+    state.gestureTimer = null;
+    state.closeTimer = null;
+    state.token = null;
+    state.sessionEnding = false;
+    ["waving", "smiling", "celebrating", "thinking", "listening", "speaking", "attentive"].forEach((name) => setFaceState(name, false));
+    message("assistant", "This session is closed. You can reconnect when you are ready.");
+    byId("chat-screen").classList.add("hidden");
+    byId("connect-screen").classList.remove("hidden");
+    setStatus("Not connected");
+  }
+
   async function connect(event) {
     event.preventDefault();
     if (state.busy) return;
@@ -216,6 +252,7 @@
       state.token = token;
       const session = await api("/api/session");
       state.closing = null;
+      state.sessionEnding = false;
       const emergencyHint = typeof session.emergency_hint === "string" && session.emergency_hint.trim()
         ? session.emergency_hint.trim() : "your local emergency number";
       byId("offline-card").querySelector("p").textContent =
@@ -223,6 +260,7 @@
       byId("offline-card").classList.add("hidden");
       renderHistory(session.history);
       updateFace(session.emotion);
+      if (session.ui?.gesture) applyGesture(session.ui.gesture);
       byId("connect-screen").classList.add("hidden");
       byId("chat-screen").classList.remove("hidden");
       byId("end-session").disabled = false;
@@ -237,7 +275,7 @@
   }
 
   async function endSession() {
-    if (state.busy || !state.token) return;
+    if (state.busy || state.sessionEnding || !state.token) return;
     setBusy(true);
     try {
       const result = await api("/api/session/end", { method: "POST", body: JSON.stringify({}) });
@@ -245,6 +283,7 @@
       speakReply(result.reply);
       if (Object.prototype.hasOwnProperty.call(result, "emotion")) updateFace(result.emotion);
       updateInteraction(result);
+      if (result.ui?.gesture) applyGesture(result.ui.gesture);
     } catch (error) {
       message("assistant", error.message, true);
     } finally { setBusy(false); }
@@ -291,6 +330,7 @@
         showSpeechError("Microphone is unavailable right now.");
       }
     });
+    recognition.onstart = () => setFaceState("listening", true);
     recognition.onresult = (event) => {
       const transcript = Array.from(event.results || []).map((item) => item[0]?.transcript || "").join(" ").trim();
       if (transcript) byId("message-input").value = transcript;
@@ -300,14 +340,23 @@
       if (event.error === "not-allowed" || event.error === "service-not-allowed") showSpeechError("Microphone permission was denied.");
       else showSpeechError("Microphone is unavailable right now.");
       micButton.setAttribute("aria-pressed", "false");
+      setFaceState("listening", false);
     };
-    recognition.onend = () => micButton.setAttribute("aria-pressed", "false");
+    recognition.onend = () => {
+      micButton.setAttribute("aria-pressed", "false");
+      setFaceState("listening", false);
+    };
   } else {
     byId("mic-button").classList.add("hidden");
   }
 
   byId("connect-form").addEventListener("submit", connect);
   byId("chat-form").addEventListener("submit", (event) => { event.preventDefault(); sendMessage(); });
+  byId("message-input").addEventListener("focus", () => setFaceState("attentive", true));
+  byId("message-input").addEventListener("blur", () => setFaceState("attentive", false));
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && state.sessionEnding) closeSessionVisually();
+  });
   byId("message-input").addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendMessage(); }
   });
